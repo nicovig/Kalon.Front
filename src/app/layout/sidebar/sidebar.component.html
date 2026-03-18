@@ -8,17 +8,34 @@
   </div>
 
   <div class="nav-label">Principal</div>
-  <a class="nav-item active"><span class="nav-icon">🏠</span> Tableau de bord</a>
-  <a class="nav-item"><span class="nav-icon">👥</span> Donateurs</a>
-  <a class="nav-item"><span class="nav-icon">💌</span> Relances <span class="nav-badge">34</span></a>
-  <a class="nav-item"><span class="nav-icon">🧾</span> Reçus fiscaux</a>
+  <a
+    class="nav-item"
+    [routerLink]="['/']"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >
+    <span class="nav-icon">🏠</span> Tableau de bord
+  </a>
+  <a class="nav-item" [routerLink]="['/donateurs']" routerLinkActive="active">
+    <span class="nav-icon">👥</span> Donateurs
+  </a>
+  <a class="nav-item" [routerLink]="['/relances']" routerLinkActive="active">
+    <span class="nav-icon">💌</span> Relances <span class="nav-badge">34</span>
+  </a>
+  <a class="nav-item" [routerLink]="['/recus']" routerLinkActive="active">
+    <span class="nav-icon">🧾</span> Reçus fiscaux
+  </a>
 
   <div class="nav-label">Analyse</div>
-  <a class="nav-item"><span class="nav-icon">📊</span> Statistiques</a>
-  <a class="nav-item"><span class="nav-icon">📥</span> Import Excel</a>
+  <a class="nav-item" [routerLink]="['/statistics']" routerLinkActive="active">
+    <span class="nav-icon">📊</span> Statistiques
+  </a>
+  <a class="nav-item" [routerLink]="['/import']" routerLinkActive="active">
+    <span class="nav-icon">📥</span> Import Excel
+  </a>
 
   <div class="nav-label">Compte</div>
-  <a class="nav-item"><span class="nav-icon">⚙️</span> Paramètres</a>
+  <a class="nav-item" [routerLink]="['/account']" routerLinkActive="active"><span class="nav-icon">⚙️</span> Paramètres</a>
 
   <div class="sidebar-footer">
     <div class="asso-card">

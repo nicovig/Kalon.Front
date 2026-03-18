@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'kalon-receipt-placeholder-page',
+  selector: 'receipt-page',
   standalone: true,
   template: `
     <section>
@@ -14,5 +14,5 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReceiptPlaceholderPageComponent {}
+export class ReceiptPageComponent {}
 

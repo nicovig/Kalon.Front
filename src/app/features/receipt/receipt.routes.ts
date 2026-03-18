@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
-import { ReceiptPlaceholderPageComponent } from './receipt-placeholder.page';
+import { ReceiptPageComponent } from './receipt.page';
 
 export const RECEIPT_ROUTES: Routes = [
   {
     path: '',
-    component: ReceiptPlaceholderPageComponent
+    component: ReceiptPageComponent
   }
 ];
 
+  

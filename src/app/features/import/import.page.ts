@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'kalon-import-placeholder-page',
+  selector: 'import-page',
   standalone: true,
   template: `
     <section>
@@ -14,5 +14,5 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportPlaceholderPageComponent {}
+export class ImportPageComponent {}
 

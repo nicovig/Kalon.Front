@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { ImportPlaceholderPageComponent } from './import-placeholder.page';
+import { ImportPageComponent } from './import.page';
 
 export const IMPORT_ROUTES: Routes = [
   {
     path: '',
-    component: ImportPlaceholderPageComponent
+    component: ImportPageComponent
   }
 ];
 

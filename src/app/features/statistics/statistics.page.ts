@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'donor-page',
+  selector: 'statistics-page',
   standalone: true,
   template: `
     <section>
-      <h1>Donateurs</h1>
+      <h1>Statistiques</h1>
       <p>
-        La gestion détaillée des donateurs sera bientôt disponible ici. En attendant, vous pouvez
+        La gestion des statistiques sera bientôt disponible ici. En attendant, vous pouvez
         consulter le tableau de bord pour un aperçu rapide.
       </p>
     </section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DonorListPageComponent {}
+export class StatisticsPageComponent {}
 

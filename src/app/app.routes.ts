@@ -40,9 +40,19 @@ export const routes: Routes = [
           import('./features/receipt/receipt.routes').then((m) => m.RECEIPT_ROUTES)
       },
       {
+        path: 'statistics',
+        loadChildren: () =>
+          import('./features/statistics/statistics.routes').then((m) => m.STATISTICS_ROUTES)
+      },
+      {
         path: 'import',
         loadChildren: () =>
           import('./features/import/import.routes').then((m) => m.IMPORT_ROUTES)
+      },
+      {
+        path: 'account',
+        loadChildren: () =>
+          import('./features/account/account.routes').then((m) => m.ACCOUNT_ROUTES)
       }
     ]
   },

@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { ReminderPlaceholderPageComponent } from './reminder-placeholder.page';
+import { ReminderPageComponent } from './reminder.page';
 
 export const REMINDER_ROUTES: Routes = [
   {
     path: '',
-    component: ReminderPlaceholderPageComponent
+    component: ReminderPageComponent
   }
 ];
 
