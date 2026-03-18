@@ -1,18 +1,36 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { AuthService } from './core/auth/auth.service';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, AsyncPipe, CommonModule],
+  imports: [RouterOutlet, SidebarComponent, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
-  readonly currentUser$ = this.authService.currentUser$;
+  private readonly cdRef = inject(ChangeDetectorRef);
+  private readonly sub = new Subscription();
+
+  protected sidebarVisible = this.authService.isAuthenticated();
+
+  ngOnInit(): void {
+    this.sidebarVisible = this.authService.isAuthenticated();
+    this.sub.add(
+      this.authService.currentUser$.subscribe(() => {
+        this.sidebarVisible = this.authService.isAuthenticated();
+        this.cdRef.markForCheck();
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }

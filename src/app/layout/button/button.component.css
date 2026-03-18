@@ -120,3 +120,99 @@
     flex-shrink: 0;
     font-family: var(--font-title);
   }
+
+.btn-send {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--pink);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 11px 24px;
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 77, 125, 0.35);
+  transition: all 0.18s;
+}
+
+.btn-send:hover {
+  background: var(--pink-dk);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 77, 125, 0.45);
+}
+
+.btn-send:disabled {
+  background: var(--ink-30);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-adv-apply {
+  background: var(--violet);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-end;
+  width: fit-content;
+}
+
+.btn-adv-apply:hover {
+  background: var(--violet-md);
+}
+
+.btn-ia-gen {
+  width: 100%;
+  background: var(--pink);
+  color: white;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 10px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-ia-gen:hover {
+  background: var(--pink-dk);
+}
+
+.btn-toolbar {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.13s;
+  font-family: var(--font-body);
+  padding: 0;
+}
+
+.btn-toolbar:hover {
+  background: white;
+  color: var(--ink);
+}

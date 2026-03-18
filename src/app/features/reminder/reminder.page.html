@@ -1,0 +1,349 @@
+<toast-component position="center-third"></toast-component>
+<topbar [title]="'Les relances'" [subtitle]="'Gérez les relances de vos précieux donateurs'">
+</topbar>
+
+<div class="reminder-page">
+<!-- LAYOUT SPLIT -->
+<div class="layout">
+    <!-- ══ GAUCHE — SÉLECTION DONATEURS ══ -->
+    <div class="left-panel">
+      <div class="lp-header">
+        <div class="lp-title">
+          Sélectionner les destinataires
+          <span class="selected-count" id="sel-count">4 sélectionnés</span>
+        </div>
+  
+        <!-- Recherche -->
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="Rechercher un donateur…" />
+        </div>
+  
+        <!-- Filtres rapides -->
+        <div class="quick-filters">
+          <div class="qf on" onclick="toggleQF(this)">Tous</div>
+          <div class="qf" onclick="toggleQF(this)">À relancer</div>
+          <div class="qf" onclick="toggleQF(this)">Nouveaux</div>
+          <div class="qf" onclick="toggleQF(this)">Actifs</div>
+          <div class="qf" onclick="toggleQF(this)">Inactifs</div>
+        </div>
+  
+        <!-- Filtres avancés -->
+        <div class="adv-toggle" onclick="toggleAdv()">
+          <span class="adv-arrow" id="adv-arrow">›</span>
+          Filtres avancés
+        </div>
+  
+        <div class="adv-panel" id="adv-panel">
+          <!-- Dernier don -->
+          <div class="adv-row">
+            <div class="adv-lbl">Dernier don il y a plus de</div>
+            <div class="range-row">
+              <div class="range-input">
+                <input type="number" id="months-val" value="12" min="1" max="60" />
+                <span>mois</span>
+              </div>
+              <div style="flex: 1">
+                <input
+                  type="range"
+                  class="slider"
+                  id="months-slider"
+                  min="1"
+                  max="60"
+                  value="12"
+                  oninput="syncSlider(this.value)"
+                />
+              </div>
+            </div>
+          </div>
+  
+          <!-- Montant total -->
+          <div class="adv-row">
+            <div class="adv-lbl">Total des dons (€)</div>
+            <div class="adv-montant">
+              <input type="number" class="adv-minput" placeholder="Min (ex: 20)" />
+              <input type="number" class="adv-minput" placeholder="Max (ex: 500)" />
+            </div>
+          </div>
+  
+          <!-- Nombre de dons -->
+          <div class="adv-row">
+            <div class="adv-lbl">Nombre de dons</div>
+            <select class="adv-select">
+              <option>Peu importe</option>
+              <option>Au moins 1 don</option>
+              <option>Au moins 2 dons</option>
+              <option>Au moins 5 dons (fidèles)</option>
+            </select>
+          </div>
+  
+          <!-- Campagne -->
+          <div class="adv-row">
+            <div class="adv-lbl">Dernière campagne</div>
+            <select class="adv-select">
+              <option>Toutes les campagnes</option>
+              <option>Campagne été 2024</option>
+              <option>Appel de fonds 2023</option>
+              <option>Collecte de Noël 2023</option>
+            </select>
+          </div>
+  
+          <button-component type="adv-apply" (click)="applyFilters()">Appliquer les filtres →</button-component>
+        </div>
+      </div>
+  
+      <!-- Liste -->
+      <div class="donor-list" id="donor-list">
+        <div class="donor-item checked" onclick="toggleDonor(this)">
+          <div class="d-check">✓</div>
+          <div class="d-av da1">ML</div>
+          <div class="d-info">
+            <div class="d-name">Marie-Laure Fontaine</div>
+            <div class="d-meta">Dernier don : janv. 2024 · 320 €</div>
+          </div>
+          <span class="d-badge db-relance">14 mois</span>
+        </div>
+  
+        <div class="donor-item checked" onclick="toggleDonor(this)">
+          <div class="d-check">✓</div>
+          <div class="d-av da2">JD</div>
+          <div class="d-info">
+            <div class="d-name">Jean Dupont</div>
+            <div class="d-meta">Dernier don : mars 2023 · 80 €</div>
+          </div>
+          <span class="d-badge db-relance">24 mois</span>
+        </div>
+  
+        <div class="donor-item" onclick="toggleDonor(this)">
+          <div class="d-check"></div>
+          <div class="d-av da3">SB</div>
+          <div class="d-info">
+            <div class="d-name">Sophie Bernard</div>
+            <div class="d-meta">Dernier don : mars 2025 · 50 €</div>
+          </div>
+          <span class="d-badge db-new">Nouveau</span>
+        </div>
+  
+        <div class="donor-item checked" onclick="toggleDonor(this)">
+          <div class="d-check">✓</div>
+          <div class="d-av da4">CM</div>
+          <div class="d-info">
+            <div class="d-name">Chloé Martin</div>
+            <div class="d-meta">Dernier don : juin 2023 · 200 €</div>
+          </div>
+          <span class="d-badge db-relance">21 mois</span>
+        </div>
+  
+        <div class="donor-item checked" onclick="toggleDonor(this)">
+          <div class="d-check">✓</div>
+          <div class="d-av da5">PL</div>
+          <div class="d-info">
+            <div class="d-name">Pierre Leclerc</div>
+            <div class="d-meta">Dernier don : juin 2023 · 150 €</div>
+          </div>
+          <span class="d-badge db-relance">21 mois</span>
+        </div>
+  
+        <div class="donor-item" onclick="toggleDonor(this)">
+          <div class="d-check"></div>
+          <div class="d-av da6">IM</div>
+          <div class="d-info">
+            <div class="d-name">Isabelle Moreau</div>
+            <div class="d-meta">Dernier don : fév. 2025 · 60 €</div>
+          </div>
+          <span class="d-badge db-actif">Actif</span>
+        </div>
+  
+        <div class="donor-item" onclick="toggleDonor(this)">
+          <div class="d-check"></div>
+          <div class="d-av da7">TG</div>
+          <div class="d-info">
+            <div class="d-name">Thomas Garnier</div>
+            <div class="d-meta">Dernier don : oct. 2023 · 45 €</div>
+          </div>
+          <span class="d-badge db-relance">17 mois</span>
+        </div>
+  
+        <div class="donor-item" onclick="toggleDonor(this)">
+          <div class="d-check"></div>
+          <div class="d-av da1">NR</div>
+          <div class="d-info">
+            <div class="d-name">Nathalie Rousseau</div>
+            <div class="d-meta">Dernier don : déc. 2023 · 100 €</div>
+          </div>
+          <span class="d-badge db-relance">15 mois</span>
+        </div>
+  
+        <div class="donor-item" onclick="toggleDonor(this)">
+          <div class="d-check"></div>
+          <div class="d-av da3">AB</div>
+          <div class="d-info">
+            <div class="d-name">Alain Benoît</div>
+            <div class="d-meta">Dernier don : jan. 2023 · 75 €</div>
+          </div>
+          <span class="d-badge db-relance">26 mois</span>
+        </div>
+      </div>
+  
+      <div class="lp-footer">
+        <span class="sel-info" id="footer-info">4 donateurs sélectionnés sur 34</span>
+        <span class="sel-all" onclick="selectAll()">Tout sélectionner</span>
+      </div>
+    </div>
+  
+    <!-- ══ DROITE — MAIL ══ -->
+    <div class="right-panel">
+      <div class="rp-header">
+        <div>
+          <div class="rp-title">Rédiger le mail de relance</div>
+          <div class="rp-sub">Chaque mail sera personnalisé avec les données du donateur</div>
+        </div>
+        <button-component type="send" id="send-btn">
+          💌 Envoyer à <span id="send-count">4</span> donateurs
+        </button-component>
+      </div>
+  
+      <div class="rp-body">
+        <!-- IA CARD -->
+        <div class="ia-card">
+          <div class="ia-top">
+            <div class="ia-icon">✨</div>
+            <div>
+              <div class="ia-ttl">Générer avec l'IA</div>
+              <div class="ia-desc">Décrivez le contexte, l'IA rédige un mail personnalisé</div>
+            </div>
+            <div class="ia-badge">NOUVEAU</div>
+          </div>
+  
+          <div class="ia-context">
+            <textarea
+              class="ia-textarea"
+              placeholder="Ex : Relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons sur les enfants…"
+            ></textarea>
+          </div>
+  
+          <div class="ia-presets">
+            <div class="ia-preset sel" onclick="selectPreset(this)">😌 Relance douce</div>
+            <div class="ia-preset" onclick="selectPreset(this)">🤝 Fidélisation</div>
+            <div class="ia-preset" onclick="selectPreset(this)">🙏 Remerciement</div>
+            <div class="ia-preset" onclick="selectPreset(this)">🚨 Urgence</div>
+            <div class="ia-preset" onclick="selectPreset(this)">🎄 Saisonnier</div>
+          </div>
+  
+          <button-component type="ia-gen" id="ia-btn" (click)="generateMail()">
+            <div class="spinner" id="spinner"></div>
+            <span id="ia-btn-text">✨ Générer un mail</span>
+          </button-component>
+        </div>
+  
+        <!-- ÉDITEUR MAIL -->
+        <div class="mail-card">
+          <!-- Objet -->
+          <div class="mail-objet">
+            <span class="objet-lbl">Objet</span>
+            <input
+              class="objet-input"
+              id="mail-objet"
+              type="text"
+              value="Vous nous manquez, Marie 💛"
+              placeholder="Objet du mail…"
+            />
+          </div>
+          <!-- Toolbar -->
+          <div class="mail-toolbar">
+            <button-component type="toolbar" title="Gras"><b>G</b></button-component>
+            <button-component type="toolbar" title="Italique"><i>I</i></button-component>
+            <button-component type="toolbar" title="Souligné"><u>S</u></button-component>
+            <div class="tb-sep"></div>
+            <button-component type="toolbar" title="Liste">≡</button-component>
+            <button-component type="toolbar" title="Lien">🔗</button-component>
+            <div class="tb-sep"></div>
+            <button-component type="toolbar" title="Aligner à gauche">⬤</button-component>
+            <button-component type="toolbar" title="Centrer">⊡</button-component>
+          </div>
+          <!-- Corps -->
+          <div class="mail-body">
+            <textarea class="mail-editor" id="mail-body" rows="8">
+  Bonjour Marie,
+  
+  Nous espérons que vous allez bien. Cela fait maintenant 14 mois que vous nous avez soutenus, et nous pensons à vous.
+  
+  Votre dernier don de 320 € a contribué directement à nos actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire l'impact].
+  
+  Si vous souhaitez renouveler votre soutien, votre aide nous serait précieuse.
+  
+  Avec toute notre gratitude,
+  L'équipe de Asso Parents d'élèves</textarea
+            >
+          </div>
+          <!-- Variables -->
+          <div class="vars-section">
+            <div class="vars-lbl">Variables disponibles — cliquez pour insérer</div>
+            <div class="vars">
+              <span class="var-chip" onclick="insertVar('Marie')">Marie</span>
+              <span class="var-chip" onclick="insertVar('Fontaine')">Fontaine</span>
+              <span class="var-chip" onclick="insertVar('320')">320</span>
+              <span class="var-chip" onclick="insertVar('2024-01-01')">2024-01-01</span>
+              <span class="var-chip" onclick="insertVar('14')">14</span>
+              <span class="var-chip" onclick="insertVar('320')">320</span>
+              <span class="var-chip" onclick="insertVar('Asso Parents d\'élèves')"
+                >Asso Parents d'élèves</span
+              >
+            </div>
+          </div>
+        </div>
+  
+        <!-- APERÇU -->
+        <div class="preview-card">
+          <div class="preview-head">
+            <div class="preview-ttl">👁 Aperçu pour</div>
+            <div class="preview-donor">
+              <select class="preview-select" onchange="updatePreview(this.value)">
+                <option value="ML">Marie-Laure Fontaine</option>
+                <option value="JD">Jean Dupont</option>
+                <option value="CM">Chloé Martin</option>
+                <option value="PL">Pierre Leclerc</option>
+              </select>
+            </div>
+          </div>
+          <div class="preview-body" id="preview-body">
+            Bonjour <span class="preview-var">Marie-Laure</span>,<br /><br />
+            Nous espérons que vous allez bien. Cela fait maintenant
+            <span class="preview-var">14 mois</span> que vous nous avez soutenus, et nous pensons à
+            vous.<br /><br />
+            Votre dernier don de <span class="preview-var">320 €</span> a contribué directement à nos
+            actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire
+            l'impact].<br /><br />
+            Si vous souhaitez renouveler votre soutien, votre aide nous serait précieuse.<br /><br />
+            Avec toute notre gratitude,<br />
+            L'équipe de <span class="preview-var">Asso Parents d'élèves</span>
+          </div>
+        </div>
+  
+        <!-- RÉCAP ENVOI -->
+        <div class="send-recap">
+          <div class="recap-stat">
+            <div class="recap-val" id="recap-dest">4</div>
+            <div class="recap-lbl">destinataires</div>
+          </div>
+          <div class="recap-sep"></div>
+          <div class="recap-stat">
+            <div class="recap-val">211</div>
+            <div class="recap-lbl">mails restants</div>
+          </div>
+          <div class="recap-sep"></div>
+          <div class="recap-stat">
+            <div class="recap-val" style="color: var(--mint-dk)">207</div>
+            <div class="recap-lbl">après envoi</div>
+          </div>
+          <div class="recap-sep"></div>
+          <div class="recap-stat">
+            <div class="recap-val" style="font-size: 15px; color: var(--ink-70)">Maintenant</div>
+            <div class="recap-lbl">planification</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

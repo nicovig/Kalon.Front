@@ -55,7 +55,12 @@
 <div class="content-grid">
   <!-- TABLE -->
   <card title="Derniers dons" subtitle="187 donateurs au total">
-    <table-component [rows]="latestDonors" [pageSizeOptions]="[25, 50, 100]" [initialPageSize]="25"></table-component>
+    <table-component
+      [rows]="latestDonors"
+      [columns]="latestDonorsColumns"
+      [pageSizeOptions]="[5, 10, 25]"
+      [initialPageSize]="5"
+    ></table-component>
   </card>
 
   <!-- RIGHT COL -->

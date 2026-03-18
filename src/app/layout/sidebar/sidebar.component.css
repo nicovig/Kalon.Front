@@ -13,6 +13,65 @@
   overflow: hidden;
 }
 
+/* Mode tablette : uniquement les icônes */
+body.sidebar-compact .sidebar {
+  width: 64px;
+  padding: 26px 10px;
+}
+
+body.sidebar-compact .logo-name,
+body.sidebar-compact .nav-label,
+body.sidebar-compact .nav-text,
+body.sidebar-compact .nav-badge,
+body.sidebar-compact .asso-name,
+body.sidebar-compact .asso-plan {
+  display: none;
+}
+
+body.sidebar-compact .nav-item {
+  padding: 10px 0;
+  justify-content: center;
+}
+
+body.sidebar-compact .nav-icon {
+  width: auto;
+  margin-right: 0;
+}
+
+body.sidebar-compact .asso-card {
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 64px;
+    padding: 26px 10px;
+  }
+
+  .logo-name,
+  .nav-label,
+  .nav-text,
+  .nav-badge,
+  .asso-name,
+  .asso-plan {
+    display: none;
+  }
+
+  .nav-item {
+    padding: 10px 0;
+    justify-content: center;
+  }
+
+  .nav-icon {
+    width: auto;
+    margin-right: 0;
+  }
+
+  .asso-card {
+    justify-content: center;
+  }
+}
+
 .sidebar::before {
   content: '';
   position: absolute;

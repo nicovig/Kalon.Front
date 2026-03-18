@@ -1,6 +1,8 @@
 <button
   class="btn"
   [attr.type]="htmlType"
+  [attr.id]="id || null"
+  [attr.title]="title || null"
   [disabled]="disabled"
   [class.btn-primary]="type === 'primary'"
   [class.btn-ghost]="type === 'ghost'"
@@ -9,6 +11,10 @@
   [class.cur]="type === 'page' && cur"
   [class.upgrade]="type === 'upgrade'"
   [class.import-pill]="type === 'import-pill'"
+  [class.btn-send]="type === 'send'"
+  [class.btn-adv-apply]="type === 'adv-apply'"
+  [class.btn-ia-gen]="type === 'ia-gen'"
+  [class.btn-toolbar]="type === 'toolbar'"
 >
   <ng-content></ng-content>
 </button>

@@ -1,7 +1,7 @@
 <div class="tbl-wrap">
-  <div class="tbl-head">
+  <div class="tbl-head" *ngIf="showSearch">
     <form-text-component
-      placeholder="Rechercher un donateur"
+      placeholder="Rechercher"
       icon="🔍"
       width="260px"
       [(ngModel)]="searchTerm"
@@ -12,44 +12,48 @@
   <table>
     <thead>
       <tr>
-        <th>Donateur</th>
-        <th>Statut</th>
-        <th>Dernier don</th>
-        <th>Total</th>
-        <th></th>
+        <th *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
+          {{ col.header }}
+        </th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let row of pagedRows; let i = index">
-        <td>
-          <div class="donor-row">
-            <div class="av" [ngClass]="'av' + (((i) % 5) + 1)">
-              {{ row.firstname.charAt(0) + row.lastname.charAt(0) }}
-            </div>
-            <div>
-              <div class="dn">{{ row.firstname }} {{ row.lastname }}</div>
-              <div class="dem">{{ row.email }}</div>
-            </div>
-          </div>
-        </td>
-        <td>
-          <span
-            class="badge"
-            [ngClass]="{
-              'b-active': row.statut === 'active',
-              'b-relance': row.statut === 'to_remind',
-              'b-new': row.statut === 'new'
-            }"
-          >
-            {{ row.statut | donorStatusLabel }}
-          </span>
-        </td>
-        <td class="date">
-          {{ row.lastDonation ? (row.lastDonation | date: 'd MMM yyyy': undefined : 'fr-FR') : '—' }}
-        </td>
-        <td class="amount">{{ row.donationCount }} €</td>
-        <td>
-          <button-component type="mail">✉️</button-component>
+      <tr *ngFor="let row of pagedRows; let rowIndex = index">
+        <td
+          *ngFor="let col of columns"
+          [class.align-right]="col.align === 'right'"
+        >
+          @switch (col.type) {
+            @case ('badge') {
+              <span
+                class="badge"
+                [ngClass]="{
+                  'b-active': getCellValue(row, col) === 'active',
+                  'b-relance': getCellValue(row, col) === 'to_remind',
+                  'b-new': getCellValue(row, col) === 'new'
+                }"
+              >
+                {{ getCellValue(row, col) | donorStatusLabel }}
+              </span>
+            }
+            @case ('date') {
+              <span class="date">
+                {{
+                  getCellValue(row, col)
+                    ? (getCellValue(row, col) | date: 'd MMM yyyy': undefined : 'fr-FR')
+                    : '—'
+                }}
+              </span>
+            }
+            @case ('number') {
+              <span class="amount">
+                {{ getCellValue(row, col) | number:'1.0-0':'fr-FR' }}
+              </span>
+            }
+            @default {
+              {{ getCellValue(row, col) }}
+            }
+          }
         </td>
       </tr>
       <tr *ngIf="totalRows === 0">

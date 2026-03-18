@@ -1,0 +1,14 @@
+<toast-component position="center-third"></toast-component>
+<topbar
+  [title]="'Les donateurs'"
+  [subtitle]="'Gérez vos donateurs avec facilité'"
+>
+  <button-component type="ghost">📥 Importer Excel</button-component>
+  <button-component type="primary">+ Nouveau donateur</button-component>
+</topbar>
+<table-component
+  [rows]="donorsComputed()"
+  [columns]="donorColumns"
+  [pageSizeOptions]="[25, 50, 100]"
+  [initialPageSize]="25"
+></table-component>

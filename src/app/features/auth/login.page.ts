@@ -6,7 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 
 @Component({
-  selector: 'kalon-login-page',
+  selector: 'login-page',
   standalone: true,
   imports: [CommonModule, FormsModule, FormTextComponent],
   templateUrl: './login.page.html',

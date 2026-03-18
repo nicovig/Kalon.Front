@@ -1,8 +1,4 @@
-@if (currentUser$ | async) {
-  <sidebar></sidebar>
-  <main class="main">
-    <router-outlet />
-  </main>
-} @else {
+<sidebar *ngIf="sidebarVisible"></sidebar>
+<main class="main" [class.main--with-sidebar]="sidebarVisible">
   <router-outlet />
-}
+</main>

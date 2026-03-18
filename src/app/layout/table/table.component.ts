@@ -1,40 +1,70 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../button/button.component';
 import { FormTextComponent } from '../forms/text/form-text.component';
 import { DonorStatusLabelPipe } from './donor-status-label.pipe';
-import { Donor } from '../../core/models/donor.model';
+
+export interface TableColumn {
+  key: string;
+  header: string;
+  type?: 'text' | 'number' | 'date' | 'badge';
+  searchable?: boolean;
+  align?: 'left' | 'right' | 'center';
+}
 
 @Component({
   selector: 'table-component',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, FormTextComponent, DatePipe, DonorStatusLabelPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    FormTextComponent,
+    DatePipe,
+    DecimalPipe,
+    DonorStatusLabelPipe,
+  ],
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TableComponent {
-  @Input() rows: Donor[] = [];
+  @Input() rows: any[] = [];
+  @Input() columns: TableColumn[] = [];
   @Input() pageSizeOptions: number[] = [25, 50, 100];
   @Input() initialPageSize = 25;
+  @Input() showSearch = true;
 
   searchTerm = '';
   currentPage = 1;
   pageSize = this.initialPageSize;
 
-  get filteredRows(): Donor[] {
-    if (!this.searchTerm) {
+  private get searchableColumns(): TableColumn[] {
+    return this.columns.filter((c) => c.searchable);
+  }
+
+  getCellValue(row: any, col: TableColumn): any {
+    return col.key
+      .split('.')
+      .reduce((acc: any, part: string) => (acc ? acc[part] : undefined), row);
+  }
+
+  get filteredRows(): any[] {
+    if (!this.searchTerm || !this.searchableColumns.length) {
       return this.rows;
     }
     const term = this.searchTerm.toLowerCase();
-    return this.rows.filter((row) => {
-      return (
-        row.firstname.toLowerCase().includes(term) ||
-        row.lastname.toLowerCase().includes(term) ||
-        row.email.toLowerCase().includes(term)
-      );
-    });
+
+    return this.rows.filter((row) =>
+      this.searchableColumns.some((col) => {
+        const value = this.getCellValue(row, col);
+        if (value === undefined || value === null) {
+          return false;
+        }
+        return String(value).toLowerCase().includes(term);
+      }),
+    );
   }
 
   get totalRows(): number {
@@ -45,7 +75,7 @@ export class TableComponent {
     return this.totalRows === 0 ? 1 : Math.ceil(this.totalRows / this.pageSize);
   }
 
-  get pagedRows(): Donor[] {
+  get pagedRows(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredRows.slice(start, start + this.pageSize);
   }
