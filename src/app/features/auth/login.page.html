@@ -1,0 +1,48 @@
+<div class="login-shell">
+  <div class="login-panel">
+    <div class="login-header">
+      <div class="login-logo-mark">K</div>
+      <div class="login-header-text">
+        <h1 class="login-title">Connexion à Kalon</h1>
+        <p class="login-sub">Retrouvez vos donateurs et vos reçus en un clin d'œil.</p>
+      </div>
+    </div>
+
+    <form class="login-form" (ngSubmit)="onSubmit()">
+      <div class="login-field">
+        <label class="login-label" for="email">Adresse email</label>
+        <input
+          id="email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required
+          autocomplete="email"
+          class="login-input"
+          placeholder="prenom.nom@email.fr"
+        />
+      </div>
+
+      <div class="login-field">
+        <label class="login-label" for="password">Mot de passe</label>
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          class="login-input"
+          placeholder="Votre mot de passe"
+        />
+      </div>
+
+      <button type="submit" class="login-button">
+        Me connecter
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <span>Premier accès ?</span>
+      <span>Demandez une invitation à l'équipe Kalon.</span>
+    </div>
+  </div>
+</div>
+

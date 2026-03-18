@@ -1,0 +1,46 @@
+.kalon-topbar {
+  height: 3.5rem;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+}
+
+.kalon-topbar-menu {
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  display: none;
+}
+
+.kalon-topbar-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.kalon-topbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.kalon-topbar-action-primary {
+  border-radius: 999px;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  background-color: #FF6B9D;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .kalon-topbar-menu {
+    display: inline-flex;
+  }
+}
+
