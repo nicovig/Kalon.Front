@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { DASHBOARD_KPIS, DASHBOARD_LATEST_DONORS, DASHBOARD_PLAN_QUOTA, DASHBOARD_REMINDERS } from './mock-data';
 import { ButtonComponent } from '../../layout/button/button.component';
 import { TableComponent } from '../../layout/table/table.component';
@@ -14,7 +14,7 @@ import { CardComponent } from '../../layout/card/card.component';
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ButtonComponent, TableComponent, DashboardCardComponent, FormTextComponent, ToastComponent, TopbarComponent, CardComponent]
+  imports: [ButtonComponent, TableComponent, DashboardCardComponent, ToastComponent, TopbarComponent, CardComponent]
 })
 export class DashboardPageComponent {
 
@@ -22,6 +22,8 @@ export class DashboardPageComponent {
   protected readonly latestDonors = DASHBOARD_LATEST_DONORS;
   protected readonly planQuota = DASHBOARD_PLAN_QUOTA;
   protected readonly reminders = DASHBOARD_REMINDERS;
+
+  protected readonly latestDonorsComputed = computed(() => DASHBOARD_LATEST_DONORS);
 
 }
 

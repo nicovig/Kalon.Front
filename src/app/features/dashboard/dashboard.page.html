@@ -54,9 +54,8 @@
 <!-- CONTENT GRID -->
 <div class="content-grid">
   <!-- TABLE -->
-  <card title="Derniers donateurs" subtitle="187 donateurs au total">
-    <form-text-component card-header-extra></form-text-component>
-    <table-component></table-component>
+  <card title="Derniers dons" subtitle="187 donateurs au total">
+    <table-component [rows]="latestDonors" [pageSizeOptions]="[25, 50, 100]" [initialPageSize]="25"></table-component>
   </card>
 
   <!-- RIGHT COL -->
