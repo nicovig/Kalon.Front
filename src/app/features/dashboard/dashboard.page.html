@@ -1,132 +1,68 @@
-<!-- MAIN -->
-<main class="main">
-
-  <div class="topbar">
-    <div>
-      <div class="page-title">Bonjour, Marie 👋</div>
-      <div class="page-sub">Voici ce qui se passe sur votre association aujourd'hui</div>
-    </div>
-    <div class="topbar-right">
-      <button class="btn btn-ghost">📥 Importer Excel</button>
-      <button class="btn btn-primary">+ Nouveau donateur</button>
-    </div>
+<toast-component position="center-third"></toast-component>
+<topbar
+  [title]="'Bonjour, Marie 👋'"
+  [subtitle]="'Voici ce qui se passe sur votre association aujourd\'hui'"
+>
+  <button-component type="ghost">📥 Importer Excel</button-component>
+  <button-component type="primary">+ Nouveau donateur</button-component>
+</topbar>
+<!-- IMPORT BANNER -->
+<div class="import-banner">
+  <span class="import-emoji">📂</span>
+  <div class="import-body">
+    <strong>Importez vos donateurs depuis Excel en un clic</strong>
+    <span
+      >Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span
+    >
   </div>
+  <button-component type="import-pill">Importer maintenant →</button-component>
+</div>
 
-  <!-- IMPORT BANNER -->
-  <div class="import-banner">
-    <span class="import-emoji">📂</span>
-    <div class="import-body">
-      <strong>Importez vos donateurs depuis Excel en un clic</strong>
-      <span>Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span>
-    </div>
-    <div class="import-pill">Importer maintenant →</div>
-  </div>
+<!-- KPIs -->
+<div class="kpi-grid">
+  <dashboard-card-component
+    [type]="'violet'"
+    [value]="187"
+    [label]="'Donateurs actifs'"
+    [helper]="'↑ +12 ce mois'"
+    [icon]="'👥'"
+  ></dashboard-card-component>
+  <dashboard-card-component
+    [type]="'pink'"
+    [value]="4320"
+    [label]="'Dons cette année'"
+    [helper]="'↑ +8% vs. 2024'"
+    [icon]="'💶'"
+  ></dashboard-card-component>
+  <dashboard-card-component
+    [type]="'yellow'"
+    [value]="34"
+    [label]="'À relancer'"
+    chip="warn"
+    [helper]="'⚠ +12 mois sans don'"
+    [icon]="'⏳'"
+  ></dashboard-card-component>
+  <dashboard-card-component
+    [type]="'mint'"
+    [value]="142"
+    [label]="'Reçus générés'"
+    [helper]="'↑ À jour'"
+    [icon]="'🧾'"
+  ></dashboard-card-component>
+</div>
 
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi k-violet">
-      <div class="kpi-icon">👥</div>
-      <div class="kpi-val">187</div>
-      <div class="kpi-lbl">Donateurs actifs</div>
-      <div class="kpi-chip chip-up">↑ +12 ce mois</div>
-    </div>
-    <div class="kpi k-pink">
-      <div class="kpi-icon">💶</div>
-      <div class="kpi-val">4 320 €</div>
-      <div class="kpi-lbl">Dons cette année</div>
-      <div class="kpi-chip chip-up">↑ +8% vs. 2024</div>
-    </div>
-    <div class="kpi k-yellow">
-      <div class="kpi-icon">⏳</div>
-      <div class="kpi-val">34</div>
-      <div class="kpi-lbl">À relancer</div>
-      <div class="kpi-chip chip-warn">⚠ +12 mois sans don</div>
-    </div>
-    <div class="kpi k-mint">
-      <div class="kpi-icon">🧾</div>
-      <div class="kpi-val">142</div>
-      <div class="kpi-lbl">Reçus générés</div>
-      <div class="kpi-chip chip-up">↑ À jour</div>
-    </div>
-  </div>
+<!-- CONTENT GRID -->
+<div class="content-grid">
+  <!-- TABLE -->
+  <card title="Derniers donateurs" subtitle="187 donateurs au total">
+    <form-text-component card-header-extra></form-text-component>
+    <table-component></table-component>
+  </card>
 
-  <!-- CONTENT GRID -->
-  <div class="content-grid">
-
-    <!-- TABLE -->
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Derniers donateurs</div>
-          <div class="card-sub">187 donateurs au total</div>
-        </div>
-        <div class="search">🔍 Rechercher…</div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Donateur</th>
-              <th>Statut</th>
-              <th>Dernier don</th>
-              <th>Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><div class="donor-row"><div class="av av1">ML</div><div><div class="dn">Marie-Laure Fontaine</div><div class="dem">ml.fontaine@email.fr</div></div></div></td>
-              <td><span class="badge b-active">● Actif</span></td>
-              <td class="date">12 jan. 2025</td>
-              <td class="amount">320 €</td>
-              <td><button class="mail-btn">✉️</button></td>
-            </tr>
-            <tr>
-              <td><div class="donor-row"><div class="av av2">JD</div><div><div class="dn">Jean Dupont</div><div class="dem">j.dupont@email.fr</div></div></div></td>
-              <td><span class="badge b-relance">⏳ À relancer</span></td>
-              <td class="date">8 mars 2023</td>
-              <td class="amount">80 €</td>
-              <td><button class="mail-btn">✉️</button></td>
-            </tr>
-            <tr>
-              <td><div class="donor-row"><div class="av av3">SB</div><div><div class="dn">Sophie Bernard</div><div class="dem">s.bernard@email.fr</div></div></div></td>
-              <td><span class="badge b-new">✨ Nouveau</span></td>
-              <td class="date">3 mars 2025</td>
-              <td class="amount">50 €</td>
-              <td><button class="mail-btn">✉️</button></td>
-            </tr>
-            <tr>
-              <td><div class="donor-row"><div class="av av4">CM</div><div><div class="dn">Chloé Martin</div><div class="dem">chloe.m@email.fr</div></div></div></td>
-              <td><span class="badge b-active">● Actif</span></td>
-              <td class="date">20 fév. 2025</td>
-              <td class="amount">200 €</td>
-              <td><button class="mail-btn">✉️</button></td>
-            </tr>
-            <tr>
-              <td><div class="donor-row"><div class="av av5">PL</div><div><div class="dn">Pierre Leclerc</div><div class="dem">p.leclerc@email.fr</div></div></div></td>
-              <td><span class="badge b-relance">⏳ À relancer</span></td>
-              <td class="date">14 juin 2023</td>
-              <td class="amount">150 €</td>
-              <td><button class="mail-btn">✉️</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="tbl-foot">
-        <span>Affichage 1–5 sur 187</span>
-        <div class="pages">
-          <button class="pg cur">1</button>
-          <button class="pg">2</button>
-          <button class="pg">3</button>
-          <button class="pg">›</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COL -->
-    <div class="right">
-
-      <!-- QUOTA -->
+  <!-- RIGHT COL -->
+  <div class="right">
+    <!-- QUOTA -->
+    <card variant="bare">
       <div class="quota-card">
         <div class="quota-top">
           <span class="quota-ttl">Mon plan</span>
@@ -134,70 +70,86 @@
         </div>
         <div class="q-item">
           <div class="q-lbl"><span>Donateurs</span><span>187 / 300</span></div>
-          <div class="q-bar"><div class="q-fill fill-pink" style="width:62%"></div></div>
+          <div class="q-bar"><div class="q-fill fill-pink" style="width: 62%"></div></div>
         </div>
         <div class="q-item">
           <div class="q-lbl"><span>Mails envoyés</span><span>89 / 300</span></div>
-          <div class="q-bar"><div class="q-fill fill-yellow" style="width:30%"></div></div>
+          <div class="q-bar"><div class="q-fill fill-yellow" style="width: 30%"></div></div>
         </div>
         <div class="q-item">
           <div class="q-lbl"><span>Import Excel</span><span>112 / 150</span></div>
-          <div class="q-bar"><div class="q-fill fill-mint" style="width:75%"></div></div>
+          <div class="q-bar"><div class="q-fill fill-mint" style="width: 75%"></div></div>
         </div>
-        <button class="upgrade">⭐ Passer au Premium</button>
+        <button-component type="upgrade">⭐ Passer au Premium</button-component>
       </div>
+    </card>
 
-      <!-- ACTIONS RAPIDES -->
-      <div class="card actions-pad">
-        <div class="actions-ttl">Actions rapides</div>
-        <div class="action-row">
-          <div class="act-ico" style="background:var(--pink-lt)">📣</div>
-          <div><div class="act-lbl">Envoyer une relance</div><div class="act-desc">34 donateurs à relancer</div></div>
-          <span class="act-arr">›</span>
+    <!-- ACTIONS RAPIDES -->
+    <card title="Actions rapides" paddingClass="actions">
+      <div class="action-row">
+        <div class="act-ico" style="background: var(--pink-lt)">📣</div>
+        <div>
+          <div class="act-lbl">Envoyer une relance</div>
+          <div class="act-desc">34 donateurs à relancer</div>
         </div>
-        <div class="action-row">
-          <div class="act-ico" style="background:var(--mint-lt)">🧾</div>
-          <div><div class="act-lbl">Générer les reçus fiscaux</div><div class="act-desc">45 reçus en attente</div></div>
-          <span class="act-arr">›</span>
-        </div>
-        <div class="action-row">
-          <div class="act-ico" style="background:var(--violet-lt)">📥</div>
-          <div><div class="act-lbl">Importer un fichier Excel</div><div class="act-desc">38 places restantes</div></div>
-          <span class="act-arr">›</span>
-        </div>
+        <span class="act-arr">›</span>
       </div>
-
-      <!-- À RELANCER -->
-      <div class="card relances-pad">
-        <div class="card-title" style="margin-bottom:4px">À relancer en priorité</div>
-        <div class="card-sub" style="margin-bottom:12px">Sans don depuis plus d'un an</div>
-        <div class="relance-row">
-          <div class="r-dot" style="background:var(--pink)"></div>
-          <div><div class="r-name">Jean Dupont</div><div class="r-since">Dernier don il y a 24 mois</div></div>
-          <div class="r-amt">80 €</div>
+      <div class="action-row">
+        <div class="act-ico" style="background: var(--mint-lt)">🧾</div>
+        <div>
+          <div class="act-lbl">Générer les reçus fiscaux</div>
+          <div class="act-desc">45 reçus en attente</div>
         </div>
-        <div class="relance-row">
-          <div class="r-dot" style="background:var(--yellow)"></div>
-          <div><div class="r-name">Pierre Leclerc</div><div class="r-since">Dernier don il y a 21 mois</div></div>
-          <div class="r-amt">150 €</div>
-        </div>
-        <div class="relance-row">
-          <div class="r-dot" style="background:var(--yellow)"></div>
-          <div><div class="r-name">Isabelle Moreau</div><div class="r-since">Dernier don il y a 18 mois</div></div>
-          <div class="r-amt">60 €</div>
-        </div>
-        <div class="relance-row">
-          <div class="r-dot" style="background:var(--ink-30)"></div>
-          <div><div class="r-name">Thomas Garnier</div><div class="r-since">Dernier don il y a 15 mois</div></div>
-          <div class="r-amt">45 €</div>
-        </div>
+        <span class="act-arr">›</span>
       </div>
+      <div class="action-row">
+        <div class="act-ico" style="background: var(--violet-lt)">📥</div>
+        <div>
+          <div class="act-lbl">Importer un fichier Excel</div>
+          <div class="act-desc">38 places restantes</div>
+        </div>
+        <span class="act-arr">›</span>
+      </div>
+    </card>
 
-    </div>
+    <!-- À RELANCER -->
+    <card
+      title="À relancer en priorité"
+      subtitle="Sans don depuis plus d'un an"
+      paddingClass="reminders"
+    >
+      <div class="relance-row">
+        <div class="r-dot" style="background: var(--pink)"></div>
+        <div>
+          <div class="r-name">Jean Dupont</div>
+          <div class="r-since">Dernier don il y a 24 mois</div>
+        </div>
+        <div class="r-amt">80 €</div>
+      </div>
+      <div class="relance-row">
+        <div class="r-dot" style="background: var(--yellow)"></div>
+        <div>
+          <div class="r-name">Pierre Leclerc</div>
+          <div class="r-since">Dernier don il y a 21 mois</div>
+        </div>
+        <div class="r-amt">150 €</div>
+      </div>
+      <div class="relance-row">
+        <div class="r-dot" style="background: var(--yellow)"></div>
+        <div>
+          <div class="r-name">Isabelle Moreau</div>
+          <div class="r-since">Dernier don il y a 18 mois</div>
+        </div>
+        <div class="r-amt">60 €</div>
+      </div>
+      <div class="relance-row">
+        <div class="r-dot" style="background: var(--ink-30)"></div>
+        <div>
+          <div class="r-name">Thomas Garnier</div>
+          <div class="r-since">Dernier don il y a 15 mois</div>
+        </div>
+        <div class="r-amt">45 €</div>
+      </div>
+    </card>
   </div>
-</main>
-
-<!-- TOAST -->
-<div class="toast">
-  ✓ Reçu fiscal envoyé à Marie-Laure Fontaine
 </div>

@@ -1,0 +1,48 @@
+.card {
+  background: white;
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+  border: 2px solid var(--ink-10);
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.card-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.card-sub {
+  font-size: 12.5px;
+  color: var(--ink-70);
+  margin-top: 2px;
+}
+
+.card-body {
+  padding: 14px 0 0;
+}
+
+.card-actions .card-body,
+.card-reminders .card-body {
+  padding: 18px 20px;
+}
+
+.card-bare {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.card-bare .card-body {
+  padding: 0;
+}
+

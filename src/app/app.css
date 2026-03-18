@@ -1,0 +1,6 @@
+.main {
+    margin-left: 124px;
+    flex: 1;
+    padding: 15px 16px;
+    max-width: calc(100vw - 124px);
+  }

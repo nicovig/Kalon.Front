@@ -1,0 +1,31 @@
+<div class="search" [class.is-disabled]="disabled" [style.width]="width">
+  @if (effectiveIcon) {
+    <span class="icon">{{ effectiveIcon }}</span>
+  }
+  <input
+    class="input"
+    [id]="id || null"
+    [name]="name || null"
+    [type]="effectiveType"
+    [placeholder]="placeholder"
+    [attr.autocomplete]="autocomplete"
+    [attr.aria-label]="ariaLabel || placeholder"
+    [required]="required"
+    [disabled]="disabled"
+    [value]="value"
+    (input)="onInput($any($event.target).value)"
+    (blur)="onBlur()"
+  />
+  @if (type === 'password' && allowPasswordToggle) {
+    <button
+      class="toggle"
+      type="button"
+      [disabled]="disabled"
+      (click)="togglePasswordVisibility()"
+      [attr.aria-label]="isPasswordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+      [attr.title]="isPasswordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+    >
+      {{ isPasswordVisible ? '🙈' : '👁️' }}
+    </button>
+  }
+</div>

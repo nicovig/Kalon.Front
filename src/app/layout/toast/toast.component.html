@@ -1,0 +1,17 @@
+<div class="toast-stack" [class.pos-center-third]="position === 'center-third'" [class.pos-bottom-right]="position === 'bottom-right'">
+  @for (item of (items$ | async); track item.id) {
+    <div
+      class="toast"
+      [class.t-info]="item.type === 'info'"
+      [class.t-alert]="item.type === 'alert'"
+      [class.t-success]="item.type === 'success'"
+      [class.is-leaving]="item.closing"
+    >
+      <div class="toast-icon">{{ iconFor(item.type) }}</div>
+      <div class="toast-message">{{ item.message }}</div>
+      <button type="button" class="toast-close" (click)="dismiss(item.id)" aria-label="Fermer">
+        ✕
+      </button>
+    </div>
+  }
+</div>

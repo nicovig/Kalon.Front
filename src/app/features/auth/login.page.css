@@ -11,7 +11,7 @@
 .login-panel {
   width: 100%;
   max-width: 420px;
-  background: #FFFFFF;
+  background: #FFF7E8;
   border-radius: 22px; /* var(--r-lg) */
   box-shadow: 0 16px 48px rgba(74, 29, 150, 0.16); /* var(--sh-lg) */
   border: 2px solid #F0EDF8; /* var(--ink-10) */
@@ -20,42 +20,44 @@
 
 .login-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
-.login-logo-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #FF4D7D, #FFD23F); /* pink -> yellow */
+.login-logo-wrap {
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background: #FFF7E8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Fredoka', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-  color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(255, 77, 125, 0.4);
+  box-shadow: 0 6px 24px rgba(74, 29, 150, 0.08);
+  border: 2px solid rgba(74, 29, 150, 0.06);
+  margin-bottom: 2px;
 }
 
-.login-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.login-logo {
+  width: 116px;
+  height: 116px;
+  object-fit: contain;
 }
 
 .login-title {
   font-family: 'Fredoka', system-ui, sans-serif;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 32px;
   color: #1A1625; /* ink */
+  letter-spacing: 0.2px;
 }
 
 .login-sub {
   font-size: 13px;
   color: #5A5470; /* ink-70 */
+  max-width: 320px;
 }
 
 .login-form {
@@ -137,7 +139,17 @@
   }
 
   .login-title {
-    font-size: 20px;
+    font-size: 28px;
+  }
+
+  .login-logo-wrap {
+    width: 124px;
+    height: 124px;
+  }
+
+  .login-logo {
+    width: 104px;
+    height: 104px;
   }
 }
 

@@ -1,0 +1,122 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+    text-decoration: none;
+  }
+  
+  .btn-primary {
+    background: var(--pink);
+    color: white;
+    box-shadow: 0 4px 14px rgba(255, 77, 125, 0.35);
+  }
+  
+  .btn-primary:hover {
+    background: var(--pink-dk);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 77, 125, 0.45);
+  }
+  
+  .btn-ghost {
+    background: white;
+    color: var(--ink);
+    border: 2px solid var(--ink-10);
+    box-shadow: var(--sh-sm);
+  }
+  
+  .btn-ghost:hover {
+    border-color: var(--violet-lt);
+  }
+
+  .mail-btn {
+    background: none;
+    border: 2px solid var(--ink-10);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 5px 9px;
+    font-size: 14px;
+    transition: all 0.15s;
+    color: var(--ink-70);
+  }
+  
+  .mail-btn:hover {
+    border-color: var(--pink);
+    background: var(--pink-lt);
+    color: var(--pink-dk);
+  }
+
+  .pg {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: none;
+    color: var(--ink-70);
+    font-family: var(--font-body);
+    transition: all 0.13s;
+  }
+  
+  .pg:hover {
+    border-color: var(--ink-10);
+    color: var(--ink);
+  }
+  
+  .pg.cur {
+    background: var(--violet);
+    color: white;
+    border-color: var(--violet);
+  }
+
+  .upgrade {
+    width: 100%;
+    padding: 11px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--r-sm);
+    color: white;
+    font-family: var(--font-title);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.18s;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  .upgrade:hover {
+    background: var(--pink);
+    border-color: var(--pink);
+    box-shadow: 0 4px 14px rgba(255, 77, 125, 0.4);
+  }
+
+  .import-pill {
+    margin-left: auto;
+    background: var(--violet);
+    color: white;
+    padding: 9px 18px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: var(--font-title);
+  }

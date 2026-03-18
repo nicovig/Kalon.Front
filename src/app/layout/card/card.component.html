@@ -1,0 +1,26 @@
+<div
+  class="card"
+  [ngClass]="{
+    'card-actions': paddingClass === 'actions',
+    'card-reminders': paddingClass === 'reminders',
+    'card-bare': variant === 'bare'
+  }"
+>
+  @if (title || subtitle) {
+    <div class="card-head">
+      <div>
+        @if (title) {
+          <div class="card-title">{{ title }}</div>
+        }
+        @if (subtitle) {
+          <div class="card-sub">{{ subtitle }}</div>
+        }
+      </div>
+      <ng-content select="[card-header-extra]" />
+    </div>
+  }
+
+  <div class="card-body">
+    <ng-content />
+  </div>
+</div>

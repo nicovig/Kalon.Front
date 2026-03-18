@@ -1,46 +1,28 @@
-.kalon-topbar {
-  height: 3.5rem;
-  padding: 0 1.5rem;
+.topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  position: sticky;
-  top: 0;
-  z-index: 900;
+  margin-bottom: 26px;
 }
 
-.kalon-topbar-menu {
-  border: none;
-  background: transparent;
-  font-size: 1.25rem;
-  display: none;
+.page-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--ink);
+  letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 
-.kalon-topbar-title {
-  font-weight: 600;
-  font-size: 1.1rem;
+.page-sub {
+  font-size: 14px;
+  color: var(--ink-70);
+  margin-top: 3px;
+  font-weight: 400;
 }
 
-.kalon-topbar-actions {
+.topbar-right {
   display: flex;
-  gap: 0.5rem;
+  gap: 10px;
+  align-items: center;
 }
-
-.kalon-topbar-action-primary {
-  border-radius: 999px;
-  border: none;
-  padding: 0.4rem 0.9rem;
-  background-color: #FF6B9D;
-  color: #ffffff;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .kalon-topbar-menu {
-    display: inline-flex;
-  }
-}
-

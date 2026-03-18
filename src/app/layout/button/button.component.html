@@ -1,0 +1,14 @@
+<button
+  class="btn"
+  [attr.type]="htmlType"
+  [disabled]="disabled"
+  [class.btn-primary]="type === 'primary'"
+  [class.btn-ghost]="type === 'ghost'"
+  [class.mail-btn]="type === 'mail'"
+  [class.pg]="type === 'page'"
+  [class.cur]="type === 'page' && cur"
+  [class.upgrade]="type === 'upgrade'"
+  [class.import-pill]="type === 'import-pill'"
+>
+  <ng-content></ng-content>
+</button>
