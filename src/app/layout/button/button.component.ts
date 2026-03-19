@@ -16,11 +16,13 @@ export class ButtonComponent {
     | 'page'
     | 'upgrade'
     | 'import-pill'
+    | 'step'
     | 'send'
     | 'adv-apply'
     | 'ia-gen'
     | 'toolbar' = 'primary';
   @Input() cur: boolean = false;
+  @Input() active: boolean = false;
   @Input() htmlType: 'button' | 'submit' | 'reset' = 'button';
   @Input() disabled: boolean = false;
   @Input() id: string | null = null;

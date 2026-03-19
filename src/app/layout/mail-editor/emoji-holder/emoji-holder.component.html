@@ -1,0 +1,24 @@
+<div class="emoji-holder">
+  <emoji-mart
+    [isNative]="true"
+    [darkMode]="false"
+    [showPreview]="false"
+    [style]="{ width: '260px', 'box-shadow': 'none', 'border-radius': '24px', height: '370px' }"
+    (emojiSelect)="select($event)"
+    [i18n]="{
+      search: 'Rechercher',
+      categories: {
+        search: 'Résultats',
+        recent: 'Récents',
+        people: 'Personnes',
+        nature: 'Nature',
+        activity: 'Activité',
+        objects: 'Objets',
+        symbols: 'Symboles',
+        flags: 'Drapeaux',
+        foods: 'Alimentation et boisson',
+        places: 'Voyage et lieux',
+      },
+    }"
+  ></emoji-mart>
+</div>

@@ -3,8 +3,8 @@
 </topbar>
 
 <div class="reminder-page">
-<!-- LAYOUT SPLIT -->
-<div class="layout">
+  <!-- LAYOUT SPLIT -->
+  <div class="layout">
     <!-- ══ GAUCHE — SÉLECTION DONATEURS ══ -->
     <div class="left-panel">
       <div class="lp-header">
@@ -12,13 +12,13 @@
           Sélectionner les destinataires
           <span class="selected-count" id="sel-count">4 sélectionnés</span>
         </div>
-  
+
         <!-- Recherche -->
         <div class="search-box">
           <span>🔍</span>
           <input type="text" placeholder="Rechercher un donateur…" />
         </div>
-  
+
         <!-- Filtres rapides -->
         <div class="quick-filters">
           <div class="qf on" onclick="toggleQF(this)">Tous</div>
@@ -27,13 +27,13 @@
           <div class="qf" onclick="toggleQF(this)">Actifs</div>
           <div class="qf" onclick="toggleQF(this)">Inactifs</div>
         </div>
-  
+
         <!-- Filtres avancés -->
         <div class="adv-toggle" onclick="toggleAdv()">
           <span class="adv-arrow" id="adv-arrow">›</span>
           Filtres avancés
         </div>
-  
+
         <div class="adv-panel" id="adv-panel">
           <!-- Dernier don -->
           <div class="adv-row">
@@ -56,7 +56,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- Montant total -->
           <div class="adv-row">
             <div class="adv-lbl">Total des dons (€)</div>
@@ -65,7 +65,7 @@
               <input type="number" class="adv-minput" placeholder="Max (ex: 500)" />
             </div>
           </div>
-  
+
           <!-- Nombre de dons -->
           <div class="adv-row">
             <div class="adv-lbl">Nombre de dons</div>
@@ -76,7 +76,7 @@
               <option>Au moins 5 dons (fidèles)</option>
             </select>
           </div>
-  
+
           <!-- Campagne -->
           <div class="adv-row">
             <div class="adv-lbl">Dernière campagne</div>
@@ -87,11 +87,13 @@
               <option>Collecte de Noël 2023</option>
             </select>
           </div>
-  
-          <button-component type="adv-apply" (click)="applyFilters()">Appliquer les filtres →</button-component>
+
+          <button-component type="adv-apply" (click)="applyFilters()"
+            >Appliquer les filtres →</button-component
+          >
         </div>
       </div>
-  
+
       <!-- Liste -->
       <div class="donor-list" id="donor-list">
         <div class="donor-item checked" onclick="toggleDonor(this)">
@@ -103,7 +105,7 @@
           </div>
           <span class="d-badge db-relance">14 mois</span>
         </div>
-  
+
         <div class="donor-item checked" onclick="toggleDonor(this)">
           <div class="d-check">✓</div>
           <div class="d-av da2">JD</div>
@@ -113,7 +115,7 @@
           </div>
           <span class="d-badge db-relance">24 mois</span>
         </div>
-  
+
         <div class="donor-item" onclick="toggleDonor(this)">
           <div class="d-check"></div>
           <div class="d-av da3">SB</div>
@@ -123,7 +125,7 @@
           </div>
           <span class="d-badge db-new">Nouveau</span>
         </div>
-  
+
         <div class="donor-item checked" onclick="toggleDonor(this)">
           <div class="d-check">✓</div>
           <div class="d-av da4">CM</div>
@@ -133,7 +135,7 @@
           </div>
           <span class="d-badge db-relance">21 mois</span>
         </div>
-  
+
         <div class="donor-item checked" onclick="toggleDonor(this)">
           <div class="d-check">✓</div>
           <div class="d-av da5">PL</div>
@@ -143,7 +145,7 @@
           </div>
           <span class="d-badge db-relance">21 mois</span>
         </div>
-  
+
         <div class="donor-item" onclick="toggleDonor(this)">
           <div class="d-check"></div>
           <div class="d-av da6">IM</div>
@@ -153,7 +155,7 @@
           </div>
           <span class="d-badge db-actif">Actif</span>
         </div>
-  
+
         <div class="donor-item" onclick="toggleDonor(this)">
           <div class="d-check"></div>
           <div class="d-av da7">TG</div>
@@ -163,7 +165,7 @@
           </div>
           <span class="d-badge db-relance">17 mois</span>
         </div>
-  
+
         <div class="donor-item" onclick="toggleDonor(this)">
           <div class="d-check"></div>
           <div class="d-av da1">NR</div>
@@ -173,7 +175,7 @@
           </div>
           <span class="d-badge db-relance">15 mois</span>
         </div>
-  
+
         <div class="donor-item" onclick="toggleDonor(this)">
           <div class="d-check"></div>
           <div class="d-av da3">AB</div>
@@ -184,13 +186,13 @@
           <span class="d-badge db-relance">26 mois</span>
         </div>
       </div>
-  
+
       <div class="lp-footer">
         <span class="sel-info" id="footer-info">4 donateurs sélectionnés sur 34</span>
         <span class="sel-all" onclick="selectAll()">Tout sélectionner</span>
       </div>
     </div>
-  
+
     <!-- ══ DROITE — MAIL ══ -->
     <div class="right-panel">
       <div class="rp-header">
@@ -198,39 +200,26 @@
           <div class="rp-title">Rédiger le mail de relance</div>
           <div class="rp-sub">Chaque mail sera personnalisé avec les données du donateur</div>
         </div>
-        <button-component type="send" id="send-btn">
-          💌 Envoyer à <span id="send-count">4</span> donateurs
-        </button-component>
       </div>
 
       <div class="rp-steps">
-        <button
-          class="step-pill"
-          type="button"
-          [class.is-active]="activeStep === 1"
-          (click)="goToStep(1)"
-        >
+        <button-component type="step" [active]="activeStep === 1" (click)="goToStep(1)">
           <span class="step-index">1</span>
-          <span class="step-label">Générer avec l'IA</span>
-        </button>
-        <button
-          class="step-pill"
-          type="button"
-          [class.is-active]="activeStep === 2"
-          (click)="goToStep(2)"
-        >
+          <span class="step-label">Générer</span>
+        </button-component>
+        <button-component type="step" [active]="activeStep === 2" (click)="goToStep(2)">
           <span class="step-index">2</span>
           <span class="step-label">Relire &amp; ajuster</span>
-        </button>
-        <button
-          class="step-pill"
-          type="button"
-          [class.is-active]="activeStep === 3"
-          (click)="goToStep(3)"
-        >
+        </button-component>
+        <button-component type="step" [active]="activeStep === 3" (click)="goToStep(3)">
           <span class="step-index">3</span>
           <span class="step-label">Aperçu &amp; envoi</span>
-        </button>
+        </button-component>
+
+        <button-component *ngIf="activeStep === 3" type="send" id="send-btn">
+          <div><span class="step-index" id="send-count">4</span> Envoyer à <span id="send-count-2">4</span> donateurs 💌</div>
+          
+        </button-component>
       </div>
 
       <div class="rp-body">
@@ -239,41 +228,41 @@
           <div class="ia-top">
             <div class="ia-icon">✨</div>
             <div>
-              <div class="ia-ttl">Générer avec l'IA</div>
-              <div class="ia-desc">Décrivez le contexte, l'IA rédige un mail personnalisé</div>
+              <div class="ia-ttl">Générer</div>
+              <div class="ia-desc">Décrivez le contexte, Kalon rédige un mail personnalisé ✍️</div>
             </div>
             <div class="ia-badge">NOUVEAU</div>
           </div>
-  
-          <div class="ia-context">
-            <textarea
-              class="ia-textarea"
-              placeholder="Ex : Relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons sur les enfants…"
-            ></textarea>
-          </div>
-  
+
           <div class="ia-presets">
-            <div class="ia-preset sel" onclick="selectPreset(this)">😌 Relance douce</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🤝 Fidélisation</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🙏 Remerciement</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🚨 Urgence</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🎄 Saisonnier</div>
+            <div class="ia-preset sel" data-prompt="Relance douce après 12 mois d'inactivité. Mettre en avant l'impact concret des dons sur les enfants. Ton chaleureux et rassurant." onclick="selectPreset(this)">😌 Relance douce</div>
+            <div class="ia-preset" data-prompt="Message de fidélisation. Rappeler l'engagement passé du donateur, souligner l'impact et proposer un renouvellement. Ton positif et encourageant." onclick="selectPreset(this)">🤝 Fidélisation</div>
+            <div class="ia-preset" data-prompt="Message de remerciement. Remercier pour le dernier don, rappeler ce que cela a permis pour l'association et ouvrir la porte à un prochain geste. Ton reconnaissant." onclick="selectPreset(this)">🙏 Remerciement</div>
+            <div class="ia-preset" data-prompt="Relance urgente. Expliquer simplement la situation actuelle et pourquoi un nouveau don aiderait maintenant. Ton direct mais bienveillant." onclick="selectPreset(this)">🚨 Urgence</div>
+            <div class="ia-preset" data-prompt="Relance saisonnière. Parler du contexte de la période (fin d'année / événements) et inviter le donateur à soutenir les prochaines actions. Ton festif et rassurant." onclick="selectPreset(this)">🎄 Saisonnier</div>
           </div>
-  
+
+          <div class="ia-context">
+            <kalon-textarea
+              id="ia-context-textarea"
+              [(value)]="iaPrompt"
+              [rows]="4"
+              placeholder="Ex : Relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons sur les enfants…"
+              variant="dark"
+            ></kalon-textarea>
+          </div>
+
           <button-component type="ia-gen" id="ia-btn" (click)="generateMail()">
             <div class="spinner" id="spinner"></div>
-            <span id="ia-btn-text">✨ Générer un mail</span>
+            <span id="ia-btn-text">✨ Générer un email</span>
           </button-component>
         </div>
-  
+
         <!-- ÉTAPE 2 : ÉDITEUR -->
         <div class="mail-card" *ngIf="activeStep === 2">
-          <kalon-mail-editor
-            [(subject)]="mailSubject"
-            [(body)]="mailBody"
-          ></kalon-mail-editor>
+          <kalon-mail-editor [(subject)]="mailSubject" [(body)]="mailBody"></kalon-mail-editor>
         </div>
-  
+
         <!-- ÉTAPE 3 : APERÇU + RÉCAP -->
         <div class="preview-card" *ngIf="activeStep === 3">
           <div class="preview-head">
@@ -292,15 +281,15 @@
             Nous espérons que vous allez bien. Cela fait maintenant
             <span class="preview-var">14 mois</span> que vous nous avez soutenus, et nous pensons à
             vous.<br /><br />
-            Votre dernier don de <span class="preview-var">320 €</span> a contribué directement à nos
-            actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire
+            Votre dernier don de <span class="preview-var">320 €</span> a contribué directement à
+            nos actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire
             l'impact].<br /><br />
             Si vous souhaitez renouveler votre soutien, votre aide nous serait précieuse.<br /><br />
             Avec toute notre gratitude,<br />
             L'équipe de <span class="preview-var">Asso Parents d'élèves</span>
           </div>
         </div>
-  
+
         <div class="send-recap" *ngIf="activeStep === 3">
           <div class="recap-stat">
             <div class="recap-val" id="recap-dest">4</div>
@@ -326,4 +315,3 @@
     </div>
   </div>
 </div>
-

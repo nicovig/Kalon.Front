@@ -1,0 +1,45 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.kalon-textarea {
+  width: 100%;
+  resize: none;
+  outline: none;
+  border-radius: var(--r-sm);
+  padding: 10px 13px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  height: 100%;
+}
+
+.kalon-textarea--dark {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.kalon-textarea--dark::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.kalon-textarea--dark:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.kalon-textarea--light {
+  background: white;
+  border: 2px solid var(--ink-10);
+  color: var(--ink);
+}
+
+.kalon-textarea--light::placeholder {
+  color: var(--ink-30);
+}
+
+.kalon-textarea--light:focus {
+  border-color: var(--violet-md);
+}
+

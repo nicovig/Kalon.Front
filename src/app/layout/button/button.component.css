@@ -151,6 +151,69 @@
   transform: none;
 }
 
+.btn-step {
+  border-radius: 999px;
+  border: 3px solid var(--ink-10);
+  background: white;
+  padding: 12px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-70);
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  justify-content: center;
+  min-width: 0;
+}
+
+.btn-step:hover {
+  border-color: var(--violet-md);
+}
+
+.btn-step.is-active {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: white;
+}
+
+:host ::ng-deep .step-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--ink-10);
+  color: var(--ink-70);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:host ::ng-deep .btn-step.is-active .step-index {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+}
+
+:host ::ng-deep .step-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .btn-step {
+    padding: 10px 14px;
+    font-size: 13.5px;
+  }
+
+  :host ::ng-deep .step-index {
+    width: 26px;
+    height: 26px;
+  }
+}
+
 .btn-adv-apply {
   background: var(--violet);
   color: white;

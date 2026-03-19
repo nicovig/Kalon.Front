@@ -1,7 +1,14 @@
-.reminder-editor {
+.mail-editor {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  height: 100%;
+}
+
+.mail-editor-body {
+  display: flex;
+  gap: 10px;
+  height: 100%;
 }
 
 .subject-row {
@@ -37,11 +44,15 @@
 }
 
 .editor {
+  flex: 1;
   min-height: 220px;
   border-radius: var(--r-lg);
   border: 2px solid var(--ink-10);
   background: white;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .editor .ql-toolbar {
@@ -57,9 +68,12 @@
   font-family: var(--font-body);
   font-size: 14px;
   color: var(--ink);
+  flex: 1;
+  height: 100%;
 }
 
 .editor .ql-editor {
   min-height: 180px;
+  height: 100%;
 }
 

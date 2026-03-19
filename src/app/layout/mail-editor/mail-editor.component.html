@@ -1,4 +1,4 @@
-<div class="reminder-editor">
+<div class="mail-editor">
   <label class="subject-row">
     <span class="subject-label">Objet</span>
     <input
@@ -10,15 +10,19 @@
     />
   </label>
 
-  <quill-editor
-    class="editor"
-    [(ngModel)]="body"
-    (ngModelChange)="onBodyChanged($event)"
-    [placeholder]="placeholder"
-    [customOptions]="customOptions"
-    [modules]="quillConfig"
-    (onSelectionChanged)="onSelectionChanged()"
-    (onContentChanged)="onContentChanged()"
-  ></quill-editor>
+  <div class="mail-editor-body">
+    <quill-editor
+      class="editor"
+      [(ngModel)]="body"
+      (ngModelChange)="onBodyChanged($event)"
+      [placeholder]="placeholder"
+      [customOptions]="customOptions"
+      [modules]="quillConfig"
+      (onSelectionChanged)="onSelectionChanged()"
+      (onContentChanged)="onContentChanged()"
+    ></quill-editor>
+
+    <emoji-holder (emojiSelected)="insertVariable($event)"></emoji-holder>
+  </div>
 </div>
 

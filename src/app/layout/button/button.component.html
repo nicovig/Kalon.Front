@@ -11,10 +11,12 @@
   [class.cur]="type === 'page' && cur"
   [class.upgrade]="type === 'upgrade'"
   [class.import-pill]="type === 'import-pill'"
+  [class.btn-step]="type === 'step'"
   [class.btn-send]="type === 'send'"
   [class.btn-adv-apply]="type === 'adv-apply'"
   [class.btn-ia-gen]="type === 'ia-gen'"
   [class.btn-toolbar]="type === 'toolbar'"
+  [class.is-active]="active"
 >
   <ng-content></ng-content>
 </button>

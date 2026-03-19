@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewCh
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QuillModule, QuillEditorComponent } from 'ngx-quill';
+import { EmojiHolderComponent } from './emoji-holder/emoji-holder.component';
 
 @Component({
   selector: 'kalon-mail-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, QuillModule],
+  imports: [CommonModule, FormsModule, QuillModule, EmojiHolderComponent],
   templateUrl: './mail-editor.component.html',
   styleUrls: ['./mail-editor.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

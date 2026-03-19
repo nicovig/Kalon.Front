@@ -1,0 +1,13 @@
+.emoji-holder {
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  padding-left: 8px;
+}
+
+@media (max-width: 900px) {
+  .emoji-holder {
+    display: none;
+  }
+}
+

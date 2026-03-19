@@ -457,47 +457,69 @@
 .rp-steps {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 26px 0;
+  gap: 14px;
+  padding: 12px 26px 0;
+  width: 100%;
 }
 
-.step-pill {
+.btn-step {
   border-radius: 999px;
-  border: 2px solid var(--ink-10);
+  border: 3px solid var(--ink-10);
   background: white;
-  padding: 5px 10px;
+  padding: 12px 18px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--ink-70);
   cursor: pointer;
   transition: all 0.15s;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
 }
 
-.step-pill:hover {
+.rp-steps button-component {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.rp-steps button-component .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+#send-btn.btn-send {
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.btn-step:hover {
   border-color: var(--violet-md);
 }
 
-.step-pill.is-active {
+.btn-step.is-active {
   background: var(--violet);
   border-color: var(--violet);
   color: white;
 }
 
-.step-pill.is-active .step-index {
+.btn-step.is-active .step-index {
   background: rgba(255, 255, 255, 0.16);
   color: white;
 }
 
 .step-index {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   background: var(--ink-10);
   color: var(--ink-70);
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -506,6 +528,31 @@
 
 .step-label {
   white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .rp-steps {
+    gap: 10px;
+    padding: 10px 16px 0;
+  }
+
+  .btn-step {
+    padding: 10px 14px;
+    font-size: 13.5px;
+  }
+
+  .rp-steps button-component .btn {
+    font-size: 14px;
+  }
+
+  #send-btn.btn-send {
+    white-space: nowrap;
+  }
+
+  .step-index {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 .rp-body {
@@ -529,9 +576,13 @@
 .ia-card {
   background: linear-gradient(135deg, var(--violet-mid), #3d1880);
   border-radius: var(--r-lg);
-  padding: 18px 20px;
+  padding: 22px 22px;
   position: relative;
   overflow: hidden;
+  flex: 1;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
 }
 .ia-card::before {
   content: '';
@@ -600,6 +651,7 @@
   position: relative;
   z-index: 1;
   margin-bottom: 12px;
+  flex: 1;
 }
 .ia-textarea {
   width: 100%;
@@ -612,7 +664,7 @@
   color: white;
   resize: none;
   outline: none;
-  height: 60px;
+  height: 105px;
   transition: border-color 0.15s;
   line-height: 1.5;
 }
@@ -677,6 +729,7 @@
   box-shadow: var(--sh-sm);
   overflow: hidden;
   padding: 15px;
+  height: 100%;
 }
 
 .mail-objet {

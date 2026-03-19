@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonComponent } from '../../layout/button/button.component';
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
-
-type MailTemplate = { objet: string; body: string };
+import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
+import { KalonTextareaComponent } from '../../layout/forms/textarea/kalon-textarea.component';
 
 @Component({
   selector: 'reminder-page',
@@ -13,43 +14,16 @@ type MailTemplate = { objet: string; body: string };
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent]
+  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent, KalonTextareaComponent]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
-
-  private readonly mails: Record<string, MailTemplate> = {
-    douce: {
-      objet: 'Vous nous manquez, {{prenom}} 💛',
-      body: `Bonjour {{prenom}},
-
-J'espère que vous allez bien. Voilà {{mois_depuis_don}} mois que nous n'avons pas eu de vos nouvelles, et je voulais prendre le temps de vous écrire personnellement.
-
-Votre soutien passé de {{dernier_don_montant}} € a eu un impact réel sur notre association. Grâce à des personnes comme vous, nous avons pu continuer à agir concrètement.
-
-Si votre situation vous le permet, un nouveau geste de votre part nous toucherait profondément. Mais avant tout, nous sommes simplement heureux de vous compter parmi nos amis.
-
-Avec toute notre gratitude,
-L'équipe de {{nom_association}}`
-    },
-    fidelisation: {
-      objet: 'Merci pour votre fidélité, {{prenom}} ✨',
-      body: `Bonjour {{prenom}},
-
-Vous faites partie de nos donateurs les plus fidèles, et nous tenions à vous le dire.
-
-Au fil des années, vous avez contribué à hauteur de {{total_dons}} € à notre cause. C'est grâce à cet engagement que nos projets prennent vie.
-
-Cette année encore, nous avons besoin de vous. Votre renouvellement de soutien nous permettrait de continuer sur cette belle lancée.
-
-Merci, du fond du cœur.
-L'équipe de {{nom_association}}`
-    }
-  };
+  private readonly iaAgent = inject(IaAgentCore);
 
   protected activeStep: 1 | 2 | 3 = 1;
   protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
   protected mailBody = '<p>Bonjour {{prenom}},</p>';
+  protected iaPrompt = '';
 
   @ViewChild(MailEditorComponent)
   private mailEditor?: MailEditorComponent;
@@ -100,6 +74,9 @@ L'équipe de {{nom_association}}`
 
     const sendCount = document.getElementById('send-count');
     if (sendCount) sendCount.textContent = String(this.selectedCount);
+
+    const sendCount2 = document.getElementById('send-count-2');
+    if (sendCount2) sendCount2.textContent = String(this.selectedCount);
 
     const recapDest = document.getElementById('recap-dest');
     if (recapDest) recapDest.textContent = String(this.selectedCount);
@@ -160,6 +137,15 @@ L'équipe de {{nom_association}}`
   selectPreset(el: HTMLElement): void {
     document.querySelectorAll('.ia-preset').forEach((p) => p.classList.remove('sel'));
     el.classList.add('sel');
+
+    const prompt = el.dataset['prompt'] ?? '';
+    this.iaPrompt = prompt;
+
+    const textarea = document.getElementById('ia-context-textarea') as HTMLTextAreaElement | null;
+    if (textarea) {
+      textarea.value = prompt;
+      textarea.dispatchEvent(new Event('input'));
+    }
   }
 
   applyFilters(): void {
@@ -173,7 +159,7 @@ L'équipe de {{nom_association}}`
     this.mailEditor?.insertVariable(v);
   }
 
-  generateMail(): void {
+  async generateMail(): Promise<void> {
     const btn = document.getElementById('ia-btn') as HTMLButtonElement | null;
     const spinner = document.getElementById('spinner') as HTMLElement | null;
     const btnText = document.getElementById('ia-btn-text') as HTMLElement | null;
@@ -182,20 +168,32 @@ L'équipe de {{nom_association}}`
     spinner.style.display = 'block';
     btnText.textContent = 'Génération en cours…';
     btn.disabled = true;
-
-    window.setTimeout(() => {
+    try {
       const presetEl = document.querySelector('.ia-preset.sel') as HTMLElement | null;
-      const preset = presetEl?.textContent?.trim() ?? '';
-      const mail = preset.includes('fidél') ? this.mails['fidelisation'] : this.mails['douce'];
+      const presetLabel = presetEl?.textContent?.trim() ?? '';
+      const tone = this.resolveTone(presetLabel);
+      const response = await firstValueFrom(
+        this.iaAgent.generateReminderTemplate({ tone })
+      );
 
-      this.mailSubject = mail.objet;
-      this.mailBody = mail.body;
-
-      spinner.style.display = 'none';
+      this.mailSubject = response.subject;
+      this.mailBody = response.body;
+      this.activeStep = 2;
       btnText.textContent = '✓ Mail généré — modifiez-le librement';
-      btn.disabled = false;
       btn.style.background = 'var(--mint-dk)';
-    }, 1800);
+    } finally {
+      spinner.style.display = 'none';
+      btn.disabled = false;
+    }
+  }
+
+  private resolveTone(label: string): ReminderTemplateTone {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('fidel') || normalized.includes('fidél')) return 'fidelisation';
+    if (normalized.includes('remerci')) return 'remerciement';
+    if (normalized.includes('urgence')) return 'urgence';
+    if (normalized.includes('saisonnier')) return 'saisonnier';
+    return 'douce';
   }
 
   updatePreview(value: string): void {
