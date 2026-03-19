@@ -6,7 +6,10 @@ const AUTH_KEY = 'kalon.currentUser';
 export type AssociationPlan = 'free' | 'basic' | 'premium';
 
 export interface AuthUser {
+  firstname: string;
+  lastname: string;
   email: string;
+  associationName: string;
   plan: AssociationPlan;
 }
 
@@ -31,7 +34,7 @@ export class AuthService {
   }
 
   login(email: string, plan: AssociationPlan = 'basic'): void {
-    const user: AuthUser = { email, plan };
+    const user: AuthUser = { email, plan, firstname: 'Marie', lastname: 'Dupont', associationName: 'Asso Parents d\'élèves' };
     localStorage.setItem(AUTH_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
   }

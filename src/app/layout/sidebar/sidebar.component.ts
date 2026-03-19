@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'sidebar',
@@ -10,6 +11,27 @@ import { RouterModule } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  private readonly authService = inject(AuthService);
+
+  protected get currentUser() {
+    return this.authService.currentUser;
+  }
+
+  protected get userInitials(): string {
+    const email = this.authService.currentUser?.email ?? '';
+    const localPart = email.split('@')[0] ?? '';
+    if (!localPart) {
+      return 'AP';
+    }
+
+    const parts = localPart.split(/[.\-_ ]+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+
+    return localPart.slice(0, 2).toUpperCase();
+  }
+
   @Input() collapsed = false;
   @Output() toggle = new EventEmitter<void>();
 

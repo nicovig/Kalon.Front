@@ -1,0 +1,65 @@
+.reminder-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subject-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subject-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  white-space: nowrap;
+  font-family: var(--font-body);
+}
+
+.subject-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.subject-input::placeholder {
+  color: var(--ink-30);
+  font-weight: 500;
+}
+
+.editor {
+  min-height: 220px;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--ink-10);
+  background: white;
+  overflow: hidden;
+}
+
+.editor .ql-toolbar {
+  border: none;
+  border-bottom: 2px solid var(--ink-10);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  background: var(--ink-10);
+  padding: 4px 8px;
+}
+
+.editor .ql-container {
+  border: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.editor .ql-editor {
+  min-height: 180px;
+}
+

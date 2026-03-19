@@ -1,7 +1,7 @@
 <toast-component position="center-third"></toast-component>
 <topbar
-  [title]="'Bonjour, Marie 👋'"
-  [subtitle]="'Voici ce qui se passe sur votre association aujourd\'hui'"
+  [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
+  [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
   <button-component type="ghost">📥 Importer Excel</button-component>
   <button-component type="primary">+ Nouveau donateur</button-component>

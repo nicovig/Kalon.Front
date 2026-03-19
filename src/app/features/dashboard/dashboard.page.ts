@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DASHBOARD_KPIS, DASHBOARD_LATEST_DONORS, DASHBOARD_PLAN_QUOTA, DASHBOARD_REMINDERS } from './mock-data';
 import { ButtonComponent } from '../../layout/button/button.component';
 import { TableComponent, TableColumn } from '../../layout/table/table.component';
 import { DashboardCardComponent } from './dashboard-card/dashboard-card.component';
-import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'dashboard-page',
@@ -18,6 +18,9 @@ import { CardComponent } from '../../layout/card/card.component';
 })
 export class DashboardPageComponent {
 
+  private readonly authService = inject(AuthService);
+
+  protected readonly currentUser = this.authService.currentUser;
   protected readonly kpis = DASHBOARD_KPIS;
   protected readonly latestDonors = DASHBOARD_LATEST_DONORS;
   protected readonly planQuota = DASHBOARD_PLAN_QUOTA;

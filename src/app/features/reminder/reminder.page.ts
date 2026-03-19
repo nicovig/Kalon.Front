@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonComponent } from '../../layout/button/button.component';
+import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
 
 type MailTemplate = { objet: string; body: string };
 
@@ -11,7 +13,7 @@ type MailTemplate = { objet: string; body: string };
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ToastComponent, TopbarComponent, ButtonComponent]
+  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
@@ -45,6 +47,13 @@ L'équipe de {{nom_association}}`
     }
   };
 
+  protected activeStep: 1 | 2 | 3 = 1;
+  protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
+  protected mailBody = '<p>Bonjour {{prenom}},</p>';
+
+  @ViewChild(MailEditorComponent)
+  private mailEditor?: MailEditorComponent;
+
   ngOnInit(): void {
     const w = window as any;
     w.toggleAdv = this.toggleAdv.bind(this);
@@ -71,6 +80,10 @@ L'équipe de {{nom_association}}`
     }
     this.updateCounts();
     this.updatePreview(this.getPreviewSelectedValue());
+  }
+
+  protected goToStep(step: 1 | 2 | 3): void {
+    this.activeStep = step;
   }
 
   private getPreviewSelectedValue(): string {
@@ -157,15 +170,7 @@ L'équipe de {{nom_association}}`
   }
 
   insertVar(v: string): void {
-    const ta = document.getElementById('mail-body') as HTMLTextAreaElement | null;
-    if (!ta) return;
-
-    const start = ta.selectionStart ?? ta.value.length;
-    const end = ta.selectionEnd ?? ta.value.length;
-
-    ta.value = ta.value.substring(0, start) + v + ta.value.substring(end);
-    ta.focus();
-    ta.selectionStart = ta.selectionEnd = start + v.length;
+    this.mailEditor?.insertVariable(v);
   }
 
   generateMail(): void {
@@ -183,10 +188,8 @@ L'équipe de {{nom_association}}`
       const preset = presetEl?.textContent?.trim() ?? '';
       const mail = preset.includes('fidél') ? this.mails['fidelisation'] : this.mails['douce'];
 
-      const mailObjet = document.getElementById('mail-objet') as HTMLInputElement | null;
-      const mailBody = document.getElementById('mail-body') as HTMLTextAreaElement | null;
-      if (mailObjet) mailObjet.value = mail.objet;
-      if (mailBody) mailBody.value = mail.body;
+      this.mailSubject = mail.objet;
+      this.mailBody = mail.body;
 
       spinner.style.display = 'none';
       btnText.textContent = '✓ Mail généré — modifiez-le librement';

@@ -4,6 +4,7 @@
   background: var(--violet-mid);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   padding: 26px 16px;
   position: fixed;
   left: 0;
@@ -45,7 +46,8 @@ body.sidebar-compact .asso-card {
 @media (max-width: 900px) {
   .sidebar {
     width: 64px;
-    padding: 26px 10px;
+    padding: 20px 10px;
+    align-items: center;
   }
 
   .logo-name,
@@ -65,9 +67,32 @@ body.sidebar-compact .asso-card {
   .nav-icon {
     width: auto;
     margin-right: 0;
+    font-size: 18px;
   }
 
   .asso-card {
+    justify-content: center;
+    padding: 8px 0;
+    background: transparent;
+    border: none;
+  }
+
+  .asso-av {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo {
+    justify-content: center;
+    padding-bottom: 18px;
+    border-bottom: none;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    width: 100%;
+    display: flex;
     justify-content: center;
   }
 }
@@ -99,7 +124,6 @@ body.sidebar-compact .asso-card {
 .logo {
   display: flex;
   align-items: center;
-  gap: 11px;
   padding-bottom: 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
@@ -146,6 +170,7 @@ body.sidebar-compact .asso-card {
   font-size: 22px;
   color: white;
   letter-spacing: 0.3px;
+  padding-left: 10px;
 }
 
 .logo-tagline {

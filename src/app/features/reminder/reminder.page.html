@@ -202,10 +202,40 @@
           💌 Envoyer à <span id="send-count">4</span> donateurs
         </button-component>
       </div>
-  
+
+      <div class="rp-steps">
+        <button
+          class="step-pill"
+          type="button"
+          [class.is-active]="activeStep === 1"
+          (click)="goToStep(1)"
+        >
+          <span class="step-index">1</span>
+          <span class="step-label">Générer avec l'IA</span>
+        </button>
+        <button
+          class="step-pill"
+          type="button"
+          [class.is-active]="activeStep === 2"
+          (click)="goToStep(2)"
+        >
+          <span class="step-index">2</span>
+          <span class="step-label">Relire &amp; ajuster</span>
+        </button>
+        <button
+          class="step-pill"
+          type="button"
+          [class.is-active]="activeStep === 3"
+          (click)="goToStep(3)"
+        >
+          <span class="step-index">3</span>
+          <span class="step-label">Aperçu &amp; envoi</span>
+        </button>
+      </div>
+
       <div class="rp-body">
-        <!-- IA CARD -->
-        <div class="ia-card">
+        <!-- ÉTAPE 1 : IA -->
+        <div class="ia-card" *ngIf="activeStep === 1">
           <div class="ia-top">
             <div class="ia-icon">✨</div>
             <div>
@@ -236,65 +266,16 @@
           </button-component>
         </div>
   
-        <!-- ÉDITEUR MAIL -->
-        <div class="mail-card">
-          <!-- Objet -->
-          <div class="mail-objet">
-            <span class="objet-lbl">Objet</span>
-            <input
-              class="objet-input"
-              id="mail-objet"
-              type="text"
-              value="Vous nous manquez, Marie 💛"
-              placeholder="Objet du mail…"
-            />
-          </div>
-          <!-- Toolbar -->
-          <div class="mail-toolbar">
-            <button-component type="toolbar" title="Gras"><b>G</b></button-component>
-            <button-component type="toolbar" title="Italique"><i>I</i></button-component>
-            <button-component type="toolbar" title="Souligné"><u>S</u></button-component>
-            <div class="tb-sep"></div>
-            <button-component type="toolbar" title="Liste">≡</button-component>
-            <button-component type="toolbar" title="Lien">🔗</button-component>
-            <div class="tb-sep"></div>
-            <button-component type="toolbar" title="Aligner à gauche">⬤</button-component>
-            <button-component type="toolbar" title="Centrer">⊡</button-component>
-          </div>
-          <!-- Corps -->
-          <div class="mail-body">
-            <textarea class="mail-editor" id="mail-body" rows="8">
-  Bonjour Marie,
-  
-  Nous espérons que vous allez bien. Cela fait maintenant 14 mois que vous nous avez soutenus, et nous pensons à vous.
-  
-  Votre dernier don de 320 € a contribué directement à nos actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire l'impact].
-  
-  Si vous souhaitez renouveler votre soutien, votre aide nous serait précieuse.
-  
-  Avec toute notre gratitude,
-  L'équipe de Asso Parents d'élèves</textarea
-            >
-          </div>
-          <!-- Variables -->
-          <div class="vars-section">
-            <div class="vars-lbl">Variables disponibles — cliquez pour insérer</div>
-            <div class="vars">
-              <span class="var-chip" onclick="insertVar('Marie')">Marie</span>
-              <span class="var-chip" onclick="insertVar('Fontaine')">Fontaine</span>
-              <span class="var-chip" onclick="insertVar('320')">320</span>
-              <span class="var-chip" onclick="insertVar('2024-01-01')">2024-01-01</span>
-              <span class="var-chip" onclick="insertVar('14')">14</span>
-              <span class="var-chip" onclick="insertVar('320')">320</span>
-              <span class="var-chip" onclick="insertVar('Asso Parents d\'élèves')"
-                >Asso Parents d'élèves</span
-              >
-            </div>
-          </div>
+        <!-- ÉTAPE 2 : ÉDITEUR -->
+        <div class="mail-card" *ngIf="activeStep === 2">
+          <kalon-mail-editor
+            [(subject)]="mailSubject"
+            [(body)]="mailBody"
+          ></kalon-mail-editor>
         </div>
   
-        <!-- APERÇU -->
-        <div class="preview-card">
+        <!-- ÉTAPE 3 : APERÇU + RÉCAP -->
+        <div class="preview-card" *ngIf="activeStep === 3">
           <div class="preview-head">
             <div class="preview-ttl">👁 Aperçu pour</div>
             <div class="preview-donor">
@@ -320,8 +301,7 @@
           </div>
         </div>
   
-        <!-- RÉCAP ENVOI -->
-        <div class="send-recap">
+        <div class="send-recap" *ngIf="activeStep === 3">
           <div class="recap-stat">
             <div class="recap-val" id="recap-dest">4</div>
             <div class="recap-lbl">destinataires</div>

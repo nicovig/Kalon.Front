@@ -1,9 +1,16 @@
+.reminder-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .layout {
   margin-left: 0;
   flex: 1;
   display: grid;
   grid-template-columns: 380px 1fr;
-  height: 100vh;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -13,7 +20,7 @@
   border-right: 2px solid var(--ink-10);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -259,6 +266,7 @@
 /* LISTE DONATEURS */
 .donor-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 6px 0;
 }
@@ -420,7 +428,7 @@
 .right-panel {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: var(--cream);
 }
@@ -446,8 +454,63 @@
   margin-top: 2px;
 }
 
+.rp-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 26px 0;
+}
+
+.step-pill {
+  border-radius: 999px;
+  border: 2px solid var(--ink-10);
+  background: white;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-70);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.step-pill:hover {
+  border-color: var(--violet-md);
+}
+
+.step-pill.is-active {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: white;
+}
+
+.step-pill.is-active .step-index {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+}
+
+.step-index {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--ink-10);
+  color: var(--ink-70);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-label {
+  white-space: nowrap;
+}
+
 .rp-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px 26px;
   display: flex;
@@ -613,6 +676,7 @@
   border: 2px solid var(--ink-10);
   box-shadow: var(--sh-sm);
   overflow: hidden;
+  padding: 15px;
 }
 
 .mail-objet {

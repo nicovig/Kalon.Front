@@ -1,0 +1,24 @@
+<div class="reminder-editor">
+  <label class="subject-row">
+    <span class="subject-label">Objet</span>
+    <input
+      class="subject-input"
+      type="text"
+      [(ngModel)]="subject"
+      (ngModelChange)="onSubjectChange($event)"
+      placeholder="Objet du mail…"
+    />
+  </label>
+
+  <quill-editor
+    class="editor"
+    [(ngModel)]="body"
+    (ngModelChange)="onBodyChanged($event)"
+    [placeholder]="placeholder"
+    [customOptions]="customOptions"
+    [modules]="quillConfig"
+    (onSelectionChanged)="onSelectionChanged()"
+    (onContentChanged)="onContentChanged()"
+  ></quill-editor>
+</div>
+

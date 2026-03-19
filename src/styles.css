@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+/* @import '~quill/dist/quill.snow.css'; */
 
 :root {
   --violet: #4A1D96;
@@ -48,4 +49,59 @@ body {
   background: var(--cream);
   color: var(--ink);
   overflow-x: hidden;
+}
+
+/* Quill */
+/* Fonts */
+
+/* Fira Code */
+[quill-editor-toolbar] .ql-font span[data-label="Fira Code"]::before {
+  font-family: "Fira Code";
+}
+
+.ql-font-firacode {
+  font-family: "Fira Code";
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value=firacode]::before, .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=firacode]::before {
+  content: 'Fira Code';
+}
+
+/* Roboto */
+[quill-editor-toolbar] .ql-font span[data-label="Roboto"]::before {
+  font-family: "Roboto";
+}
+
+.ql-font-roboto {
+  font-family: "Roboto";
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value=roboto]::before, .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=roboto]::before {
+  content: 'Roboto';
+}
+
+/* Serif */
+[quill-editor-toolbar] .ql-font span[data-label="Serif"]::before {
+  font-family: "Serif";
+}
+
+.ql-font-serif {
+  font-family: "Serif";
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value=serif]::before, .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=serif]::before {
+  content: 'Serif';
+}
+
+/* Monospace */
+[quill-editor-toolbar] .ql-font span[data-label="monospace"]::before {
+  font-family: "monospace";
+}
+
+.ql-font-monospace {
+  font-family: "monospace";
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value=monospace]::before, .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=monospace]::before {
+  content: 'monospace';
 }

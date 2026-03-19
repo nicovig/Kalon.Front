@@ -30,6 +30,8 @@
               }
             ],
             "styles": [
+              "quill/dist/quill.snow.css",
+              "quill/dist/quill.core.css",
               "src/styles.css"
             ]
           },
