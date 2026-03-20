@@ -1,0 +1,13 @@
+<div class="dc-overlay" (click)="onCancel()">
+  <div class="dc-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="dc-head">
+      <div class="dc-title">Nouveau donateur</div>
+      <button class="dc-close" type="button" (click)="onCancel()">✕</button>
+    </div>
+
+    <div class="dc-body">
+      <donor-form (create)="onCreate($event)"></donor-form>
+    </div>
+  </div>
+</div>
+

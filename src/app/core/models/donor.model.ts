@@ -1,10 +1,11 @@
-export interface Donor {
+export interface IDonor {
   id: string;
   firstname: string;
   lastname: string;
   email: string;
   phone?: string;
-  address?: string;
+  address?: IDonorAddress;
+  enterprise?: IDonorEnterprise;
   creationDate: Date;
   statut: 'active' | 'to_remind' | 'new' | 'inactive';
   totalDonation: number;
@@ -12,3 +13,19 @@ export interface Donor {
   donationCount: number;
 }
 
+export interface IDonorAddress {
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  phone?: string;
+  email?: string;
+  contactName?: string;
+  contactPhone?: string;
+}
+
+export interface IDonorEnterprise {
+  name: string;
+  siret: string;
+  address: IDonorAddress;
+}

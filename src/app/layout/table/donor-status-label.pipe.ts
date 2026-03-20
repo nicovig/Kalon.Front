@@ -1,12 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Donor } from '../../core/models/donor.model';
+import { IDonor } from '../../core/models/donor.model';
 
 @Pipe({
   name: 'donorStatusLabel',
   standalone: true
 })
 export class DonorStatusLabelPipe implements PipeTransform {
-  transform(status: Donor['statut']): string {
+  transform(status: IDonor['statut']): string {
     switch (status) {
       case 'active':
         return 'Actif';

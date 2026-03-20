@@ -1,0 +1,260 @@
+<form class="df-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="df-tabs" role="tablist">
+    <button
+      type="button"
+      class="df-tab-btn"
+      [class.active]="activeTab === 'personne'"
+      (click)="setActiveTab('personne')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'personne'"
+    >
+      Personne
+    </button>
+
+    <button
+      type="button"
+      class="df-tab-btn"
+      [class.active]="activeTab === 'entreprise'"
+      (click)="setActiveTab('entreprise')"
+      role="tab"
+      [attr.aria-selected]="activeTab === 'entreprise'"
+    >
+      Entreprise
+    </button>
+  </div>
+
+  <div class="df-tab-content" [hidden]="activeTab !== 'personne'">
+    <div class="df-grid">
+      <div class="df-field">
+        <label class="df-label" for="df-firstname">Prénom</label>
+        <form-text-component
+          id="df-firstname"
+          formControlName="firstname"
+          placeholder="Marie"
+          [required]="true"
+          type="text"
+          [icon]="null"
+          width="100%"
+        ></form-text-component>
+      </div>
+
+      <div class="df-field">
+        <label class="df-label" for="df-lastname">Nom</label>
+        <form-text-component
+          id="df-lastname"
+          formControlName="lastname"
+          placeholder="Dupont"
+          [required]="true"
+          type="text"
+          [icon]="null"
+          width="100%"
+        ></form-text-component>
+      </div>
+
+      <div class="df-field df-span-2">
+        <label class="df-label" for="df-email">Email</label>
+        <form-text-component
+          id="df-email"
+          formControlName="email"
+          placeholder="marie.dupont@example.org"
+          [required]="true"
+          type="email"
+          [icon]="null"
+          width="100%"
+        ></form-text-component>
+      </div>
+
+      <div class="df-field">
+        <label class="df-label" for="df-phone">Téléphone</label>
+        <form-text-component
+          id="df-phone"
+          formControlName="phone"
+          placeholder="+33 6 12 34 56 78"
+          type="tel"
+          [icon]="null"
+          width="100%"
+        ></form-text-component>
+      </div>
+    </div>
+
+    <div class="df-section">
+      <div class="df-section-title">Adresse</div>
+
+      <div formGroupName="address">
+        <div class="df-grid df-grid-address">
+          <div class="df-field df-span-2">
+            <label class="df-label" for="df-street">Rue</label>
+            <form-text-component
+              id="df-street"
+              formControlName="street"
+              placeholder="12 rue de la Paix"
+              [required]="true"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+
+          <div class="df-field">
+            <label class="df-label" for="df-postalCode">Code postal</label>
+            <form-text-component
+              id="df-postalCode"
+              formControlName="postalCode"
+              placeholder="75001"
+              [required]="true"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+
+          <div class="df-field">
+            <label class="df-label" for="df-city">Ville</label>
+            <form-text-component
+              id="df-city"
+              formControlName="city"
+              placeholder="Paris"
+              [required]="true"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+
+          <div class="df-field df-span-2">
+            <label class="df-label" for="df-country">Pays</label>
+            <form-text-component
+              id="df-country"
+              formControlName="country"
+              placeholder="France"
+              [required]="true"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="df-tab-content" [hidden]="activeTab !== 'entreprise'">
+    <div class="df-section">
+      <div class="df-section-title">Entreprise</div>
+
+      <div class="df-field">
+        <label class="df-label" for="df-enterpriseMode">Mode d'adresse entreprise</label>
+        <select id="df-enterpriseMode" class="df-select" formControlName="enterpriseMode">
+          <option value="none">Aucune entreprise</option>
+          <option value="donorAddress">Adresse identique au donateur</option>
+          <option value="customAddress">Adresse de l'entreprise différente</option>
+        </select>
+      </div>
+
+      @if (form.get('enterpriseMode')?.value !== 'none') {
+        <div formGroupName="enterprise">
+          <div class="df-enterprise-layout">
+            <div class="df-enterprise-left">
+              <div class="df-grid df-enterprise-info-grid">
+                <div class="df-field">
+                  <label class="df-label" for="df-enterpriseName">Nom</label>
+                  <form-text-component
+                    id="df-enterpriseName"
+                    formControlName="name"
+                    placeholder="Association / société"
+                    type="text"
+                    [icon]="null"
+                    width="100%"
+                  ></form-text-component>
+                </div>
+
+                <div class="df-field">
+                  <label class="df-label" for="df-enterpriseSiret">SIRET</label>
+                  <form-text-component
+                    id="df-enterpriseSiret"
+                    formControlName="siret"
+                    placeholder="123 456 789 00000"
+                    type="text"
+                    [icon]="null"
+                    width="100%"
+                  ></form-text-component>
+                </div>
+              </div>
+            </div>
+
+            <div class="df-enterprise-right">
+              <div class="df-subsection df-subsection-full">
+                <div class="df-subsection-title">Adresse de l'entreprise</div>
+
+                <div formGroupName="address">
+                  <div class="df-grid df-grid-address">
+                    <div class="df-field df-span-2">
+                      <label class="df-label" for="df-enterpriseStreet">Rue</label>
+                      <form-text-component
+                        id="df-enterpriseStreet"
+                        formControlName="street"
+                        placeholder="12 rue de la Paix"
+                        [required]="true"
+                        type="text"
+                        [icon]="null"
+                        width="100%"
+                      ></form-text-component>
+                    </div>
+
+                    <div class="df-field">
+                      <label class="df-label" for="df-enterprisePostalCode">Code postal</label>
+                      <form-text-component
+                        id="df-enterprisePostalCode"
+                        formControlName="postalCode"
+                        placeholder="75001"
+                        [required]="true"
+                        type="text"
+                        [icon]="null"
+                        width="100%"
+                      ></form-text-component>
+                    </div>
+
+                    <div class="df-field">
+                      <label class="df-label" for="df-enterpriseCity">Ville</label>
+                      <form-text-component
+                        id="df-enterpriseCity"
+                        formControlName="city"
+                        placeholder="Paris"
+                        [required]="true"
+                        type="text"
+                        [icon]="null"
+                        width="100%"
+                      ></form-text-component>
+                    </div>
+
+                    <div class="df-field df-span-2">
+                      <label class="df-label" for="df-enterpriseCountry">Pays</label>
+                      <form-text-component
+                        id="df-enterpriseCountry"
+                        formControlName="country"
+                        placeholder="France"
+                        [required]="true"
+                        type="text"
+                        [icon]="null"
+                        width="100%"
+                      ></form-text-component>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (submitted && errorMessage) {
+    <div class="df-error" role="alert">{{ errorMessage }}</div>
+  }
+
+  <div class="df-actions">
+    <button-component type="primary" htmlType="submit" [disabled]="form.invalid">Créer</button-component>
+  </div>
+</form>
+

@@ -4,8 +4,13 @@
   [subtitle]="'Gérez vos donateurs avec facilité'"
 >
   <button-component type="ghost">📥 Importer Excel</button-component>
-  <button-component type="primary">+ Nouveau donateur</button-component>
+  <button-component type="primary" (click)="openCreateModal()">+ Nouveau donateur</button-component>
 </topbar>
+
+@if (createModalOpen) {
+  <donor-create-popup (closed)="closeCreateModal()"></donor-create-popup>
+}
+
 <table-component
   [rows]="donorsComputed()"
   [columns]="donorColumns"
