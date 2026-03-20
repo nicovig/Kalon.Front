@@ -246,18 +246,17 @@
           </div>
   
           <div class="ia-context">
-            <textarea
-              class="ia-textarea"
-              placeholder="Ex : Relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons sur les enfants…"
-            ></textarea>
+            <form-textarea
+              [placeholder]="placeholder"
+            ></form-textarea>
           </div>
   
           <div class="ia-presets">
-            <div class="ia-preset sel" onclick="selectPreset(this)">😌 Relance douce</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🤝 Fidélisation</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🙏 Remerciement</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🚨 Urgence</div>
-            <div class="ia-preset" onclick="selectPreset(this)">🎄 Saisonnier</div>
+            <div class="ia-preset sel" onclick="selectPreset(this, 'douce')">😌 Relance douce</div>
+            <div class="ia-preset" onclick="selectPreset(this, 'fidelisation')">🤝 Fidélisation</div>
+            <div class="ia-preset" onclick="selectPreset(this, 'remerciement')">🙏 Remerciement</div>
+            <div class="ia-preset" onclick="selectPreset(this, 'urgence')">🚨 Urgence</div>
+            <div class="ia-preset" onclick="selectPreset(this, 'saisonnier')">🎄 Saisonnier</div>
           </div>
   
           <button-component type="ia-gen" id="ia-btn" (click)="generateMail()">

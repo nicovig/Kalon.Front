@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, ChangeDetectorRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonComponent } from '../../layout/button/button.component';
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
+import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 
 type MailTemplate = { objet: string; body: string };
 
@@ -13,10 +14,12 @@ type MailTemplate = { objet: string; body: string };
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent]
+  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent, FormTextareaComponent]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
+
+  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   private readonly mails: Record<string, MailTemplate> = {
     douce: {
@@ -47,6 +50,14 @@ L'équipe de {{nom_association}}`
     }
   };
 
+  protected placeholders: Record<string, string> = {
+    douce: 'Exemple : Relance douce après 12 mois d\'inactivité, mettre en avant l\'impact concret des dons…',
+    fidelisation: 'Exemple : Fidélisation après 5 ans de soutien, mettre en avant l\'impact concret des dons…',
+    remerciement: 'Exemple : Merci pour votre soutien, mettre en avant l\'impact concret des dons…',
+    urgence: 'Exemple : Projet urgent, mettre en avant l\'impact concret des dons…',
+    saisonnier: 'Exemple : Bonne année, mettre en avant l\'impact concret des dons…'
+  };
+  protected placeholder = this.placeholders['douce'];
   protected activeStep: 1 | 2 | 3 = 1;
   protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
   protected mailBody = '<p>Bonjour {{prenom}},</p>';
@@ -157,9 +168,11 @@ L'équipe de {{nom_association}}`
     this.updateCounts();
   }
 
-  selectPreset(el: HTMLElement): void {
+  selectPreset(el: HTMLElement, type: string): void {
     document.querySelectorAll('.ia-preset').forEach((p) => p.classList.remove('sel'));
     el.classList.add('sel');
+    this.placeholder = this.placeholders[type] ?? this.placeholders['douce'];
+    this.cdr.markForCheck();
   }
 
   applyFilters(): void {
@@ -195,6 +208,7 @@ L'équipe de {{nom_association}}`
       btnText.textContent = '✓ Mail généré — modifiez-le librement';
       btn.disabled = false;
       btn.style.background = 'var(--mint-dk)';
+      this.goToStep(2);
     }, 1800);
   }
 
