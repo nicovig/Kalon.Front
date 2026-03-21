@@ -4,8 +4,12 @@
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
   <button-component type="ghost">📥 Importer Excel</button-component>
-  <button-component type="primary">+ Nouveau donateur</button-component>
+  <button-component type="primary" (click)="openCreateModal()">+ Nouveau donateur</button-component>
 </topbar>
+
+@if (createModalOpen) {
+  <donor-create-popup (closed)="closeCreateModal()"></donor-create-popup>
+}
 <!-- IMPORT BANNER -->
 <div class="import-banner">
   <span class="import-emoji">📂</span>
@@ -56,7 +60,7 @@
   <!-- TABLE -->
   <card title="Derniers dons" subtitle="187 donateurs au total">
     <table-component
-      [rows]="latestDonors"
+      [rows]="latestDonorsComputed()"
       [columns]="latestDonorsColumns"
       [pageSizeOptions]="[5, 10, 25]"
       [initialPageSize]="5"

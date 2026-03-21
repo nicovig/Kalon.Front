@@ -40,12 +40,32 @@
   </a>
 
   <div class="sidebar-footer">
-    <div class="asso-card">
+    <div
+      class="asso-card"
+      role="button"
+      tabindex="0"
+      (click)="onAssoCardClick($event)"
+      (keydown.enter)="onAssoCardKeyDown($event)"
+      (keydown.space)="onAssoCardKeyDown($event)"
+    >
       <div class="asso-av">{{ userInitials }}</div>
       <div>
         <div class="asso-name">Asso Parents d'élèves</div>
         <div class="asso-plan"><span class="plan-dot"></span> Plan Basic</div>
       </div>
+    </div>
+
+    <div
+      class="logout-menu"
+      *ngIf="logoutMenuOpen"
+      [style.left.px]="logoutMenuX"
+      [style.top.px]="logoutMenuY"
+      (click)="$event.stopPropagation()"
+      role="menu"
+    >
+      <button class="logout-item" type="button" (click)="onLogout()">
+        Se déconnecter
+      </button>
     </div>
   </div>
 </aside>

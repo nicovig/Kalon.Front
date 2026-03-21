@@ -1,0 +1,54 @@
+.dc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 22, 37, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.dc-modal {
+  width: 100%;
+  max-width: 760px;
+  background: var(--white);
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  overflow: hidden;
+}
+
+.dc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 10px;
+}
+
+.dc-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.dc-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink-70);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px;
+}
+
+.dc-close:hover {
+  color: var(--ink);
+}
+
+.dc-body {
+  padding: 10px 20px 20px;
+}
+

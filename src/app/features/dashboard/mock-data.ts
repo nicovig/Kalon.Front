@@ -1,4 +1,4 @@
-import { Donor } from '../../core/models/donor.model';
+import { IDonor } from '../../core/models/donor.model';
 
 export interface DashboardKpi {
   id: string;
@@ -57,7 +57,7 @@ export const DASHBOARD_PLAN_QUOTA: DashboardPlanQuota = {
   canImportMore: true
 };
 
-export const DASHBOARD_LATEST_DONORS: Donor[] = [
+export const DASHBOARD_LATEST_DONORS: IDonor[] = [
   {
     id: '1',
     firstname: 'Marie-Laure',

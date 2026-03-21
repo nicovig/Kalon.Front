@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
@@ -19,7 +19,16 @@ import { KalonTextareaComponent } from '../../layout/forms/textarea/kalon-textar
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
   private readonly iaAgent = inject(IaAgentCore);
+  constructor(private readonly cdr: ChangeDetectorRef) {}
 
+  protected placeholders: Record<string, string> = {
+    douce: 'Exemple : Relance douce après 12 mois d\'inactivité, mettre en avant l\'impact concret des dons…',
+    fidelisation: 'Exemple : Fidélisation après 5 ans de soutien, mettre en avant l\'impact concret des dons…',
+    remerciement: 'Exemple : Merci pour votre soutien, mettre en avant l\'impact concret des dons…',
+    urgence: 'Exemple : Projet urgent, mettre en avant l\'impact concret des dons…',
+    saisonnier: 'Exemple : Bonne année, mettre en avant l\'impact concret des dons…'
+  };
+  protected placeholder = this.placeholders['douce'];
   protected activeStep: 1 | 2 | 3 = 1;
   protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
   protected mailBody = '<p>Bonjour {{prenom}},</p>';
@@ -134,7 +143,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     this.updateCounts();
   }
 
-  selectPreset(el: HTMLElement): void {
+  selectPreset(el: HTMLElement, type: string): void {
     document.querySelectorAll('.ia-preset').forEach((p) => p.classList.remove('sel'));
     el.classList.add('sel');
 
@@ -146,6 +155,9 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
       textarea.value = prompt;
       textarea.dispatchEvent(new Event('input'));
     }
+    
+    this.placeholder = this.placeholders[type] ?? this.placeholders['douce'];
+    this.cdr.markForCheck();
   }
 
   applyFilters(): void {
