@@ -1,6 +1,6 @@
 {
     "buildCommand": "npm run build",
-    "outputDirectory": "dist/kalon/browser",
+    "outputDirectory": "dist/Kalon.Front/browser",
     "framework": "angular",
     "rewrites": [
       {
