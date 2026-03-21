@@ -12,6 +12,6 @@ import { CommonModule } from '@angular/common';
 export class CardComponent {
   @Input() title = '';
   @Input() subtitle = '';
-  @Input() paddingClass: 'default' | 'actions' | 'reminders' = 'default';
+  @Input() paddingClass: 'default' | 'reminders' = 'default';
   @Input() variant: 'default' | 'bare' = 'default';
 }

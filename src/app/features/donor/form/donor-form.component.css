@@ -1,38 +1,56 @@
 .df-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+  font-size: 15px;
 }
 
-.df-tabs {
-  display: flex;
-  gap: 10px;
-}
-
-.df-tab-btn {
-  flex: 1 1 0;
-  border-radius: 999px;
+.df-kind {
   border: 2px solid var(--ink-10);
-  background: var(--white);
-  color: var(--ink-70);
+  border-radius: var(--r-sm);
+  padding: 16px 16px 18px;
+  margin: 0;
+}
+
+.df-kind-legend {
   font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 13px;
-  padding: 10px 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  padding: 0 8px;
+}
+
+.df-kind-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.df-kind-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
 }
 
-.df-tab-btn.active {
-  background: var(--pink-lt);
-  border-color: var(--pink);
-  color: var(--pink-dk);
+.df-kind-option input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--pink);
+  cursor: pointer;
 }
 
-.df-tab-content {
+.df-panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 .df-grid {
@@ -48,16 +66,18 @@
 .df-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1 1 240px;
   min-width: 0;
 }
 
 .df-label {
-  font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
   color: var(--ink-70);
+  line-height: 1.3;
 }
 
 .df-input {
@@ -85,8 +105,9 @@
 .df-error {
   color: var(--pink-dk);
   font-family: var(--font-body);
-  font-size: 12.5px;
+  font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .df-actions {
@@ -97,29 +118,37 @@
 .df-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 2px;
+  gap: 14px;
+  margin-top: 4px;
 }
 
 .df-section-title {
   font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 13.5px;
+  font-weight: 800;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
   color: var(--ink);
+  padding-bottom: 2px;
+  border-bottom: 2px solid var(--ink-10);
 }
 
 .df-subsection {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 2px;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 4px;
 }
 
 .df-subsection-title {
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 12.5px;
-  color: var(--ink-70);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--ink);
+  opacity: 0.92;
 }
 
 .df-select {
@@ -143,6 +172,17 @@
 
 .df-grid-address {
   flex-wrap: wrap;
+}
+
+:host ::ng-deep form-text-component .search {
+  font-size: 15px;
+  padding: 11px 14px;
+  min-height: 46px;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep form-text-component .input {
+  font-size: 15px;
 }
 
 .df-enterprise-layout {
@@ -182,16 +222,8 @@
     flex-direction: column;
   }
 
-  .df-enterprise-layout {
-    flex-direction: column;
-  }
-
   .df-field {
     flex: 1 1 100%;
-  }
-
-  .df-enterprise-left {
-    flex: 1 1 auto;
   }
 }
 

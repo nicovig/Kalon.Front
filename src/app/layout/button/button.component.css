@@ -9,8 +9,10 @@
     font-weight: 700;
     cursor: pointer;
     border: none;
-    transition: all 0.18s ease;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+      box-shadow 0.18s ease, transform 0.18s ease;
     text-decoration: none;
+    box-sizing: border-box;
   }
   
   .btn-primary {
@@ -135,7 +137,7 @@
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(255, 77, 125, 0.35);
-  transition: all 0.18s;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .btn-send:hover {
@@ -151,6 +153,11 @@
   transform: none;
 }
 
+:host ::ng-deep .btn-send .step-index {
+  background: rgba(255, 255, 255, 0.22);
+  color: white;
+}
+
 .btn-step {
   border-radius: 999px;
   border: 3px solid var(--ink-10);
@@ -164,7 +171,7 @@
   font-weight: 800;
   color: var(--ink-70);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   width: 100%;
   justify-content: center;
   min-width: 0;
@@ -191,6 +198,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 :host ::ng-deep .btn-step.is-active .step-index {

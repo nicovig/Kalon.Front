@@ -1,7 +1,10 @@
 <div class="dc-overlay" (click)="onCancel()">
   <div class="dc-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
     <div class="dc-head">
-      <div class="dc-title">Nouveau donateur</div>
+      <div class="dc-head-text">
+        <div class="dc-title">Nouveau donateur</div>
+        <p class="dc-sub">Choisissez <b>particulier</b> ou <b>personne morale</b> : les reçus fiscaux (CERFA) ne sont pas générés de la même façon.</p>
+      </div>
       <button class="dc-close" type="button" (click)="onCancel()">✕</button>
     </div>
 

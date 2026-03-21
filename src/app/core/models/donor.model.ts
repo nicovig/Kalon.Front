@@ -1,5 +1,8 @@
+export type DonorKind = 'individual' | 'company';
+
 export interface IDonor {
   id: string;
+  kind: DonorKind;
   firstname: string;
   lastname: string;
   email: string;
@@ -28,4 +31,6 @@ export interface IDonorEnterprise {
   name: string;
   siret: string;
   address: IDonorAddress;
+  contactFirstname?: string;
+  contactLastname?: string;
 }

@@ -1,1 +1,11 @@
-<textarea class="ia-textarea" [placeholder]="placeholder"></textarea>
+<textarea
+  class="kalon-textarea"
+  [class.kalon-textarea--dark]="variant === 'dark'"
+  [class.kalon-textarea--light]="variant === 'light'"
+  [attr.rows]="rows"
+  [attr.id]="id || null"
+  [attr.placeholder]="placeholder"
+  [value]="value"
+  (input)="onInput($any($event.target).value)"
+></textarea>
+

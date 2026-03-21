@@ -6,7 +6,7 @@ import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonComponent } from '../../layout/button/button.component';
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
-import { KalonTextareaComponent } from '../../layout/forms/textarea/kalon-textarea.component';
+import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 
 @Component({
   selector: 'reminder-page',
@@ -14,21 +14,23 @@ import { KalonTextareaComponent } from '../../layout/forms/textarea/kalon-textar
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent, KalonTextareaComponent]
+  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent, FormTextareaComponent]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
   private readonly iaAgent = inject(IaAgentCore);
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
-  protected placeholders: Record<string, string> = {
-    douce: 'Exemple : Relance douce après 12 mois d\'inactivité, mettre en avant l\'impact concret des dons…',
-    fidelisation: 'Exemple : Fidélisation après 5 ans de soutien, mettre en avant l\'impact concret des dons…',
-    remerciement: 'Exemple : Merci pour votre soutien, mettre en avant l\'impact concret des dons…',
-    urgence: 'Exemple : Projet urgent, mettre en avant l\'impact concret des dons…',
-    saisonnier: 'Exemple : Bonne année, mettre en avant l\'impact concret des dons…'
+  protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
+    douce:
+      "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons…",
+    fidelisation:
+      "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
+    remerciement: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
+    urgence: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",
+    saisonnier: 'Exemple : contexte de la période et prochaines actions à soutenir…'
   };
-  protected placeholder = this.placeholders['douce'];
+  protected iaContextPlaceholder = this.iaContextPlaceholders['douce'];
   protected activeStep: 1 | 2 | 3 = 1;
   protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
   protected mailBody = '<p>Bonjour {{prenom}},</p>';
@@ -143,20 +145,14 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     this.updateCounts();
   }
 
-  selectPreset(el: HTMLElement, type: string): void {
+  selectPreset(el: HTMLElement, tone: ReminderTemplateTone): void {
     document.querySelectorAll('.ia-preset').forEach((p) => p.classList.remove('sel'));
     el.classList.add('sel');
 
     const prompt = el.dataset['prompt'] ?? '';
     this.iaPrompt = prompt;
 
-    const textarea = document.getElementById('ia-context-textarea') as HTMLTextAreaElement | null;
-    if (textarea) {
-      textarea.value = prompt;
-      textarea.dispatchEvent(new Event('input'));
-    }
-    
-    this.placeholder = this.placeholders[type] ?? this.placeholders['douce'];
+    this.iaContextPlaceholder = this.iaContextPlaceholders[tone] ?? this.iaContextPlaceholders['douce'];
     this.cdr.markForCheck();
   }
 

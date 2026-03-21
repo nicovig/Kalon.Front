@@ -10,7 +10,6 @@
 @if (createModalOpen) {
   <donor-create-popup (closed)="closeCreateModal()"></donor-create-popup>
 }
-<!-- IMPORT BANNER -->
 <div class="import-banner">
   <span class="import-emoji">📂</span>
   <div class="import-body">
@@ -22,7 +21,6 @@
   <button-component type="import-pill">Importer maintenant →</button-component>
 </div>
 
-<!-- KPIs -->
 <div class="kpi-grid">
   <dashboard-card-component
     [type]="'violet'"
@@ -58,18 +56,19 @@
 <!-- CONTENT GRID -->
 <div class="content-grid">
   <!-- TABLE -->
-  <card title="Derniers dons" subtitle="187 donateurs au total">
+  <card
+    title="Derniers dons"
+    [subtitle]="latestDonations.length + ' derniers dons enregistrés'"
+  >
     <table-component
-      [rows]="latestDonorsComputed()"
-      [columns]="latestDonorsColumns"
+      [rows]="latestDonations"
+      [columns]="latestDonationsColumns"
       [pageSizeOptions]="[5, 10, 25]"
       [initialPageSize]="5"
     ></table-component>
   </card>
 
-  <!-- RIGHT COL -->
   <div class="right">
-    <!-- QUOTA -->
     <card variant="bare">
       <div class="quota-card">
         <div class="quota-top">
@@ -92,35 +91,6 @@
       </div>
     </card>
 
-    <!-- ACTIONS RAPIDES -->
-    <card title="Actions rapides" paddingClass="actions">
-      <div class="action-row">
-        <div class="act-ico" style="background: var(--pink-lt)">📣</div>
-        <div>
-          <div class="act-lbl">Envoyer une relance</div>
-          <div class="act-desc">34 donateurs à relancer</div>
-        </div>
-        <span class="act-arr">›</span>
-      </div>
-      <div class="action-row">
-        <div class="act-ico" style="background: var(--mint-lt)">🧾</div>
-        <div>
-          <div class="act-lbl">Générer les reçus fiscaux</div>
-          <div class="act-desc">45 reçus en attente</div>
-        </div>
-        <span class="act-arr">›</span>
-      </div>
-      <div class="action-row">
-        <div class="act-ico" style="background: var(--violet-lt)">📥</div>
-        <div>
-          <div class="act-lbl">Importer un fichier Excel</div>
-          <div class="act-desc">38 places restantes</div>
-        </div>
-        <span class="act-arr">›</span>
-      </div>
-    </card>
-
-    <!-- À RELANCER -->
     <card
       title="À relancer en priorité"
       subtitle="Sans don depuis plus d'un an"

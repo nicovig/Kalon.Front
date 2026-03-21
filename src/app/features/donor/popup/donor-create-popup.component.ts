@@ -25,14 +25,7 @@ export class DonorCreatePopupComponent {
   }
 
   onCreate(value: NewDonorFormValue): void {
-    this.donorStore.createDonor({
-      firstname: value.firstname,
-      lastname: value.lastname,
-      email: value.email,
-      phone: value.phone || undefined,
-      address: value.address,
-      enterprise: value.enterprise
-    });
+    this.donorStore.createDonor(value);
     this.close();
   }
 

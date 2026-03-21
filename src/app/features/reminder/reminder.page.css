@@ -389,10 +389,6 @@
   background: var(--yellow-lt);
   color: #8a6000;
 }
-.db-new {
-  background: var(--pink-lt);
-  color: var(--pink-dk);
-}
 .db-actif {
   background: var(--mint-lt);
   color: var(--mint-dk);
@@ -460,6 +456,8 @@
   gap: 14px;
   padding: 12px 26px 0;
   width: 100%;
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .btn-step {
@@ -475,14 +473,15 @@
   font-weight: 800;
   color: var(--ink-70);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   flex: 1;
   justify-content: center;
   min-width: 0;
 }
 
 .rp-steps button-component {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -490,12 +489,29 @@
 
 .rp-steps button-component .btn {
   width: 100%;
+  min-width: 0;
   justify-content: center;
 }
 
-#send-btn.btn-send {
+.rp-steps #send-btn.btn-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   white-space: nowrap;
   flex-wrap: nowrap;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 800;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(255, 77, 125, 0.45);
+}
+
+.send-step-label {
+  white-space: nowrap;
 }
 
 .btn-step:hover {
@@ -545,7 +561,9 @@
     font-size: 14px;
   }
 
-  #send-btn.btn-send {
+  .rp-steps #send-btn.btn-send {
+    padding: 10px 14px;
+    font-size: 13.5px;
     white-space: nowrap;
   }
 
@@ -553,6 +571,15 @@
     width: 26px;
     height: 26px;
   }
+}
+
+.rp-step-surface {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: min(520px, 68vh);
 }
 
 .rp-body {

@@ -57,9 +57,9 @@
         </td>
       </tr>
       <tr *ngIf="totalRows === 0">
-        <td colspan="5">
+        <td [attr.colspan]="columns.length || 1">
           <div class="empty">
-            <div class="empty-title">Aucun donateur trouvé</div>
+            <div class="empty-title">Aucun résultat</div>
             <div class="empty-sub">Ajustez votre recherche ou vérifiez vos filtres.</div>
           </div>
         </td>

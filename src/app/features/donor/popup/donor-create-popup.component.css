@@ -21,16 +21,33 @@
 
 .dc-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   padding: 18px 20px 10px;
+}
+
+.dc-head-text {
+  min-width: 0;
 }
 
 .dc-title {
   font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: var(--ink);
+}
+
+.dc-sub {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-70);
+  max-width: 100%;
 }
 
 .dc-close {
@@ -49,6 +66,6 @@
 }
 
 .dc-body {
-  padding: 10px 20px 20px;
+  padding: 8px 20px 24px;
 }
 
