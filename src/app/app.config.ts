@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideQuillConfig({
       customOptions: [{
         import: 'formats/font',
-        whitelist: ['firacode', 'roboto', 'serif', 'monospace']
+        whitelist: ['firacode', 'roboto', 'monospace']
       }]
     })
   ]

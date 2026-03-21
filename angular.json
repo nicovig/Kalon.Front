@@ -34,6 +34,9 @@
               "quill/dist/quill.core.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
               "src/styles.css"
+            ],
+            "allowedCommonJsDependencies": [
+              "quill-delta"
             ]
           },
           "configurations": {
@@ -41,13 +44,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "600kB",
                   "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "16kB",
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all"

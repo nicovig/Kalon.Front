@@ -80,19 +80,6 @@ body {
   content: 'Roboto';
 }
 
-/* Serif */
-[quill-editor-toolbar] .ql-font span[data-label="Serif"]::before {
-  font-family: "Serif";
-}
-
-.ql-font-serif {
-  font-family: "Serif";
-}
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value=serif]::before, .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=serif]::before {
-  content: 'Serif';
-}
-
 /* Monospace */
 [quill-editor-toolbar] .ql-font span[data-label="monospace"]::before {
   font-family: "monospace";

@@ -33,7 +33,7 @@ export class MailEditorComponent {
         [{ list: 'ordered' }, { list: 'bullet' }],
         [{ script: 'sub' }, { script: 'super' }],
         [{ direction: 'rtl' }],
-        [{ font: ['firacode', 'roboto', 'serif', 'monospace'] }],
+        [{ font: ['firacode', 'roboto', 'monospace'] }],
         [{ align: ['', 'center', 'right', 'justify'] }],
         ['clean'],
         ['link'],
@@ -45,7 +45,7 @@ export class MailEditorComponent {
   protected readonly customOptions = [
     {
       import: 'formats/font',
-      whitelist: ['mirza', 'roboto', 'aref', 'serif', 'sansserif', 'monospace']
+      whitelist: ['mirza', 'roboto', 'aref', 'sansserif', 'monospace']
     }
   ];
 
