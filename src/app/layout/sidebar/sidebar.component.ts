@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
@@ -41,6 +41,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   @Input() collapsed = false;
   @Output() toggle = new EventEmitter<void>();
+
+  protected readonly kpiToRemind = computed(() => 0);
 
   onAssoCardClick(event: MouseEvent): void {
     event.preventDefault();

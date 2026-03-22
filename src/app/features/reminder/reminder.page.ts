@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, AfterViewInit, OnInit, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  AfterViewInit,
+  OnInit,
+  ViewChild,
+  inject,
+  ChangeDetectorRef,
+  computed
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
@@ -7,6 +16,9 @@ import { ButtonLabelComponent } from '../../layout/button/button-label/button-la
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
+import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
+import { DonorStoreService } from '../donor/donor.store';
+import { donorDisplayName, IDonor } from '../../core/models/donor.model';
 
 @Component({
   selector: 'reminder-page',
@@ -14,12 +26,23 @@ import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonLabelComponent, MailEditorComponent, FormTextareaComponent]
+  imports: [
+    CommonModule,
+    ToastComponent,
+    TopbarComponent,
+    ButtonLabelComponent,
+    MailEditorComponent,
+    FormTextareaComponent,
+    EmptyDonorsWelcomeComponent
+  ]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;
   private readonly iaAgent = inject(IaAgentCore);
+  private readonly donorStore = inject(DonorStoreService);
   constructor(private readonly cdr: ChangeDetectorRef) {}
+
+  protected readonly donors = computed(() => this.donorStore.donors());
 
   protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
     douce:
@@ -50,7 +73,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     w.applyFilters = this.applyFilters.bind(this);
     w.insertVar = this.insertVar.bind(this);
     w.generateMail = this.generateMail.bind(this);
-    w.updatePreview = this.updatePreview.bind(this);
+    w.updatePreview = (v: string) => this.updatePreviewFromDom(v);
   }
 
   ngAfterViewInit(): void {
@@ -64,16 +87,58 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
       this.syncSlider(monthsVal.value);
     }
     this.updateCounts();
-    this.updatePreview(this.getPreviewSelectedValue());
+    const first = this.donorStore.donors()[0];
+    if (first) {
+      this.updatePreviewBody(first.id);
+    }
   }
 
   protected goToStep(step: 1 | 2 | 3): void {
     this.activeStep = step;
   }
 
-  private getPreviewSelectedValue(): string {
-    const select = document.querySelector('.preview-select') as HTMLSelectElement | null;
-    return select?.value ?? 'ML';
+  protected displayName(d: IDonor): string {
+    return donorDisplayName(d);
+  }
+
+  protected initials(d: IDonor): string {
+    if (d.kind === 'company' && d.enterprise?.name) {
+      const parts = d.enterprise.name.trim().split(/\s+/).filter(Boolean);
+      const a = parts[0]?.[0] ?? '';
+      const b = parts[1]?.[0] ?? parts[0]?.[1] ?? '';
+      return `${a}${b}`.toUpperCase().slice(0, 2) || '?';
+    }
+    const a = d.firstname?.trim()?.[0] ?? '';
+    const b = d.lastname?.trim()?.[0] ?? '';
+    return `${a}${b}`.toUpperCase() || '?';
+  }
+
+  protected donorMetaLine(d: IDonor): string {
+    if (!d.lastDonation) {
+      return `Aucun don enregistré · ${d.totalDonation} € au total`;
+    }
+    const when = d.lastDonation.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+    return `Dernier don : ${when} · ${d.totalDonation} €`;
+  }
+
+  protected monthsSinceLast(d: IDonor): number {
+    if (!d.lastDonation) {
+      return 0;
+    }
+    const now = new Date();
+    const from = d.lastDonation;
+    let m = (now.getFullYear() - from.getFullYear()) * 12;
+    m += now.getMonth() - from.getMonth();
+    return Math.max(0, m);
+  }
+
+  protected onPreviewDonorChange(event: Event): void {
+    const v = (event.target as HTMLSelectElement).value;
+    this.updatePreviewBody(v);
+  }
+
+  private updatePreviewFromDom(value: string): void {
+    this.updatePreviewBody(value);
   }
 
   private updateCounts(): void {
@@ -93,11 +158,13 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     if (recapDest) recapDest.textContent = String(this.selectedCount);
 
     const footerInfo = document.getElementById('footer-info');
-    if (footerInfo) footerInfo.textContent = `${this.selectedCount} donateurs sélectionnés sur 34`;
+    const total = this.donorStore.donors().length;
+    if (footerInfo) footerInfo.textContent = `${this.selectedCount} donateurs sélectionnés sur ${total}`;
 
     const recapStats = document.querySelectorAll('.recap-stat');
     const afterVal = recapStats[2]?.querySelector('.recap-val');
-    if (afterVal) afterVal.textContent = String(211 - this.selectedCount);
+    const planMails = 300;
+    if (afterVal) afterVal.textContent = String(Math.max(0, planMails - this.selectedCount));
   }
 
   toggleAdv(): void {
@@ -204,26 +271,26 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return 'douce';
   }
 
-  updatePreview(value: string): void {
+  private updatePreviewBody(donorId: string): void {
+    const d = this.donorStore.donors().find((x) => x.id === donorId);
     const container = document.getElementById('preview-body');
-    if (!container) return;
+    if (!container || !d) {
+      return;
+    }
 
-    const previewById: Record<
-      string,
-      { prenom: string; mois: string; dernier: string; nomAsso: string }
-    > = {
-      ML: { prenom: 'Marie-Laure', mois: '14', dernier: '320 €', nomAsso: 'Asso Parents d\'élèves' },
-      JD: { prenom: 'Jean', mois: '24', dernier: '80 €', nomAsso: 'Asso Parents d\'élèves' },
-      CM: { prenom: 'Chloé', mois: '18', dernier: '50 €', nomAsso: 'Asso Parents d\'élèves' },
-      PL: { prenom: 'Pierre', mois: '21', dernier: '150 €', nomAsso: 'Asso Parents d\'élèves' }
-    };
+    const prenom =
+      d.kind === 'company'
+        ? (d.enterprise?.contactFirstname?.trim() || d.firstname || 'vous')
+        : d.firstname.trim();
+    const mois = d.lastDonation ? String(this.monthsSinceLast(d)) : '—';
+    const dernier = `${d.totalDonation} €`;
+    const nomAsso = 'votre association';
 
-    const data = previewById[value] ?? previewById['ML'];
     const vars = container.querySelectorAll('.preview-var');
-    if (vars[0]) vars[0].textContent = data.prenom;
-    if (vars[1]) vars[1].textContent = `${data.mois} mois`;
-    if (vars[2]) vars[2].textContent = data.dernier;
-    if (vars[3]) vars[3].textContent = data.nomAsso;
+    if (vars[0]) vars[0].textContent = prenom;
+    if (vars[1]) vars[1].textContent = d.lastDonation ? `${mois} mois` : mois;
+    if (vars[2]) vars[2].textContent = dernier;
+    if (vars[3]) vars[3].textContent = nomAsso;
   }
 }
 

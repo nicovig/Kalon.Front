@@ -1,0 +1,32 @@
+.edw-emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.edw-sub {
+  margin-top: 8px;
+}
+
+.edw-line {
+  display: block;
+  margin-top: 8px;
+}
+
+.edw-body {
+  padding-top: 4px;
+}
+
+.edw-hint {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.edw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}

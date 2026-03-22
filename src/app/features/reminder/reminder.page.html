@@ -1,4 +1,5 @@
 <toast-component position="center-third"></toast-component>
+<empty-donors-welcome />
 <topbar [title]="'Les relances'" [subtitle]="'Gérez les relances de vos précieux donateurs'">
 </topbar>
 
@@ -10,7 +11,7 @@
       <div class="lp-header">
         <div class="lp-title">
           Sélectionner les destinataires
-          <span class="selected-count" id="sel-count">4 sélectionnés</span>
+          <span class="selected-count" id="sel-count">0 sélectionné</span>
         </div>
 
         <!-- Recherche -->
@@ -94,96 +95,29 @@
         </div>
       </div>
 
-      <!-- Liste -->
       <div class="donor-list" id="donor-list">
-        <div class="donor-item checked" onclick="toggleDonor(this)">
-          <div class="d-check">✓</div>
-          <div class="d-av da1">ML</div>
-          <div class="d-info">
-            <div class="d-name">Marie-Laure Fontaine</div>
-            <div class="d-meta">Dernier don : janv. 2024 · 320 €</div>
+        @if (donors().length === 0) {
+          <p class="donor-list-empty">Aucun donateur pour le moment. Créez ou importez des donateurs pour les relancer.</p>
+        }
+        @for (d of donors(); track d.id; let i = $index) {
+          <div class="donor-item" onclick="toggleDonor(this)">
+            <div class="d-check"></div>
+            <div [class]="'d-av da' + ((i % 7) + 1)">{{ initials(d) }}</div>
+            <div class="d-info">
+              <div class="d-name">{{ displayName(d) }}</div>
+              <div class="d-meta">{{ donorMetaLine(d) }}</div>
+            </div>
+            @if (d.statut === 'to_remind' && d.lastDonation) {
+              <span class="d-badge db-relance">{{ monthsSinceLast(d) }} mois</span>
+            } @else if (d.statut === 'active') {
+              <span class="d-badge db-actif">Actif</span>
+            } @else if (d.statut === 'new') {
+              <span class="d-badge db-actif">Nouveau</span>
+            } @else if (d.statut === 'inactive') {
+              <span class="d-badge db-relance">Inactif</span>
+            }
           </div>
-          <span class="d-badge db-relance">14 mois</span>
-        </div>
-
-        <div class="donor-item checked" onclick="toggleDonor(this)">
-          <div class="d-check">✓</div>
-          <div class="d-av da2">JD</div>
-          <div class="d-info">
-            <div class="d-name">Jean Dupont</div>
-            <div class="d-meta">Dernier don : mars 2023 · 80 €</div>
-          </div>
-          <span class="d-badge db-relance">24 mois</span>
-        </div>
-
-        <div class="donor-item" onclick="toggleDonor(this)">
-          <div class="d-check"></div>
-          <div class="d-av da3">SB</div>
-          <div class="d-info">
-            <div class="d-name">Sophie Bernard</div>
-            <div class="d-meta">Dernier don : mars 2025 · 50 €</div>
-          </div>
-        </div>
-
-        <div class="donor-item checked" onclick="toggleDonor(this)">
-          <div class="d-check">✓</div>
-          <div class="d-av da4">CM</div>
-          <div class="d-info">
-            <div class="d-name">Chloé Martin</div>
-            <div class="d-meta">Dernier don : juin 2023 · 200 €</div>
-          </div>
-          <span class="d-badge db-relance">21 mois</span>
-        </div>
-
-        <div class="donor-item checked" onclick="toggleDonor(this)">
-          <div class="d-check">✓</div>
-          <div class="d-av da5">PL</div>
-          <div class="d-info">
-            <div class="d-name">Pierre Leclerc</div>
-            <div class="d-meta">Dernier don : juin 2023 · 150 €</div>
-          </div>
-          <span class="d-badge db-relance">21 mois</span>
-        </div>
-
-        <div class="donor-item" onclick="toggleDonor(this)">
-          <div class="d-check"></div>
-          <div class="d-av da6">IM</div>
-          <div class="d-info">
-            <div class="d-name">Isabelle Moreau</div>
-            <div class="d-meta">Dernier don : fév. 2025 · 60 €</div>
-          </div>
-          <span class="d-badge db-actif">Actif</span>
-        </div>
-
-        <div class="donor-item" onclick="toggleDonor(this)">
-          <div class="d-check"></div>
-          <div class="d-av da7">TG</div>
-          <div class="d-info">
-            <div class="d-name">Thomas Garnier</div>
-            <div class="d-meta">Dernier don : oct. 2023 · 45 €</div>
-          </div>
-          <span class="d-badge db-relance">17 mois</span>
-        </div>
-
-        <div class="donor-item" onclick="toggleDonor(this)">
-          <div class="d-check"></div>
-          <div class="d-av da1">NR</div>
-          <div class="d-info">
-            <div class="d-name">Nathalie Rousseau</div>
-            <div class="d-meta">Dernier don : déc. 2023 · 100 €</div>
-          </div>
-          <span class="d-badge db-relance">15 mois</span>
-        </div>
-
-        <div class="donor-item" onclick="toggleDonor(this)">
-          <div class="d-check"></div>
-          <div class="d-av da3">AB</div>
-          <div class="d-info">
-            <div class="d-name">Alain Benoît</div>
-            <div class="d-meta">Dernier don : jan. 2023 · 75 €</div>
-          </div>
-          <span class="d-badge db-relance">26 mois</span>
-        </div>
+        }
       </div>
 
       <div class="lp-footer">
@@ -267,12 +201,15 @@
           <div class="preview-head">
             <div class="preview-ttl">👁 Aperçu pour</div>
             <div class="preview-donor">
-              <select class="preview-select" onchange="updatePreview(this.value)">
-                <option value="ML">Marie-Laure Fontaine</option>
-                <option value="JD">Jean Dupont</option>
-                <option value="CM">Chloé Martin</option>
-                <option value="PL">Pierre Leclerc</option>
-              </select>
+              @if (donors().length) {
+                <select class="preview-select" (change)="onPreviewDonorChange($event)">
+                  @for (d of donors(); track d.id) {
+                    <option [value]="d.id">{{ displayName(d) }}</option>
+                  }
+                </select>
+              } @else {
+                <span class="preview-donor-empty">—</span>
+              }
             </div>
           </div>
           <div class="preview-body" id="preview-body">
@@ -297,7 +234,7 @@
           </div>
           <div class="recap-sep"></div>
           <div class="recap-stat">
-            <div class="recap-val">211</div>
+            <div class="recap-val">300</div>
             <div class="recap-lbl">mails restants</div>
           </div>
           <div class="recap-sep"></div>

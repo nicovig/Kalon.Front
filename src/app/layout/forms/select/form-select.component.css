@@ -1,0 +1,62 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.fs {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.fs-label {
+  display: block;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-70);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.fs-field {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.fs-select {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--ink);
+  background: white;
+  outline: none;
+  cursor: pointer;
+}
+
+.fs-select:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 1px rgba(255, 77, 125, 0.2);
+}
+
+.fs--warn .fs-select {
+  border-color: var(--yellow);
+  background: #fffef8;
+}
+
+.fs--no-label .fs-field {
+  flex: 1 1 auto;
+}

@@ -1,0 +1,96 @@
+:host {
+  display: block;
+}
+
+.iob-help {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--violet-lt) 0%, var(--pink-lt) 100%);
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: var(--sh-sm);
+  margin-top: 12px;
+}
+
+.iob-help-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.iob-help-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.iob-help-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.iob-help-lead {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.iob-help-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iob-help-steps li {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.iob-help-details {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(74, 29, 150, 0.12);
+}
+
+.iob-help-details summary {
+  cursor: pointer;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--violet-md);
+  list-style: none;
+}
+
+.iob-help-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.iob-help-details summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.iob-help-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.iob-help-tips {
+  margin: 10px 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-70);
+}
+
+.iob-help-tips li {
+  margin-bottom: 6px;
+}

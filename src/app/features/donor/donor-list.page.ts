@@ -4,6 +4,7 @@ import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { TableComponent, TableColumn } from '../../layout/table/table.component';
 import { IDonor } from '../../core/models/donor.model';
 import { DonorCreateLauncherComponent } from './donor-create-launcher.component';
+import { EmptyDonorsWelcomeComponent } from './empty-donors-welcome/empty-donors-welcome.component';
 import { ImportDonorBannerComponent } from '../import/import-donor-banner/import-donor-banner.component';
 import { DonorDonationsPopupComponent } from './popup/donor-donations/donor-donations-popup.component';
 import { EditDonorPopupComponent } from './popup/edit-donor/edit-donor-popup.component';
@@ -20,6 +21,7 @@ import { DonorStoreService } from './donor.store';
     TopbarComponent,
     TableComponent,
     DonorCreateLauncherComponent,
+    EmptyDonorsWelcomeComponent,
     EditDonorPopupComponent,
     DonorDonationsPopupComponent,
     ImportDonorBannerComponent

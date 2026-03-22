@@ -281,6 +281,20 @@
   border-radius: 2px;
 }
 
+.donor-list-empty {
+  margin: 0;
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.preview-donor-empty {
+  font-size: 14px;
+  color: var(--ink-70);
+  padding: 6px 0;
+}
+
 .donor-item {
   display: flex;
   align-items: center;

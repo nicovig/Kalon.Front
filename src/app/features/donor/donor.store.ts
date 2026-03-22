@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
 import { DonorKind, IDonor, IDonorAddress, IDonorEnterprise } from '../../core/models/donor.model';
-import { DASHBOARD_LATEST_DONORS } from '../dashboard/mock-data';
 
 export interface NewDonorInputIndividual {
   kind: 'individual';
@@ -22,10 +21,18 @@ export type NewDonorInput = NewDonorInputIndividual | NewDonorInputCompany;
 
 @Injectable({ providedIn: 'root' })
 export class DonorStoreService {
-  private readonly donorsSignal = signal<IDonor[]>(DASHBOARD_LATEST_DONORS);
+  private readonly donorsSignal = signal<IDonor[]>([]);
 
   donors(): IDonor[] {
     return this.donorsSignal();
+  }
+
+  findDonorByEmail(email: string): IDonor | undefined {
+    const e = email.trim().toLowerCase();
+    if (!e) {
+      return undefined;
+    }
+    return this.donorsSignal().find((d) => d.email.toLowerCase() === e);
   }
 
   createDonor(input: NewDonorInput): IDonor {

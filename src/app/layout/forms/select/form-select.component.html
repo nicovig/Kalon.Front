@@ -1,0 +1,19 @@
+<div class="fs" [class.fs--no-label]="!label" [class.fs--warn]="variant === 'warn'">
+  @if (label) {
+    <span class="fs-label">{{ label }}</span>
+  }
+  <div class="fs-field">
+    <select
+      class="fs-select"
+      [disabled]="disabled"
+      [attr.aria-invalid]="invalid ? 'true' : null"
+      [ngModel]="innerValue"
+      (ngModelChange)="onSelectChange($event)"
+      (blur)="onBlur()"
+    >
+      @for (opt of options; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+  </div>
+</div>

@@ -125,6 +125,14 @@ import-donor-banner {
   background: var(--mint);
 }
 
+.relance-empty {
+  margin: 0;
+  padding: 8px 0 4px;
+  font-size: 13px;
+  color: var(--ink-70);
+  line-height: 1.45;
+}
+
 .relance-row {
   display: flex;
   align-items: center;

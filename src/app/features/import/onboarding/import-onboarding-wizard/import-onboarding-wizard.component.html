@@ -1,0 +1,53 @@
+<section class="iob" aria-labelledby="iob-title">
+  <div class="iob-viewport">
+    <div class="iob-track" [class.iob-track--file]="step() === 'file'">
+      <div class="iob-panel iob-panel--type">
+        <p class="iob-trail" aria-hidden="true">
+          <span class="iob-trail-i" [class.iob-trail-i--on]="step() === 'type'">1 · Type</span>
+          <span class="iob-trail-arr">→</span>
+          <span class="iob-trail-i" [class.iob-trail-i--on]="step() === 'file'">2 · Fichier</span>
+          <span class="iob-trail-arr">→</span>
+          <span class="iob-trail-i iob-trail-i--muted">3 · Colonnes</span>
+        </p>
+
+        <h2 id="iob-title" class="iob-title">Par quoi commencer ?</h2>
+        <p class="iob-lead">
+          Faites défiler le carrousel, puis validez pour passer à l’envoi du fichier.
+        </p>
+
+        <import-type-carousel [mode]="mode()" (modeChange)="onModeChange($event)" />
+
+        <div class="iob-actions">
+          <button-label-component type="primary" (click)="goToFileStep()">Continuer</button-label-component>
+        </div>
+      </div>
+
+      <div class="iob-panel iob-panel--file">
+        <p class="iob-trail iob-trail--sub" aria-hidden="true">
+          <span class="iob-trail-i iob-trail-i--muted">1 · Type</span>
+          <span class="iob-trail-arr">→</span>
+          <span class="iob-trail-i iob-trail-i--on">2 · Fichier</span>
+          <span class="iob-trail-arr">→</span>
+          <span class="iob-trail-i iob-trail-i--muted">3 · Colonnes</span>
+        </p>
+
+        <h2 class="iob-title iob-title--file">Déposez votre fichier</h2>
+        <p class="iob-lead iob-lead--file">CSV ou Excel — la lecture est automatique.</p>
+
+        <div class="iob-drop">
+          @if (parsing()) {
+            <div class="iob-loader">
+              <inline-loader size="lg" label="Lecture de votre fichier…" />
+            </div>
+          } @else {
+            <import-donor-banner variant="xxl" [navigate]="false" (fileSelected)="onFile($event)" />
+          }
+        </div>
+
+        <div class="iob-back">
+          <button-label-component type="ghost" (click)="goBackToType()">← Retour au choix du type</button-label-component>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

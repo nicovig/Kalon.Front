@@ -1,13 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { IDonation } from '../../core/models/donation.model';
 import { donorDisplayName, IDonor } from '../../core/models/donor.model';
-import { DASHBOARD_LATEST_DONATIONS } from '../dashboard/mock-data';
 import { DonorStoreService } from '../donor/donor.store';
 
 @Injectable({ providedIn: 'root' })
 export class DonationStoreService {
   private readonly donorStore = inject(DonorStoreService);
-  private readonly donationsSignal = signal<IDonation[]>([...DASHBOARD_LATEST_DONATIONS]);
+  private readonly donationsSignal = signal<IDonation[]>([]);
 
   readonly donationsRead = this.donationsSignal.asReadonly();
 

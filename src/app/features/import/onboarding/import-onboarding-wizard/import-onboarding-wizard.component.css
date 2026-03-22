@@ -1,0 +1,138 @@
+:host {
+  display: block;
+}
+
+.iob {
+  padding: 4px 0 0;
+}
+
+.iob-viewport {
+  overflow: hidden;
+  width: 100%;
+  border-radius: var(--r-lg);
+}
+
+.iob-track {
+  display: flex;
+  flex-direction: row;
+  width: 200%;
+  transition: transform 0.45s cubic-bezier(0.33, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.iob-track--file {
+  transform: translateX(-50%);
+}
+
+.iob-panel {
+  flex: 0 0 50%;
+  width: 50%;
+  box-sizing: border-box;
+  padding: 0 4px;
+  min-width: 0;
+}
+
+.iob-panel--type {
+  padding-bottom: 8px;
+  min-height: min(72vh, 620px);
+}
+
+.iob-panel--file {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.iob-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  margin: 0 0 14px;
+}
+
+.iob-trail--sub {
+  margin-bottom: 10px;
+}
+
+.iob-trail-arr {
+  opacity: 0.35;
+  user-select: none;
+}
+
+.iob-trail-i--on {
+  color: var(--violet);
+  font-weight: 700;
+}
+
+.iob-trail-i--muted {
+  opacity: 0.4;
+}
+
+.iob-title {
+  font-family: var(--font-title);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 8px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.iob-title--file {
+  margin-top: 4px;
+}
+
+.iob-lead {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--ink-70);
+  margin: 0 auto 18px;
+  max-width: 26rem;
+  line-height: 1.45;
+}
+
+.iob-lead--file {
+  margin-bottom: 14px;
+}
+
+.iob-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.iob-drop {
+  flex: 1;
+  min-height: min(52vh, 480px);
+  display: flex;
+  flex-direction: column;
+}
+
+.iob-loader {
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px dashed var(--violet-md);
+  border-radius: var(--r-lg);
+  padding: 32px;
+}
+
+.iob-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iob-track {
+    transition: none;
+  }
+}

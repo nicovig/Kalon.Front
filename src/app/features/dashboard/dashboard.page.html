@@ -1,4 +1,5 @@
 <toast-component position="center-third"></toast-component>
+<empty-donors-welcome />
 <topbar
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
@@ -11,31 +12,31 @@
 <div class="kpi-grid">
   <dashboard-card-component
     [type]="'violet'"
-    [value]="187"
+    [value]="kpiActiveDonors()"
     [label]="'Donateurs actifs'"
-    [helper]="'↑ +12 ce mois'"
+    [helper]="'Statut actif dans Kalon'"
     [icon]="'👥'"
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'pink'"
-    [value]="4320"
+    [value]="kpiYearDonationsTotal()"
     [label]="'Dons cette année'"
-    [helper]="'↑ +8% vs. 2024'"
+    [helper]="'Total enregistré depuis le 1er janvier'"
     [icon]="'💶'"
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'yellow'"
-    [value]="34"
+    [value]="kpiToRemind()"
     [label]="'À relancer'"
     chip="warn"
-    [helper]="'⚠ +12 mois sans don'"
+    [helper]="'Statut « à relancer »'"
     [icon]="'⏳'"
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'mint'"
-    [value]="142"
+    [value]="kpiReceipts"
     [label]="'Reçus générés'"
-    [helper]="'↑ À jour'"
+    [helper]="'Bientôt disponible'"
     [icon]="'🧾'"
   ></dashboard-card-component>
 </div>
@@ -64,16 +65,20 @@
           <span class="plan-pill">Basic</span>
         </div>
         <div class="q-item">
-          <div class="q-lbl"><span>Donateurs</span><span>187 / 300</span></div>
-          <div class="q-bar"><div class="q-fill fill-pink" style="width: 62%"></div></div>
+          <div class="q-lbl">
+            <span>Donateurs</span><span>{{ donorCount() }} / 300</span>
+          </div>
+          <div class="q-bar">
+            <div class="q-fill fill-pink" [style.width.%]="quotaDonorsPct()"></div>
+          </div>
         </div>
         <div class="q-item">
-          <div class="q-lbl"><span>Mails envoyés</span><span>89 / 300</span></div>
-          <div class="q-bar"><div class="q-fill fill-yellow" style="width: 30%"></div></div>
+          <div class="q-lbl"><span>Mails envoyés</span><span>{{ emailSentCount() }} / 300</span></div>
+          <div class="q-bar"><div class="q-fill fill-yellow" [style.width.%]="emailSentQuotaPct()"></div></div>
         </div>
         <div class="q-item">
-          <div class="q-lbl"><span>Import Excel</span><span>112 / 150</span></div>
-          <div class="q-bar"><div class="q-fill fill-mint" style="width: 75%"></div></div>
+          <div class="q-lbl"><span>Import de données</span><span>{{ importCount() }} / 150</span></div>
+          <div class="q-bar"><div class="q-fill fill-mint" [style.width.%]="importQuotaPct()"></div></div>
         </div>
         <button-label-component type="upgrade">⭐ Passer au Premium</button-label-component>
       </div>
@@ -81,41 +86,29 @@
 
     <card
       title="À relancer en priorité"
-      subtitle="Sans don depuis plus d'un an"
+      subtitle="Donateurs au statut « à relancer »"
       paddingClass="advanced"
     >
-      <div class="relance-row">
-        <div class="r-dot" style="background: var(--pink)"></div>
-        <div>
-          <div class="r-name">Jean Dupont</div>
-          <div class="r-since">Dernier don il y a 24 mois</div>
-        </div>
-        <div class="r-amt">80 €</div>
-      </div>
-      <div class="relance-row">
-        <div class="r-dot" style="background: var(--yellow)"></div>
-        <div>
-          <div class="r-name">Pierre Leclerc</div>
-          <div class="r-since">Dernier don il y a 21 mois</div>
-        </div>
-        <div class="r-amt">150 €</div>
-      </div>
-      <div class="relance-row">
-        <div class="r-dot" style="background: var(--yellow)"></div>
-        <div>
-          <div class="r-name">Isabelle Moreau</div>
-          <div class="r-since">Dernier don il y a 18 mois</div>
-        </div>
-        <div class="r-amt">60 €</div>
-      </div>
-      <div class="relance-row">
-        <div class="r-dot" style="background: var(--ink-30)"></div>
-        <div>
-          <div class="r-name">Thomas Garnier</div>
-          <div class="r-since">Dernier don il y a 15 mois</div>
-        </div>
-        <div class="r-amt">45 €</div>
-      </div>
+      @if (priorityRelanceDonors().length === 0) {
+        <p class="relance-empty">Aucun donateur à relancer pour le moment.</p>
+      } @else {
+        @for (d of priorityRelanceDonors(); track d.id) {
+          <div class="relance-row">
+            <div class="r-dot" style="background: var(--yellow)"></div>
+            <div>
+              <div class="r-name">{{ donorLabel(d) }}</div>
+              <div class="r-since">
+                @if (d.lastDonation) {
+                  Dernier don il y a {{ monthsSinceLastDonation(d) }} mois
+                } @else {
+                  Aucun don enregistré
+                }
+              </div>
+            </div>
+            <div class="r-amt">{{ d.totalDonation }} €</div>
+          </div>
+        }
+      }
     </card>
   </div>
 </div>
