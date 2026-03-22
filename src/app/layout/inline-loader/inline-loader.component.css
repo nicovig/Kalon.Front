@@ -1,0 +1,47 @@
+:host {
+  display: inline-flex;
+}
+
+.il {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-70);
+}
+
+.il--lg {
+  flex-direction: column;
+  gap: 16px;
+  font-size: 1.05rem;
+}
+
+.il-spin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--ink-10);
+  border-top-color: var(--violet-md);
+  animation: il-rot 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+.il--lg .il-spin {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+.il-label {
+  text-align: center;
+  max-width: 28rem;
+  line-height: 1.4;
+}
+
+@keyframes il-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,22 @@
+<input
+  #fileInput
+  type="file"
+  class="fd-input"
+  accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+  (change)="onInputChange($event)"
+/>
+
+<button
+  type="button"
+  class="fd-zone"
+  [class.fd-zone--inline]="inline"
+  [class.fd-zone--active]="dragOver"
+  (click)="openPicker()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <span class="fd-icon" aria-hidden="true">📂</span>
+  <span class="fd-title">Déposez votre fichier ici</span>
+  <span class="fd-hint">Excel (.xlsx, .xls) ou CSV — ou cliquez pour parcourir</span>
+</button>

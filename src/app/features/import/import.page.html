@@ -1,0 +1,215 @@
+<toast-component position="center-third"></toast-component>
+<topbar
+  [title]="'Import de données'"
+  [subtitle]="'Déposez votre fichier pour relier chaque colonne à Kalon, sans ressaisir les données'"
+></topbar>
+
+<div class="import-shell" [class.import-shell--empty]="!fileName()">
+  <div class="imp-help" role="region" aria-labelledby="imp-help-title">
+    <div class="imp-help-head">
+      <span class="imp-help-icon" aria-hidden="true">💡</span>
+      <div>
+        <div id="imp-help-title" class="imp-help-title">Comment ça marche ?</div>
+        <p class="imp-help-lead">
+          Pas besoin de maîtriser Excel : vous indiquez simplement à quoi correspond chaque colonne
+          de votre fichier.
+        </p>
+      </div>
+    </div>
+    <ol class="imp-help-steps">
+      <li>
+        <span class="imp-help-step-num">1</span>
+        <span
+          ><strong>À gauche</strong>, vous
+          @if (!fileName()) {
+            reconnaîtrez
+          } @else {
+            reconnaissez
+          }
+          les titres de colonnes de votre fichier - souvent la première ligne.</span
+        >
+      </li>
+      <li>
+        <span class="imp-help-step-num">2</span>
+        <span
+          ><strong>À droite</strong>, vous 
+          @if (!fileName()) {
+            choisirez
+          } @else {
+            choisissez
+          }
+          le champ Kalon correspondant : nom, email,
+          téléphone, etc.</span
+        >
+      </li>
+      <li>
+        <span class="imp-help-step-num">3</span>
+        <span
+          ><strong>L’aperçu</strong> se met à jour tout seul : vous           
+          @if (!fileName()) {
+            verrez
+          } @else {
+            voyez
+          }          
+          tout de suite si les
+          bonnes informations se retrouvent au bon endroit.</span
+        >
+      </li>
+    </ol>
+    <details class="imp-help-details">
+      <summary>Conseils utiles</summary>
+      <ul class="imp-help-tips">
+        <li>Une colonne inutile ? Choisissez « Ignorer » dans la liste.</li>
+        <li>
+          Si vous ne savez pas quoi choisir, laissez notre détection automatique ou testez une autre
+          option et regardez l’aperçu.
+        </li>
+        <li>
+          Plusieurs colonnes pour la même chose (par exemple deux colonnes « email ») ? Un message
+          vous le signale : gardez une seule colonne active ou changez les choix pour éviter les
+          doublons.
+        </li>
+      </ul>
+    </details>
+  </div>
+
+  @if (!fileName()) {
+    <div class="imp-empty-hero">
+      @if (importFlow.parsing()) {
+        <div class="imp-empty-loader">
+          <inline-loader size="lg" label="Lecture de votre fichier…" />
+        </div>
+      } @else {
+        <import-donor-banner
+          variant="xxl"
+          [navigate]="false"
+          (fileSelected)="onDroppedFile($event)"
+        />
+      }
+    </div>
+  } @else {
+    <div class="imp-toolbar">
+      <div class="imp-file-pill">
+        <span class="imp-file-name">{{ fileName() }}</span>
+        @if (sheetName()) {
+          <span class="imp-sheet">Feuille : {{ sheetName() }}</span>
+        }
+        <span class="imp-rows">{{ rowCount() }} ligne(s) de données</span>
+      </div>
+      <div class="imp-toolbar-actions">
+        <button-label-component type="ghost" (click)="reapplyGuess()"
+          >Ré-détecter les colonnes</button-label-component
+        >
+        <button-label-component type="ghost" (click)="clearAndRestart()"
+          >Changer de fichier</button-label-component
+        >
+      </div>
+    </div>
+
+    <div class="imp-workspace">
+      <div class="imp-main">
+        @if (duplicateFieldSummaries().length) {
+          <div class="imp-dup-alert" role="alert">
+            <span class="imp-dup-alert-icon" aria-hidden="true">⚠️</span>
+            <div class="imp-dup-alert-body">
+              <strong>Même champ Kalon choisi plusieurs fois</strong>
+              <p>
+                Pour l’aperçu, lorsque deux colonnes pointent vers le même champ,
+                <strong>c’est la valeur la plus à droite dans votre fichier</strong> qui est
+                utilisée. Ajustez les listes ci-dessous pour n’avoir qu’une seule colonne par
+                information, ou ignorez les colonnes en trop.
+              </p>
+              <ul class="imp-dup-list">
+                @for (d of duplicateFieldSummaries(); track d.key) {
+                  <li>
+                    <span class="imp-dup-pill">{{ d.label }}</span>
+                    utilisé {{ d.count }} fois
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
+
+        <card
+          title="Relier vos colonnes à Kalon"
+          subtitle="Une ligne par colonne de votre fichier : à gauche le nom dans le fichier, à droite le champ dans Kalon"
+          paddingClass="advanced"
+        >
+          <div class="imp-map-grid">
+            @for (h of headers(); track $index) {
+              <div class="imp-map-row" [class.imp-map-row--dup]="duplicateRowIndices().has($index)">
+                <div class="imp-src">
+                  <span class="imp-src-label">Dans votre fichier</span>
+                  <span class="imp-src-val" [title]="h">{{ h || '(sans titre)' }}</span>
+                </div>
+                <span class="imp-arrow" aria-hidden="true">→</span>
+                <div class="imp-target">
+                  <span class="imp-src-label">Dans Kalon</span>
+                  <select
+                    class="imp-select"
+                    [class.imp-select--dup]="duplicateRowIndices().has($index)"
+                    [ngModel]="bindings()[$index]"
+                    (ngModelChange)="onBindingChange($index, $event)"
+                    [attr.aria-invalid]="duplicateRowIndices().has($index) ? 'true' : null"
+                  >
+                    @for (opt of fieldOptions; track opt.key) {
+                      <option [ngValue]="opt.key">{{ opt.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
+          </div>
+        </card>
+
+        <div class="imp-footer">
+          <button-label-component
+            type="primary"
+            [disabled]="true"
+            title="Étape suivante bientôt disponible"
+            >Importer dans Kalon</button-label-component
+          >
+        </div>
+      </div>
+
+      <aside class="imp-preview-aside" aria-labelledby="imp-preview-title">
+        <div class="imp-preview-sticky">
+          <div class="imp-preview-card">
+            <div class="imp-preview-head">
+              <div id="imp-preview-title" class="imp-preview-title">Aperçu en direct</div>
+              <p class="imp-preview-sub">
+                {{ previewRows().length }} ligne(s) d’exemple — ce que Kalon comprendra une fois
+                l’import terminé
+              </p>
+            </div>
+            <div class="imp-preview-wrap">
+              <table class="imp-preview-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Adresse</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of previewRows(); track $index) {
+                    <tr>
+                      <td>{{ p.lastname || '—' }}</td>
+                      <td>{{ p.firstname || '—' }}</td>
+                      <td>{{ p.email || '—' }}</td>
+                      <td>{{ p.phone || '—' }}</td>
+                      <td>{{ p.address || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</div>

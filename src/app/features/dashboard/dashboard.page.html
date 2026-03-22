@@ -3,20 +3,10 @@
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
-  <button-label-component type="ghost">📥 Importer Excel</button-label-component>
   <donor-create-launcher></donor-create-launcher>
 </topbar>
 
-<div class="import-banner">
-  <span class="import-emoji">📂</span>
-  <div class="import-body">
-    <strong>Importez vos donateurs depuis Excel en un clic</strong>
-    <span
-      >Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span
-    >
-  </div>
-  <button-label-component type="import-pill">Importer maintenant →</button-label-component>
-</div>
+<import-donor-banner />
 
 <div class="kpi-grid">
   <dashboard-card-component
@@ -92,7 +82,7 @@
     <card
       title="À relancer en priorité"
       subtitle="Sans don depuis plus d'un an"
-      paddingClass="reminders"
+      paddingClass="advanced"
     >
       <div class="relance-row">
         <div class="r-dot" style="background: var(--pink)"></div>

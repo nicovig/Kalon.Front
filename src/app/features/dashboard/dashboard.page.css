@@ -1,51 +1,5 @@
-/* ══ IMPORT BANNER ══ */
-.import-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: white;
-  border: 2px dashed var(--violet-md);
-  border-radius: var(--r-lg);
-  padding: 16px 22px;
+import-donor-banner {
   margin-bottom: 22px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.import-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(74, 29, 150, 0.03), rgba(255, 77, 125, 0.03));
-  pointer-events: none;
-}
-
-.import-banner:hover {
-  border-style: solid;
-  box-shadow: var(--sh-sm);
-}
-
-.import-emoji {
-  font-size: 26px;
-  flex-shrink: 0;
-}
-
-.import-body strong {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-  display: block;
-  font-family: var(--font-title);
-}
-
-.import-body span {
-  font-size: 13px;
-  color: var(--ink-70);
 }
 
 .kpi-grid {

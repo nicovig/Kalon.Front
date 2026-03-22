@@ -8,6 +8,7 @@ import { CardComponent } from '../../layout/card/card.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { DonationStoreService } from '../donation/donation.store';
 import { DonorCreateLauncherComponent } from '../donor/donor-create-launcher.component';
+import { ImportDonorBannerComponent } from '../import/import-donor-banner/import-donor-banner.component';
 
 @Component({
   selector: 'dashboard-page',
@@ -22,7 +23,8 @@ import { DonorCreateLauncherComponent } from '../donor/donor-create-launcher.com
     ToastComponent,
     TopbarComponent,
     CardComponent,
-    DonorCreateLauncherComponent
+    DonorCreateLauncherComponent,
+    ImportDonorBannerComponent
   ]
 })
 export class DashboardPageComponent {

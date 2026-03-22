@@ -1,21 +1,24 @@
-<toast-component position="center-third"></toast-component>
-<topbar
-  [title]="'Les donateurs'"
-  [subtitle]="'Gérez vos donateurs avec facilité'"
->
-  <button-label-component type="ghost">📥 Importer Excel</button-label-component>
-  <donor-create-launcher></donor-create-launcher>
-</topbar>
+<div class="donor-list-page">
+  <toast-component position="center-third"></toast-component>
+  <topbar
+    [title]="'Les donateurs'"
+    [subtitle]="'Gérez vos donateurs avec facilité'"
+  >
+    <donor-create-launcher></donor-create-launcher>
+  </topbar>
 
-<table-component
-  [rows]="donorsComputed()"
-  [columns]="donorColumns"
-  [pageSizeOptions]="[25, 50, 100]"
-  [initialPageSize]="25"
-  [showRowActions]="true"
-  (rowEdit)="onEditDonor($event)"
-  (rowViewDonations)="onViewDonations($event)"
-></table-component>
+  <import-donor-banner />
+
+  <table-component
+    [rows]="donorsComputed()"
+    [columns]="donorColumns"
+    [pageSizeOptions]="[25, 50, 100]"
+    [initialPageSize]="25"
+    [showRowActions]="true"
+    (rowEdit)="onEditDonor($event)"
+    (rowViewDonations)="onViewDonations($event)"
+  ></table-component>
+</div>
 
 @if (donorToEdit(); as d) {
   <edit-donor-popup [donor]="d" (closed)="closeEditDonor()" />
