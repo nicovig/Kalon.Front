@@ -1,0 +1,27 @@
+.fd-wrap {
+  min-width: 0;
+}
+
+.fd-input {
+  width: 100%;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  background: var(--white);
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.fd-input:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 1px rgba(255, 77, 125, 0.25);
+  background: var(--pink-lt);
+}
+
+.fd-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

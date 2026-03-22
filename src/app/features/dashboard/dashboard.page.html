@@ -3,13 +3,10 @@
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
-  <button-component type="ghost">📥 Importer Excel</button-component>
-  <button-component type="primary" (click)="openCreateModal()">+ Nouveau donateur</button-component>
+  <button-label-component type="ghost">📥 Importer Excel</button-label-component>
+  <donor-create-launcher></donor-create-launcher>
 </topbar>
 
-@if (createModalOpen) {
-  <donor-create-popup (closed)="closeCreateModal()"></donor-create-popup>
-}
 <div class="import-banner">
   <span class="import-emoji">📂</span>
   <div class="import-body">
@@ -18,7 +15,7 @@
       >Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span
     >
   </div>
-  <button-component type="import-pill">Importer maintenant →</button-component>
+  <button-label-component type="import-pill">Importer maintenant →</button-label-component>
 </div>
 
 <div class="kpi-grid">
@@ -58,13 +55,14 @@
   <!-- TABLE -->
   <card
     title="Derniers dons"
-    [subtitle]="latestDonations.length + ' derniers dons enregistrés'"
+    [subtitle]="latestDonationsComputed().length + ' derniers dons enregistrés'"
   >
     <table-component
-      [rows]="latestDonations"
+      [rows]="latestDonationsComputed()"
       [columns]="latestDonationsColumns"
       [pageSizeOptions]="[5, 10, 25]"
       [initialPageSize]="5"
+      [clickableRows]="false"
     ></table-component>
   </card>
 
@@ -87,7 +85,7 @@
           <div class="q-lbl"><span>Import Excel</span><span>112 / 150</span></div>
           <div class="q-bar"><div class="q-fill fill-mint" style="width: 75%"></div></div>
         </div>
-        <button-component type="upgrade">⭐ Passer au Premium</button-component>
+        <button-label-component type="upgrade">⭐ Passer au Premium</button-label-component>
       </div>
     </card>
 

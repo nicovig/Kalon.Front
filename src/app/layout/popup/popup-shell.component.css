@@ -1,17 +1,15 @@
-.dc-overlay {
+.app-popup-overlay {
   position: fixed;
   inset: 0;
   background: rgba(26, 22, 37, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
   padding: 16px;
 }
 
-.dc-modal {
+.app-popup-modal {
   width: 100%;
-  max-width: 760px;
   background: var(--white);
   border: 2px solid var(--ink-10);
   border-radius: var(--r-lg);
@@ -19,7 +17,7 @@
   overflow: hidden;
 }
 
-.dc-head {
+.app-popup-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -27,20 +25,20 @@
   padding: 18px 20px 10px;
 }
 
-.dc-head-text {
+.app-popup-head-text {
   min-width: 0;
 }
 
-.dc-title {
+:host ::ng-deep [popup-header] .app-popup-title {
   font-family: var(--font-title);
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--ink);
 }
 
-.dc-sub {
+:host ::ng-deep [popup-header] .app-popup-sub {
   margin: 10px 0 0;
   font-family: var(--font-body);
   font-size: 0.95rem;
@@ -50,7 +48,7 @@
   max-width: 100%;
 }
 
-.dc-close {
+.app-popup-close {
   appearance: none;
   border: none;
   background: transparent;
@@ -61,11 +59,10 @@
   padding: 6px;
 }
 
-.dc-close:hover {
+.app-popup-close:hover {
   color: var(--ink);
 }
 
-.dc-body {
+.app-popup-body {
   padding: 8px 20px 24px;
 }
-

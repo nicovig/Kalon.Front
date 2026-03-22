@@ -88,8 +88,8 @@
             </select>
           </div>
 
-          <button-component type="adv-apply" (click)="applyFilters()"
-            >Appliquer les filtres →</button-component
+          <button-label-component type="adv-apply" (click)="applyFilters()"
+            >Appliquer les filtres →</button-label-component
           >
         </div>
       </div>
@@ -202,22 +202,22 @@
       </div>
 
       <div class="rp-steps">
-        <button-component type="step" [active]="activeStep === 1" (click)="goToStep(1)">
+        <button-label-component type="step" [active]="activeStep === 1" (click)="goToStep(1)">
           <span class="step-index">1</span>
           <span class="step-label">Générer</span>
-        </button-component>
-        <button-component type="step" [active]="activeStep === 2" (click)="goToStep(2)">
+        </button-label-component>
+        <button-label-component type="step" [active]="activeStep === 2" (click)="goToStep(2)">
           <span class="step-index">2</span>
           <span class="step-label">Relire &amp; ajuster</span>
-        </button-component>
-        <button-component type="step" [active]="activeStep === 3" (click)="goToStep(3)">
+        </button-label-component>
+        <button-label-component type="step" [active]="activeStep === 3" (click)="goToStep(3)">
           <span class="step-index">3</span>
           <span class="step-label">Aperçu &amp; envoi</span>
-        </button-component>
-        <button-component *ngIf="activeStep === 3" type="send" id="send-btn">
+        </button-label-component>
+        <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn">
           <span class="step-index" id="send-count">4</span>
           <span class="send-step-label">Envoyer à <span id="send-count-2">4</span> donateurs 💌</span>
-        </button-component>
+        </button-label-component>
       </div>
 
       <div class="rp-body">
@@ -251,10 +251,10 @@
             ></form-textarea>
           </div>
 
-          <button-component type="ia-gen" id="ia-btn" (click)="generateMail()">
+          <button-label-component type="ia-gen" id="ia-btn" (click)="generateMail()">
             <div class="spinner" id="spinner"></div>
             <span id="ia-btn-text">✨ Générer un email</span>
-          </button-component>
+          </button-label-component>
         </div>
 
         <!-- ÉTAPE 2 : ÉDITEUR -->

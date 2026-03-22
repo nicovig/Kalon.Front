@@ -256,6 +256,7 @@ export const DASHBOARD_LATEST_DONORS: IDonor[] = [
     enterprise: {
       name: 'Solidarité Nord',
       siret: '12345678900012',
+      fiscalStatus: 'general_interest_66',
       address: {
         street: '15 avenue de la République',
         postalCode: '59000',
@@ -263,7 +264,9 @@ export const DASHBOARD_LATEST_DONORS: IDonor[] = [
         country: 'France'
       },
       contactFirstname: 'Camille',
-      contactLastname: 'Dubois'
+      contactLastname: 'Dubois',
+      contactEmail: 'camille.dubois@example.org',
+      contactPhone: '+33 6 00 00 00 00'
     }
   }
 ];

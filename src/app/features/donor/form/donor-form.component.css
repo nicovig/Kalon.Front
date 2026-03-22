@@ -5,11 +5,16 @@
   font-size: 15px;
 }
 
+.df-kind-locked {
+  opacity: 0.88;
+  filter: grayscale(0.06);
+}
+
 .df-kind {
-  border: 2px solid var(--ink-10);
-  border-radius: var(--r-sm);
-  padding: 16px 16px 18px;
+  border: none;
   margin: 0;
+  padding: 0;
+  min-inline-size: 0;
 }
 
 .df-kind-legend {
@@ -18,33 +23,16 @@
   font-size: 1rem;
   letter-spacing: -0.01em;
   color: var(--ink);
-  padding: 0 8px;
+  padding: 0 0 10px;
+  margin: 0;
+  float: unset;
+  width: 100%;
 }
 
 .df-kind-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
-}
-
-.df-kind-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 0.98rem;
-  color: var(--ink);
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.df-kind-option input {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  accent-color: var(--pink);
-  cursor: pointer;
 }
 
 .df-panel {
@@ -57,6 +45,17 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.df-grid-enterprise {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.df-grid-enterprise .df-col-span-2 {
+  grid-column: span 2;
 }
 
 .df-span-2 {
@@ -151,25 +150,6 @@
   opacity: 0.92;
 }
 
-.df-select {
-  width: 100%;
-  border-radius: var(--r-sm);
-  border: 2px solid var(--ink-10);
-  background: var(--white);
-  padding: 10px 12px;
-  font-size: 13.5px;
-  font-family: var(--font-body);
-  color: var(--ink);
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.df-select:focus {
-  border-color: var(--pink);
-  box-shadow: 0 0 0 1px rgba(255, 77, 125, 0.25);
-  background: var(--pink-lt);
-}
-
 .df-grid-address {
   flex-wrap: wrap;
 }
@@ -211,6 +191,16 @@
 
 .df-subsection-full {
   margin-top: 0;
+}
+
+@media (max-width: 720px) {
+  .df-panel-enterprise .df-grid-enterprise {
+    grid-template-columns: 1fr;
+  }
+
+  .df-grid-enterprise .df-col-span-2 {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 520px) {

@@ -1,15 +1,9 @@
 <form class="df-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-  <fieldset class="df-kind">
+  <fieldset class="df-kind" [class.df-kind-locked]="editDonor()">
     <legend class="df-kind-legend">Nature du donateur</legend>
     <div class="df-kind-row">
-      <label class="df-kind-option">
-        <input type="radio" formControlName="kind" value="individual" />
-        <span>Particulier</span>
-      </label>
-      <label class="df-kind-option">
-        <input type="radio" formControlName="kind" value="company" />
-        <span>Entreprise ou autre personne morale</span>
-      </label>
+      <radio-option [control]="kindControl" value="individual">Particulier</radio-option>
+      <radio-option [control]="kindControl" value="company">Entreprise ou autre personne morale</radio-option>
     </div>
   </fieldset>
 
@@ -129,9 +123,9 @@
       </div>
     </div>
   } @else {
-    <div class="df-panel">
-      <div class="df-grid">
-        <div class="df-field df-span-2">
+    <div class="df-panel df-panel-enterprise">
+      <div class="df-grid df-grid-enterprise">
+        <div class="df-field">
           <label class="df-label" for="df-email-co">Email</label>
           <form-text-component
             id="df-email-co"
@@ -161,8 +155,8 @@
         <div class="df-section-title">Personne morale</div>
 
         <div formGroupName="enterprise">
-          <div class="df-grid">
-            <div class="df-field df-span-2">
+          <div class="df-grid df-grid-enterprise">
+            <div class="df-field df-col-span-2">
               <label class="df-label" for="df-enterpriseName">Raison sociale</label>
               <form-text-component
                 id="df-enterpriseName"
@@ -193,8 +187,8 @@
             <div class="df-subsection-title">Adresse du siège social</div>
 
             <div formGroupName="address">
-              <div class="df-grid df-grid-address">
-                <div class="df-field df-span-2">
+              <div class="df-grid df-grid-enterprise df-grid-address">
+                <div class="df-field df-col-span-2">
                   <label class="df-label" for="df-enterpriseStreet">Rue</label>
                   <form-text-component
                     id="df-enterpriseStreet"
@@ -233,7 +227,7 @@
                   ></form-text-component>
                 </div>
 
-                <div class="df-field df-span-2">
+                <div class="df-field">
                   <label class="df-label" for="df-enterpriseCountry">Pays</label>
                   <form-text-component
                     id="df-enterpriseCountry"
@@ -251,7 +245,7 @@
 
           <div class="df-subsection">
             <div class="df-subsection-title">Représentant (facultatif)</div>
-            <div class="df-grid">
+            <div class="df-grid df-grid-enterprise">
               <div class="df-field">
                 <label class="df-label" for="df-contact-fn">Prénom</label>
                 <form-text-component
@@ -275,6 +269,30 @@
                   width="100%"
                 ></form-text-component>
               </div>
+
+              <div class="df-field">
+                <label class="df-label" for="df-contact-email">Email</label>
+                <form-text-component
+                  id="df-contact-email"
+                  formControlName="contactEmail"
+                  placeholder="email@exemple.org"
+                  type="email"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
+
+              <div class="df-field">
+                <label class="df-label" for="df-contact-phone">Téléphone</label>
+                <form-text-component
+                  id="df-contact-phone"
+                  formControlName="contactPhone"
+                  placeholder="+33 6 12 34 56 78"
+                  type="tel"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
             </div>
           </div>
 
@@ -289,6 +307,8 @@
   }
 
   <div class="df-actions">
-    <button-component type="primary" htmlType="submit" [disabled]="form.invalid">Créer</button-component>
+    <button-label-component type="primary" htmlType="submit" [disabled]="form.invalid">{{
+      editDonor() ? 'Enregistrer' : 'Créer'
+    }}</button-label-component>
   </div>
 </form>

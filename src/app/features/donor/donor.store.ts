@@ -29,24 +29,67 @@ export class DonorStoreService {
   }
 
   createDonor(input: NewDonorInput): IDonor {
-    const donor = this.buildDonor(input);
+    const donor = this.toDonorFromInput(input, {
+      id: this.newId(),
+      creationDate: new Date(),
+      statut: 'new',
+      totalDonation: 0,
+      lastDonation: undefined,
+      donationCount: 0
+    });
     this.donorsSignal.set([donor, ...this.donorsSignal()]);
     return donor;
   }
 
-  private buildDonor(input: NewDonorInput): IDonor {
-    const base = {
-      id: this.newId(),
-      creationDate: new Date(),
-      statut: 'new' as const,
-      totalDonation: 0,
-      lastDonation: undefined,
-      donationCount: 0
-    };
+  updateDonor(id: string, input: NewDonorInput): IDonor | null {
+    const existing = this.donorsSignal().find((d) => d.id === id);
+    if (!existing) {
+      return null;
+    }
+    const updated = this.toDonorFromInput(input, {
+      id: existing.id,
+      creationDate: existing.creationDate,
+      statut: existing.statut,
+      totalDonation: existing.totalDonation,
+      lastDonation: existing.lastDonation,
+      donationCount: existing.donationCount
+    });
+    this.donorsSignal.update((list) => list.map((d) => (d.id === id ? updated : d)));
+    return updated;
+  }
 
+  recordDonation(donorId: string, amount: number, date: Date): void {
+    this.donorsSignal.update((list) =>
+      list.map((d) => {
+        if (d.id !== donorId) {
+          return d;
+        }
+        const lastDonation =
+          !d.lastDonation || date > d.lastDonation ? date : d.lastDonation;
+        return {
+          ...d,
+          totalDonation: d.totalDonation + amount,
+          donationCount: d.donationCount + 1,
+          lastDonation
+        };
+      })
+    );
+  }
+
+  private toDonorFromInput(
+    input: NewDonorInput,
+    meta: {
+      id: string;
+      creationDate: Date;
+      statut: IDonor['statut'];
+      totalDonation: number;
+      lastDonation?: Date;
+      donationCount: number;
+    }
+  ): IDonor {
     if (input.kind === 'individual') {
       return {
-        ...base,
+        ...meta,
         kind: 'individual' satisfies DonorKind,
         firstname: input.firstname.trim(),
         lastname: input.lastname.trim(),
@@ -62,15 +105,17 @@ export class DonorStoreService {
       name: e.name.trim(),
       siret: e.siret.trim(),
       address: this.normalizeAddress(e.address),
+      fiscalStatus: e.fiscalStatus,
       contactFirstname: e.contactFirstname?.trim() || undefined,
-      contactLastname: e.contactLastname?.trim() || undefined
+      contactLastname: e.contactLastname?.trim() || undefined,
+      contactEmail: e.contactEmail?.trim() || undefined,
+      contactPhone: e.contactPhone?.trim() || undefined
     };
 
     const contactFirst = enterprise.contactFirstname ?? '';
-    const contactLast = enterprise.contactLastname ?? '';
 
     return {
-      ...base,
+      ...meta,
       kind: 'company' satisfies DonorKind,
       firstname: contactFirst,
       lastname: enterprise.name,

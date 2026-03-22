@@ -1,0 +1,17 @@
+<div class="fd-wrap" [style.width]="width">
+  <input
+    class="fd-input"
+    type="date"
+    [id]="id || null"
+    [name]="name || null"
+    [value]="value"
+    [disabled]="disabled"
+    [required]="required"
+    [attr.min]="min"
+    [attr.max]="max"
+    [attr.autocomplete]="autocomplete"
+    [attr.aria-label]="ariaLabel"
+    (input)="onInput($any($event.target).value)"
+    (blur)="onBlur()"
+  />
+</div>

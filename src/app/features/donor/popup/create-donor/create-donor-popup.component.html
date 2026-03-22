@@ -1,0 +1,9 @@
+<app-popup-shell [maxWidth]="'760px'" [zIndex]="2000" (dismiss)="onDismiss()">
+  <div popup-header>
+    <div class="app-popup-title">Nouveau donateur</div>
+    <p class="app-popup-sub">
+      Choisissez <b>particulier</b> ou <b>personne morale</b> : les reçus fiscaux (CERFA) ne sont pas générés de la même façon.
+    </p>
+  </div>
+  <donor-form (create)="onCreate($event)"></donor-form>
+</app-popup-shell>

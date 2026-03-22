@@ -22,22 +22,60 @@ thead th {
 
 tbody tr {
   border-bottom: 1px solid var(--ink-10);
-  transition: background 0.13s;
-  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+  cursor: default;
 }
 
 tbody tr:last-child {
   border-bottom: none;
 }
 
-tbody tr:hover {
-  background: var(--cream);
+tbody tr.tbl-row-clickable {
+  cursor: pointer;
+}
+
+tbody tr.tbl-row-clickable:hover {
+  background: var(--pink-lt);
+  box-shadow: inset 4px 0 0 var(--pink);
 }
 
 tbody td {
   padding: 13px 22px;
   font-size: 13.5px;
   font-family: var(--font-body);
+}
+
+.tbl-th-actions {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.tbl-actions {
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.tbl-actions button-label-component {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.tbl-actions button-label-component + button-label-component {
+  margin-left: 6px;
+}
+
+tbody tr:has(.tbl-actions) .tbl-actions {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+tbody tr:has(.tbl-actions):hover .tbl-actions,
+tbody tr:has(.tbl-actions):focus-within .tbl-actions {
+  opacity: 1;
 }
 
 .donor-row {
@@ -110,6 +148,16 @@ tbody td {
 .b-new {
   background: var(--pink-lt);
   color: var(--pink-dk);
+}
+
+.b-kind-individual {
+  background: rgba(155, 93, 229, 0.12);
+  color: var(--violet-md);
+}
+
+.b-kind-company {
+  background: rgba(0, 180, 216, 0.12);
+  color: #0077b6;
 }
 
 .amount {

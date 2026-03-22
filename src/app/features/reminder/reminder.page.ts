@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
-import { ButtonComponent } from '../../layout/button/button.component';
+import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
@@ -14,7 +14,7 @@ import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea
   templateUrl: './reminder.page.html',
   styleUrls: ['./reminder.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonComponent, MailEditorComponent, FormTextareaComponent]
+  imports: [CommonModule, ToastComponent, TopbarComponent, ButtonLabelComponent, MailEditorComponent, FormTextareaComponent]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private selectedCount = 0;

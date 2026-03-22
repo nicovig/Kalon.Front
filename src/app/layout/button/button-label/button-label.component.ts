@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'button-component',
+  selector: 'button-label-component',
   standalone: true,
-  templateUrl: './button.component.html',
-  styleUrls: ['./button.component.css'],
+  templateUrl: './button-label.component.html',
+  styleUrls: ['./button-label.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ButtonComponent {
+export class ButtonLabelComponent {
   @Input()
   type:
     | 'primary'

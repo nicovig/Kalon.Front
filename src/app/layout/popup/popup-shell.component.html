@@ -1,0 +1,21 @@
+<div class="app-popup-overlay" [style.z-index]="zIndex" (click)="onBackdrop()">
+  <div
+    class="app-popup-modal"
+    role="dialog"
+    aria-modal="true"
+    [style.max-width]="maxWidth"
+    (click)="stopModalClick($event)"
+  >
+    <div class="app-popup-head">
+      <div class="app-popup-head-text">
+        <ng-content select="[popup-header]"></ng-content>
+      </div>
+      <button type="button" class="app-popup-close" (click)="onCloseClick()" aria-label="Fermer">
+        ✕
+      </button>
+    </div>
+    <div class="app-popup-body">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

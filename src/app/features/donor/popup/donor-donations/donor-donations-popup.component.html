@@ -1,0 +1,19 @@
+<app-popup-shell [maxWidth]="'560px'" [zIndex]="2000" (dismiss)="onDismiss()">
+  <div popup-header>
+    <div class="app-popup-title">Dons — {{ donorTitle() }}</div>
+    <p class="app-popup-sub">Historique des dons enregistrés pour ce donateur.</p>
+  </div>
+  @if (donationRows().length === 0) {
+    <div class="dd-empty">Aucun don enregistré pour ce donateur.</div>
+  } @else {
+    <div class="dd-table-wrap">
+      <table-component
+        [rows]="donationRows()"
+        [columns]="donationColumns"
+        [showSearch]="false"
+        [pageSizeOptions]="[5, 10, 25]"
+        [initialPageSize]="10"
+      />
+    </div>
+  }
+</app-popup-shell>

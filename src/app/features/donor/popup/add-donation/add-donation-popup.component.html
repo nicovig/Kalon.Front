@@ -1,0 +1,57 @@
+<app-popup-shell [maxWidth]="'560px'" [zIndex]="2100" (dismiss)="onDismiss()">
+  <div popup-header>
+    <div class="app-popup-title">Enregistrer des dons</div>
+    <p class="app-popup-sub">
+      Pour <strong>{{ displayName() }}</strong> — ajoutez des dons ou importez un fichier.
+    </p>
+  </div>
+
+  <div class="add-donation-content">
+    <div class="add-donation-choices">
+      <button type="button" class="add-donation-choice" [class.active]="manualOpen" (click)="openManual()">
+        <span class="add-donation-choice-ico">✍️</span>
+        <span class="add-donation-choice-ttl">Saisie manuelle</span>
+        <span class="add-donation-choice-desc">Saisir un ou plusieurs montants (un par envoi)</span>
+      </button>
+
+      <button type="button" class="add-donation-choice" (click)="goImportExcel()">
+        <span class="add-donation-choice-ico">📥</span>
+        <span class="add-donation-choice-ttl">Import Excel</span>
+        <span class="add-donation-choice-desc">Importer des lignes de dons depuis un tableur</span>
+      </button>
+    </div>
+
+    @if (manualOpen) {
+      <form class="add-donation-manual" [formGroup]="form" (ngSubmit)="onSubmitManual()">
+        <div class="add-donation-manual-grid">
+          <div class="add-donation-field">
+            <label class="add-donation-label" for="add-donation-amount">Montant (€)</label>
+            <form-text-component
+              id="add-donation-amount"
+              formControlName="amount"
+              placeholder="50"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+          <div class="add-donation-field">
+            <label class="add-donation-label" for="add-donation-date">Date du don</label>
+            <form-date-component
+              id="add-donation-date"
+              formControlName="date"
+              width="100%"
+            ></form-date-component>
+          </div>
+        </div>
+        @if (submitted && form.invalid) {
+          <div class="add-donation-error" role="alert">Indiquez un montant valide et une date.</div>
+        }
+        <div class="add-donation-actions">
+          <button-label-component type="ghost" htmlType="button" (click)="onDismiss()">Plus tard</button-label-component>
+          <button-label-component type="primary" htmlType="submit">Enregistrer ce don</button-label-component>
+        </div>
+      </form>
+    }
+  </div>
+</app-popup-shell>

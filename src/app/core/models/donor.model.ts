@@ -27,10 +27,22 @@ export interface IDonorAddress {
   contactPhone?: string;
 }
 
+export type EnterpriseFiscalStatus = 'general_interest_66';
+
 export interface IDonorEnterprise {
   name: string;
   siret: string;
+  fiscalStatus: EnterpriseFiscalStatus;
   address: IDonorAddress;
   contactFirstname?: string;
   contactLastname?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export function donorDisplayName(d: IDonor): string {
+  if (d.kind === 'company' && d.enterprise?.name) {
+    return d.enterprise.name;
+  }
+  return `${d.firstname} ${d.lastname}`.trim();
 }

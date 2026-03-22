@@ -1,0 +1,108 @@
+.add-donation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-donation-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .add-donation-choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+.add-donation-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 14px 14px 16px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  background: var(--white);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+  font-family: inherit;
+}
+
+.add-donation-choice:hover {
+  border-color: var(--pink);
+  background: var(--pink-lt);
+}
+
+.add-donation-choice.active {
+  border-color: var(--pink);
+  background: var(--pink-lt);
+}
+
+.add-donation-choice-ico {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.add-donation-choice-ttl {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.add-donation-choice-desc {
+  font-size: 0.82rem;
+  color: var(--ink-70);
+  line-height: 1.35;
+}
+
+.add-donation-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--ink-10);
+}
+
+.add-donation-manual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .add-donation-manual-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.add-donation-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-donation-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-70);
+}
+
+.add-donation-error {
+  color: var(--pink-dk);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.add-donation-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}

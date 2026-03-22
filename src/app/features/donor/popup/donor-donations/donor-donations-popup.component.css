@@ -1,0 +1,15 @@
+.dd-empty {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink-70);
+  padding: 8px 0 4px;
+  margin: 0;
+}
+
+.dd-table-wrap {
+  margin-top: 4px;
+}
+
+.dd-table-wrap ::ng-deep .tbl-foot {
+  padding-top: 8px;
+}

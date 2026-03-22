@@ -3,17 +3,24 @@
   [title]="'Les donateurs'"
   [subtitle]="'Gérez vos donateurs avec facilité'"
 >
-  <button-component type="ghost">📥 Importer Excel</button-component>
-  <button-component type="primary" (click)="openCreateModal()">+ Nouveau donateur</button-component>
+  <button-label-component type="ghost">📥 Importer Excel</button-label-component>
+  <donor-create-launcher></donor-create-launcher>
 </topbar>
-
-@if (createModalOpen) {
-  <donor-create-popup (closed)="closeCreateModal()"></donor-create-popup>
-}
 
 <table-component
   [rows]="donorsComputed()"
   [columns]="donorColumns"
   [pageSizeOptions]="[25, 50, 100]"
   [initialPageSize]="25"
+  [showRowActions]="true"
+  (rowEdit)="onEditDonor($event)"
+  (rowViewDonations)="onViewDonations($event)"
 ></table-component>
+
+@if (donorToEdit(); as d) {
+  <edit-donor-popup [donor]="d" (closed)="closeEditDonor()" />
+}
+
+@if (donorToViewDonations(); as dv) {
+  <donor-donations-popup [donor]="dv" (closed)="closeViewDonations()" />
+}

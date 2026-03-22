@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from '../button/button.component';
+import { ButtonLabelComponent } from '../button/button-label/button-label.component';
 import { FormTextComponent } from '../forms/text/form-text.component';
+import { DonorKindLabelPipe } from './donor-kind-label.pipe';
 import { DonorStatusLabelPipe } from './donor-status-label.pipe';
 
 export interface TableColumn {
   key: string;
   header: string;
-  type?: 'text' | 'number' | 'date' | 'badge';
+  type?: 'text' | 'number' | 'date' | 'badge' | 'donorKind';
   searchable?: boolean;
   align?: 'left' | 'right' | 'center';
 }
@@ -19,11 +20,12 @@ export interface TableColumn {
   imports: [
     CommonModule,
     FormsModule,
-    ButtonComponent,
+    ButtonLabelComponent,
     FormTextComponent,
     DatePipe,
     DecimalPipe,
     DonorStatusLabelPipe,
+    DonorKindLabelPipe,
   ],
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.css'],
@@ -35,6 +37,14 @@ export class TableComponent {
   @Input() pageSizeOptions: number[] = [25, 50, 100];
   @Input() initialPageSize = 25;
   @Input() showSearch = true;
+  @Input() clickableRows = false;
+  @Input() showRowActions = false;
+  @Input() rowActionEditLabel = '✏️';
+  @Input() rowActionDonationsLabel = '💰';
+
+  @Output() rowClick = new EventEmitter<unknown>();
+  @Output() rowEdit = new EventEmitter<unknown>();
+  @Output() rowViewDonations = new EventEmitter<unknown>();
 
   searchTerm = '';
   currentPage = 1;
@@ -62,7 +72,13 @@ export class TableComponent {
         if (value === undefined || value === null) {
           return false;
         }
-        return String(value).toLowerCase().includes(term);
+        const text =
+          col.type === 'donorKind'
+            ? value === 'company'
+              ? 'entreprise'
+              : 'particulier'
+            : String(value);
+        return text.toLowerCase().includes(term);
       }),
     );
   }
@@ -129,5 +145,26 @@ export class TableComponent {
     if (this.currentPage < this.pageCount) {
       this.currentPage += 1;
     }
+  }
+
+  onDataRowClick(row: unknown): void {
+    if (!this.clickableRows) {
+      return;
+    }
+    this.rowClick.emit(row);
+  }
+
+  onEditClick(row: unknown, event: Event): void {
+    event.stopPropagation();
+    this.rowEdit.emit(row);
+  }
+
+  onViewDonationsClick(row: unknown, event: Event): void {
+    event.stopPropagation();
+    this.rowViewDonations.emit(row);
+  }
+
+  get columnCount(): number {
+    return this.columns.length + (this.showRowActions ? 1 : 0);
   }
 }

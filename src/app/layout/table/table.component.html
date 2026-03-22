@@ -15,14 +15,16 @@
         <th *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
           {{ col.header }}
         </th>
+        <th *ngIf="showRowActions" class="tbl-th-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let row of pagedRows; let rowIndex = index">
-        <td
-          *ngFor="let col of columns"
-          [class.align-right]="col.align === 'right'"
-        >
+      <tr
+        *ngFor="let row of pagedRows; let rowIndex = index"
+        [class.tbl-row-clickable]="clickableRows"
+        (click)="onDataRowClick(row)"
+      >
+        <td *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
           @switch (col.type) {
             @case ('badge') {
               <span
@@ -50,14 +52,33 @@
                 {{ getCellValue(row, col) | number:'1.0-0':'fr-FR' }}
               </span>
             }
+            @case ('donorKind') {
+              <span
+                class="badge"
+                [ngClass]="{
+                  'b-kind-company': getCellValue(row, col) === 'company',
+                  'b-kind-individual': getCellValue(row, col) === 'individual'
+                }"
+              >
+                {{ getCellValue(row, col) | donorKindLabel }}
+              </span>
+            }
             @default {
               {{ getCellValue(row, col) }}
             }
           }
         </td>
+        <td *ngIf="showRowActions" class="tbl-actions" (click)="$event.stopPropagation()">
+          <button-label-component type="ghost" (click)="onEditClick(row, $event)">{{
+            rowActionEditLabel
+          }}</button-label-component>
+          <button-label-component type="ghost" (click)="onViewDonationsClick(row, $event)">{{
+            rowActionDonationsLabel
+          }}</button-label-component>
+        </td>
       </tr>
       <tr *ngIf="totalRows === 0">
-        <td [attr.colspan]="columns.length || 1">
+        <td [attr.colspan]="columnCount || 1">
           <div class="empty">
             <div class="empty-title">Aucun résultat</div>
             <div class="empty-sub">Ajustez votre recherche ou vérifiez vos filtres.</div>
@@ -81,20 +102,20 @@
     </label>
 
     <div class="pages">
-      <button-component type="page" (click)="goToPrevious()">
+      <button-label-component type="page" (click)="goToPrevious()">
         ‹
-      </button-component>
-      <button-component
+      </button-label-component>
+      <button-label-component
         type="page"
         *ngFor="let page of pages"
         [cur]="page === currentPage"
         (click)="goToPage(page)"
       >
         {{ page }}
-      </button-component>
-      <button-component type="page" (click)="goToNext()">
+      </button-label-component>
+      <button-label-component type="page" (click)="goToNext()">
         ›
-      </button-component>
+      </button-label-component>
     </div>
   </div>
 </div>
