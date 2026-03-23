@@ -27,6 +27,14 @@
     box-shadow: 0 6px 20px rgba(255, 77, 125, 0.45);
   }
   
+.btn-primary:disabled {
+  background: var(--ink-30);
+  color: rgba(255, 255, 255, 0.72);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
   .btn-ghost {
     background: white;
     color: var(--ink);

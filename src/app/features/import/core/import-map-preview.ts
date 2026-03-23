@@ -1,9 +1,11 @@
-import { ImportFieldKey } from './import-field.model';
-import { CombinedImportFieldKey } from './import-combined-field.model';
+import { ImportFieldKey } from './model/import-field.model';
+import { CombinedImportFieldKey } from './model/import-combined-field.model';
 
 export type ImportPreviewRow = {
+  kind: 'individual' | 'company';
   lastname: string;
   firstname: string;
+  contactLastname?: string;
   email: string;
   phone: string;
   address: string;
@@ -50,7 +52,22 @@ export function mapDataRowToPreview(row: string[], bindings: ImportFieldKey[]): 
     address = [bag.street, bag.postalCode, bag.city, bag.country].filter(Boolean).join(', ');
   }
 
+  const intendedKind = (bag.enterpriseName ?? '') || (bag.siret ?? '') ? 'company' : 'individual';
+
+  if (intendedKind === 'company') {
+    return {
+      kind: 'company',
+      lastname: bag.enterpriseName ?? '',
+      firstname: bag.contactFirstname ?? '',
+      contactLastname: bag.contactLastname ?? '',
+      email: bag.email ?? '',
+      phone: bag.phone ?? '',
+      address
+    };
+  }
+
   return {
+    kind: 'individual',
     lastname: bag.lastname ?? '',
     firstname: bag.firstname ?? '',
     email: bag.email ?? '',

@@ -1,4 +1,4 @@
-export type ImportMode = 'donors' | 'donations' | 'combined';
+export type ImportMode = 'donors' | 'donations' | 'combined' | 'default';
 
 export const IMPORT_MODE_OPTIONS: {
   mode: ImportMode;
@@ -15,7 +15,7 @@ export const IMPORT_MODE_OPTIONS: {
   {
     mode: 'donations',
     label: 'Dons',
-    hint: 'Montants et dates, liés à un donateur existant par email',
+    hint: 'Montants et dates, liés à un donateur (lien fait avec l\'email)',
     blurb: 'Enregistrer des dons : le donateur doit déjà exister (reconnu par email).'
   },
   {

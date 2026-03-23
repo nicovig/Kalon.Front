@@ -1,0 +1,94 @@
+.ds-title {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.ds-sub {
+  margin: 8px 0 0;
+  color: var(--ink-70);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.ds-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.ds-row {
+  display: grid;
+  gap: 6px;
+}
+
+.ds-label {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-70);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ds-input {
+  border: 2px solid var(--ink-10);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: white;
+  outline: none;
+}
+
+.ds-input:focus {
+  border-color: var(--violet-md);
+}
+
+.ds-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-title);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.b-active {
+  background: var(--mint-lt);
+  color: var(--mint-dk);
+}
+
+.b-relance {
+  background: var(--yellow-lt);
+  color: #8a6000;
+}
+
+.b-new {
+  background: var(--pink-lt);
+  color: var(--pink-dk);
+}
+
+.ds-active-note {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-70);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+

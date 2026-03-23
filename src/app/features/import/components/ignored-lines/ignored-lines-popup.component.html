@@ -1,0 +1,128 @@
+<app-popup-shell [maxWidth]="'900px'" [zIndex]="2050" (dismiss)="onDismiss()">
+  <div popup-header>
+    <div class="app-popup-title">Certaines lignes n’ont pas été importées</div>
+    <p class="app-popup-sub">
+      {{"Vous pouvez corriger la correspondance et réessayer."}}
+    </p>
+  </div>
+
+  <div class="il-body">
+    <div class="il-summary" role="status" aria-live="polite">
+      {{ ignoredLines().length }} ligne(s) ignorée(s)
+    </div>
+
+    @if (sheetName()) {
+      <div class="il-sheet">Onglet : {{ sheetName() }}</div>
+    }
+
+    <div class="il-list" role="list" aria-label="Lignes ignorées">
+      @for (line of draftLines(); track line.rowNumber) {
+        <div class="il-item" role="listitem">
+          <div class="il-row">
+            {{ personLabel(line.rowNumber) }}
+            <span class="il-row-sub">— ligne {{ line.rowNumber }}</span>
+          </div>
+          <div class="il-reason">{{ line.reason }}</div>
+          <div class="il-edit">
+            <div class="il-edit-title">Champs à compléter</div>
+            @if (wantsEmailInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">Email</div>
+                <input
+                  class="il-input"
+                  type="text"
+                  placeholder="Email du donateur"
+                  [value]="line.email ?? ''"
+                  (input)="onEmailInput(line, ($any($event.target)).value)"
+                />
+              </label>
+            }
+
+            @if (wantsEnterpriseNameInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">Nom entreprise</div>
+                <input
+                  class="il-input"
+                  type="text"
+                  placeholder="Nom de l'entreprise"
+                  [value]="line.enterpriseName ?? ''"
+                  (input)="onEnterpriseNameInput(line, ($any($event.target)).value)"
+                />
+              </label>
+            }
+
+            @if (wantsSiretInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">SIRET</div>
+                <input
+                  class="il-input"
+                  type="text"
+                  placeholder="SIRET"
+                  [value]="line.siret ?? ''"
+                  (input)="onSiretInput(line, ($any($event.target)).value)"
+                />
+              </label>
+            }
+
+            @if (wantsNameInput(line)) {
+              <div class="il-name-grid">
+                <label class="il-field">
+                  <div class="il-field-label">{{ line.donorKind === 'company' ? 'Prénom contact' : 'Prénom' }}</div>
+                  <input
+                    class="il-input"
+                    type="text"
+                    placeholder="Prénom"
+                    [value]="line.firstname ?? ''"
+                    (input)="onFirstnameInput(line, ($any($event.target)).value)"
+                  />
+                </label>
+                <label class="il-field">
+                  <div class="il-field-label">{{ line.donorKind === 'company' ? 'Nom contact' : 'Nom' }}</div>
+                  <input
+                    class="il-input"
+                    type="text"
+                    placeholder="Nom"
+                    [value]="line.lastname ?? ''"
+                    (input)="onLastnameInput(line, ($any($event.target)).value)"
+                  />
+                </label>
+              </div>
+            }
+
+            @if (wantsDonationAmountInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">Montant</div>
+                <input
+                  class="il-input"
+                  type="text"
+                  placeholder="Ex : 25,00"
+                  [value]="line.donationAmount ?? ''"
+                  (input)="onDonationAmountInput(line, ($any($event.target)).value)"
+                />
+              </label>
+            }
+
+            @if (wantsDonationDateInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">Date</div>
+                <input
+                  class="il-input"
+                  type="text"
+                  placeholder="Ex : 23/03/2026"
+                  [value]="line.donationDate ?? ''"
+                  (input)="onDonationDateInput(line, ($any($event.target)).value)"
+                />
+              </label>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="il-actions">
+      <button-label-component type="ghost" (click)="onDismiss()">Annuler</button-label-component>
+      <button-label-component type="primary" (click)="onContinue()">Continuer</button-label-component>
+    </div>
+  </div>
+</app-popup-shell>
+

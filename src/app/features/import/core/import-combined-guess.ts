@@ -1,6 +1,6 @@
 import { guessFieldForHeader } from './import-column-guess';
 import { guessDonationFieldForHeader } from './import-donation-guess';
-import { CombinedImportFieldKey } from './import-combined-field.model';
+import { CombinedImportFieldKey } from './model/import-combined-field.model';
 
 export function guessCombinedMappingForHeaders(headers: string[]): CombinedImportFieldKey[] {
   const raw = headers.map((h): CombinedImportFieldKey => {

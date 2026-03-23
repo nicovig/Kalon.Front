@@ -5,10 +5,12 @@ import { TableComponent, TableColumn } from '../../layout/table/table.component'
 import { IDonor } from '../../core/models/donor.model';
 import { DonorCreateLauncherComponent } from './donor-create-launcher.component';
 import { EmptyDonorsWelcomeComponent } from './empty-donors-welcome/empty-donors-welcome.component';
-import { ImportDonorBannerComponent } from '../import/import-donor-banner/import-donor-banner.component';
+import { ImportBannerComponent } from '../import/components/import-banner/import-banner.component';
 import { DonorDonationsPopupComponent } from './popup/donor-donations/donor-donations-popup.component';
 import { EditDonorPopupComponent } from './popup/edit-donor/edit-donor-popup.component';
 import { DonorStoreService } from './donor.store';
+import { DonorSettingsComponent } from './settings/donor-settings.component';
+import { DonorSettingsStore } from './settings/donor-settings.store';
 
 @Component({
   selector: 'donor-page',
@@ -24,13 +26,21 @@ import { DonorStoreService } from './donor.store';
     EmptyDonorsWelcomeComponent,
     EditDonorPopupComponent,
     DonorDonationsPopupComponent,
-    ImportDonorBannerComponent
+    ImportBannerComponent,
+    DonorSettingsComponent
   ]
 })
 export class DonorListPageComponent {
   private readonly donorStore = inject(DonorStoreService);
+  private readonly donorSettings = inject(DonorSettingsStore);
 
-  protected readonly donorsComputed = computed(() => this.donorStore.donors());
+  protected readonly donorsComputed = computed(() => {
+    const now = new Date();
+    return this.donorStore.donors().map((d) => ({
+      ...d,
+      statut: this.donorSettings.statusOf(d, now)
+    }));
+  });
 
   protected readonly donorToEdit = signal<IDonor | null>(null);
 

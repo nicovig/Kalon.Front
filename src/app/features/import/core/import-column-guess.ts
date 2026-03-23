@@ -1,4 +1,4 @@
-import { ImportFieldKey } from './import-field.model';
+import { ImportFieldKey } from './model/import-field.model';
 
 export function normalizeHeaderLabel(raw: string): string {
   return raw
@@ -20,6 +20,36 @@ const RULES: Rule[] = [
       /\bmail\b/.test(n) ||
       /\bcourriel\b/.test(n) ||
       /\be[\s-]?mail\b/.test(n)
+  },
+  {
+    field: 'enterpriseName',
+    weight: 9,
+    test: (n) =>
+      /\bentreprise\b/.test(n) ||
+      /\braison\s*sociale\b/.test(n) ||
+      /\bsociete\b/.test(n) ||
+      /\bsociete\s+anonyme\b/.test(n) ||
+      /\bnom\s+entreprise\b/.test(n)
+  },
+  {
+    field: 'siret',
+    weight: 10,
+    test: (n) =>
+      /\bsiret\b/.test(n) ||
+      /\bsir[eè]t\b/.test(n) ||
+      /\bnum[eé]ro\s*siret\b/.test(n)
+  },
+  {
+    field: 'contactLastname',
+    weight: 8,
+    test: (n) =>
+      /\bnom\b/.test(n) && (/\bcontact\b/.test(n) || /\binterlocuteur\b/.test(n) || /\bresponsable\b/.test(n))
+  },
+  {
+    field: 'contactFirstname',
+    weight: 8,
+    test: (n) =>
+      /\bprenom\b/.test(n) && (/\bcontact\b/.test(n) || /\binterlocuteur\b/.test(n) || /\bresponsable\b/.test(n))
   },
   {
     field: 'phone',

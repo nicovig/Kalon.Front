@@ -20,8 +20,14 @@
 >
   <span class="idb-emoji" aria-hidden="true">📂</span>
   <div class="idb-body">
-    <strong>Importez vos donateurs depuis un fichier en un clic</strong>
+    <strong>Importez vos données depuis un fichier en un clic</strong>
     <span>Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span>
   </div>
   <span class="idb-pill">Parcourir →</span>
 </div>
+
+<import-pop-up
+  *ngIf="modePickerOpen"
+  (dismiss)="closeModePicker()"
+  (continue)="onModePicked($event)"
+/>

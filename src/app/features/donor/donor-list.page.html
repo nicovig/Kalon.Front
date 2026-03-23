@@ -5,10 +5,13 @@
     [title]="'Les donateurs'"
     [subtitle]="'Gérez vos donateurs avec facilité'"
   >
-    <donor-create-launcher></donor-create-launcher>
+    <div class="donor-topbar-actions">
+      <donor-settings-launcher></donor-settings-launcher>
+      <donor-create-launcher></donor-create-launcher>
+    </div>
   </topbar>
 
-  <import-donor-banner />
+  <import-banner />
 
   <table-component
     [rows]="donorsComputed()"

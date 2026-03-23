@@ -1,4 +1,4 @@
-import { DonationImportFieldKey } from './import-donation-field.model';
+import { DonationImportFieldKey } from './model/import-donation-field.model';
 import { parseAmountFromCell, parseDateFromCell } from './import-parse-cells';
 
 export function collectDonationImportBag(

@@ -1,0 +1,143 @@
+.il-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.il-summary {
+  font-weight: 800;
+  font-family: var(--font-title);
+  color: var(--ink);
+}
+
+.il-list {
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  padding: 10px;
+  max-height: min(50vh, 420px);
+  overflow: auto;
+  background: color-mix(in srgb, var(--cream) 70%, white 30%);
+}
+
+.il-item {
+  padding: 10px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--ink-10);
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.il-item:last-child {
+  margin-bottom: 0;
+}
+
+.il-row {
+  font-family: var(--font-title);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.il-row-sub {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.il-sheet {
+  font-weight: 800;
+  font-family: var(--font-title);
+  color: var(--ink-70);
+  margin-top: -4px;
+}
+
+.il-reason {
+  color: var(--ink-70);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.il-meta {
+  color: var(--ink-70);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.il-meta-val {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.il-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.il-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-md);
+  padding: 12px 12px;
+}
+
+.il-edit-title {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--violet-md);
+  margin: -2px 0 -4px;
+}
+
+.il-name-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.il-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.il-field-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--ink-70);
+  font-family: var(--font-title);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.il-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  outline: none;
+}
+
+.il-input:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--violet) 40%, transparent);
+}
+
+.il-input::placeholder {
+  color: color-mix(in srgb, var(--ink-70) 70%, transparent);
+  font-weight: 650;
+}
+

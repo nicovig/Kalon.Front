@@ -1,15 +1,28 @@
 <toast-component position="center-third"></toast-component>
-<topbar [title]="'Import de données'" [subtitle]="topbarSubtitle()"></topbar>
+<topbar [title]="topbarTitle()" [subtitle]="topbarSubtitle()"></topbar>
 
 <div class="import-shell" [class.import-shell--empty]="!fileName()">
-  @if (importFlow.suggestDonations() && importMode() === 'donations') {
-    <div class="imp-tunnel-banner" role="status">
-      <div class="imp-tunnel-banner-body">
-        <strong>Étape suivante</strong>
-        <span>Les donateurs sont enregistrés. Importez maintenant un fichier de dons (montants et dates), ou déposez-le ci-dessous.</span>
+  @if (ignoredPopupOpen()) {
+    <import-ignored-lines-popup
+      [ignoredLines]="ignoredLines()"
+      [sheetName]="sheetName()"
+      (dismiss)="onIgnoredPopupDismiss()"
+      (continue)="onIgnoredPopupContinue($event)"
+    />
+  }
+
+  @if (donationsImportPromptOpen()) {
+    <app-popup-shell [maxWidth]="'760px'" [zIndex]="2065" (dismiss)="onDonationsImportPromptNo()">
+      <div popup-header>
+        <div class="app-popup-title">Données importées avec succès</div>
+        <p class="app-popup-sub">Souhaitez-vous importer les données de <b>dons</b> maintenant ?</p>
       </div>
-      <button-label-component type="ghost" (click)="dismissSuggestDonations()">Masquer</button-label-component>
-    </div>
+
+      <div class="imp-prompt-actions">
+        <button-label-component type="ghost" (click)="onDonationsImportPromptNo()">Non</button-label-component>
+        <button-label-component type="primary" (click)="onDonationsImportPromptYes()">Oui</button-label-component>
+      </div>
+    </app-popup-shell>
   }
 
   @if (!fileName()) {
@@ -25,6 +38,8 @@
       <import-onboarding-help />
     }
   } @else {
+    <import-step-trail [step]="'columns'" />
+
     <div class="imp-toolbar">
       <div class="imp-file-pill">
         <span class="imp-file-name">{{ fileName() }}</span>
@@ -73,10 +88,10 @@
           title="Relier vos colonnes à Kalon"
           [subtitle]="
             importMode() === 'donations'
-              ? 'Reliez date, montant et email du donateur (pour retrouver la fiche existante)'
+              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du donateur ou nom/prénom).'
               : importMode() === 'combined'
-                ? 'Incluez les champs contact et, si la ligne comporte un don, date et montant'
-                : 'Une ligne par colonne de votre fichier : à gauche le nom dans le fichier, à droite le champ dans Kalon'
+                ? 'Champs obligatoires : email + (Nom ou Prénom). Pour les lignes qui contiennent un don : Date du don + Montant.'
+                : 'Champs obligatoires : Email + (Nom ou Prénom). Une ligne par colonne de votre fichier : à gauche le nom dans le fichier, à droite le champ dans Kalon.'
           "
           paddingClass="advanced"
         >
@@ -133,8 +148,9 @@
                   <table class="imp-preview-table">
                     <thead>
                       <tr>
+                        <th>Type</th>
                         <th>Nom</th>
-                        <th>Prénom</th>
+                        <th>Prénom / Contact</th>
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Adresse</th>
@@ -143,8 +159,15 @@
                     <tbody>
                       @for (p of previewRows(); track $index) {
                         <tr>
+                          <td>{{ p.kind === 'company' ? 'Entreprise' : 'Particulier' }}</td>
                           <td>{{ p.lastname || '—' }}</td>
-                          <td>{{ p.firstname || '—' }}</td>
+                          <td>
+                            @if (p.kind === 'company') {
+                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '—') }}
+                            } @else {
+                              {{ p.firstname || '—' }}
+                            }
+                          </td>
                           <td>{{ p.email || '—' }}</td>
                           <td>{{ p.phone || '—' }}</td>
                           <td>{{ p.address || '—' }}</td>
@@ -179,8 +202,9 @@
                   <table class="imp-preview-table">
                     <thead>
                       <tr>
+                        <th>Type</th>
                         <th>Nom</th>
-                        <th>Prénom</th>
+                        <th>Prénom / Contact</th>
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Adresse</th>
@@ -191,8 +215,15 @@
                     <tbody>
                       @for (p of combinedPreviewRows(); track $index) {
                         <tr>
+                          <td>{{ p.kind === 'company' ? 'Entreprise' : 'Particulier' }}</td>
                           <td>{{ p.lastname || '—' }}</td>
-                          <td>{{ p.firstname || '—' }}</td>
+                          <td>
+                            @if (p.kind === 'company') {
+                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '—') }}
+                            } @else {
+                              {{ p.firstname || '—' }}
+                            }
+                          </td>
                           <td>{{ p.email || '—' }}</td>
                           <td>{{ p.phone || '—' }}</td>
                           <td>{{ p.address || '—' }}</td>

@@ -12,14 +12,14 @@
   flex-shrink: 0;
 }
 
-:host.import-donor-banner--xxl {
+:host.import-banner--xxl {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-:host.import-donor-banner--xxl .idb {
+:host.import-banner--xxl .idb {
   flex: 1;
   min-height: min(52vh, 420px);
   align-items: center;
@@ -30,21 +30,21 @@
   gap: clamp(16px, 3vw, 28px);
 }
 
-:host.import-donor-banner--xxl .idb-emoji {
+:host.import-banner--xxl .idb-emoji {
   font-size: clamp(2.5rem, 8vw, 4rem);
 }
 
-:host.import-donor-banner--xxl .idb-body strong {
+:host.import-banner--xxl .idb-body strong {
   font-size: clamp(1.15rem, 3vw, 1.5rem);
 }
 
-:host.import-donor-banner--xxl .idb-body span {
+:host.import-banner--xxl .idb-body span {
   font-size: clamp(0.95rem, 2vw, 1.1rem);
   max-width: 36rem;
   margin: 0 auto;
 }
 
-:host.import-donor-banner--xxl .idb-pill {
+:host.import-banner--xxl .idb-pill {
   margin-left: 0;
   margin-top: 8px;
   padding: 12px 28px;

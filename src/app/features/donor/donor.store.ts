@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { DonorKind, IDonor, IDonorAddress, IDonorEnterprise } from '../../core/models/donor.model';
+import { DonorSettingsStore } from './settings/donor-settings.store';
 
 export interface NewDonorInputIndividual {
   kind: 'individual';
@@ -22,6 +23,7 @@ export type NewDonorInput = NewDonorInputIndividual | NewDonorInputCompany;
 @Injectable({ providedIn: 'root' })
 export class DonorStoreService {
   private readonly donorsSignal = signal<IDonor[]>([]);
+  private readonly donorSettings = inject(DonorSettingsStore);
 
   donors(): IDonor[] {
     return this.donorsSignal();
@@ -35,14 +37,36 @@ export class DonorStoreService {
     return this.donorsSignal().find((d) => d.email.toLowerCase() === e);
   }
 
+  findDonorByLink(link: string): IDonor | undefined {
+    const s = link.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!s) {
+      return undefined;
+    }
+
+    if (s.includes('@')) {
+      return this.findDonorByEmail(s);
+    }
+
+    return this.donorsSignal().find((d) => {
+      const a = `${d.firstname} ${d.lastname}`.trim().toLowerCase().replace(/\s+/g, ' ');
+      const b = `${d.lastname} ${d.firstname}`.trim().toLowerCase().replace(/\s+/g, ' ');
+      return a === s || b === s;
+    });
+  }
+
   createDonor(input: NewDonorInput): IDonor {
-    const donor = this.toDonorFromInput(input, {
+    const now = new Date();
+    const baseData = this.toDonorFromInput(input, {
       id: this.newId(),
-      creationDate: new Date(),
+      creationDate: now,
       statut: 'new',
       totalDonation: 0,
       lastDonation: undefined,
       donationCount: 0
+    });
+    const donor = this.toDonorFromInput(input, {
+      ...baseData,
+      statut: this.donorSettings.statusOf(baseData, now)
     });
     this.donorsSignal.set([donor, ...this.donorsSignal()]);
     return donor;
@@ -61,8 +85,12 @@ export class DonorStoreService {
       lastDonation: existing.lastDonation,
       donationCount: existing.donationCount
     });
-    this.donorsSignal.update((list) => list.map((d) => (d.id === id ? updated : d)));
-    return updated;
+    const updatedWithStatus = {
+      ...updated,
+      statut: this.donorSettings.statusOf(updated)
+    };
+    this.donorsSignal.update((list) => list.map((d) => (d.id === id ? updatedWithStatus : d)));
+    return updatedWithStatus;
   }
 
   recordDonation(donorId: string, amount: number, date: Date): void {
@@ -73,13 +101,27 @@ export class DonorStoreService {
         }
         const lastDonation =
           !d.lastDonation || date > d.lastDonation ? date : d.lastDonation;
-        return {
+        const updated = {
           ...d,
           totalDonation: d.totalDonation + amount,
           donationCount: d.donationCount + 1,
           lastDonation
         };
+        return {
+          ...updated,
+          statut: this.donorSettings.statusOf(updated)
+        };
       })
+    );
+  }
+
+  recomputeStatuses(): void {
+    const now = new Date();
+    this.donorsSignal.update((list) =>
+      list.map((d) => ({
+        ...d,
+        statut: this.donorSettings.statusOf(d, now)
+      }))
     );
   }
 
@@ -149,4 +191,5 @@ export class DonorStoreService {
   private newId(): string {
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
+
 }

@@ -14,43 +14,6 @@
   overflow: hidden;
 }
 
-/* ══ PANNEAU GAUCHE — DONATEURS ══ */
-.left-panel {
-  background: white;
-  border-right: 2px solid var(--ink-10);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.lp-header {
-  padding: 20px 18px 14px;
-  border-bottom: 2px solid var(--ink-10);
-  flex-shrink: 0;
-}
-
-.lp-title {
-  font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 17px;
-  color: var(--ink);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.selected-count {
-  background: var(--pink);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 20px;
-  font-family: var(--font-title);
-}
-
 /* RECHERCHE */
 .search-box {
   display: flex;
@@ -417,6 +380,50 @@
   flex-shrink: 0;
   background: white;
 }
+
+.lp-select-actions {
+  padding: 10px 18px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sel-action {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--violet-md);
+  cursor: pointer;
+  font-family: var(--font-title);
+  transition: color 0.13s;
+}
+
+.sel-action:hover {
+  color: var(--pink);
+}
+
+.sel-action--muted {
+  color: var(--ink-70);
+}
+
+.lp-pagination {
+  padding: 10px 18px;
+  background: white;
+  border-top: 2px solid var(--ink-10);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lp-pagination-label {
+  font-size: 12.5px;
+  color: var(--ink-70);
+  font-weight: 600;
+  font-family: var(--font-title);
+  white-space: nowrap;
+}
 .sel-info {
   font-size: 12.5px;
   color: var(--ink-70);
@@ -588,12 +595,12 @@
 }
 
 .rp-step-surface {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
-  min-height: min(520px, 68vh);
+  min-height: 0;
 }
 
 .rp-body {
@@ -620,8 +627,8 @@
   padding: 22px 22px;
   position: relative;
   overflow: hidden;
-  flex: 1;
-  min-height: 240px;
+  flex: 0 0 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -692,7 +699,7 @@
   position: relative;
   z-index: 1;
   margin-bottom: 12px;
-  flex: 1;
+  flex: 0 0 auto;
 }
 .ia-textarea {
   width: 100%;
@@ -705,7 +712,7 @@
   color: white;
   resize: none;
   outline: none;
-  height: 105px;
+  height: 88px;
   transition: border-color 0.15s;
   line-height: 1.5;
 }

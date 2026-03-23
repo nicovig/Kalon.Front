@@ -6,7 +6,8 @@ import {
   ViewChild,
   inject,
   ChangeDetectorRef,
-  computed
+  computed,
+  signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
@@ -18,7 +19,14 @@ import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
 import { DonorStoreService } from '../donor/donor.store';
-import { donorDisplayName, IDonor } from '../../core/models/donor.model';
+import { donorDisplayName, DonorStatus, IDonor } from '../../core/models/donor.model';
+import {
+  ReminderAdvancedFilters,
+  RecipientSelectorItem,
+  ReminderQuickFilter,
+  ReminderRecipientSelectorComponent
+} from '../../layout/list/reminder-recipient-selector/reminder-recipient-selector.component';
+import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
 
 @Component({
   selector: 'reminder-page',
@@ -33,16 +41,147 @@ import { donorDisplayName, IDonor } from '../../core/models/donor.model';
     ButtonLabelComponent,
     MailEditorComponent,
     FormTextareaComponent,
-    EmptyDonorsWelcomeComponent
+    EmptyDonorsWelcomeComponent,
+    ReminderRecipientSelectorComponent
   ]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
-  private selectedCount = 0;
   private readonly iaAgent = inject(IaAgentCore);
   private readonly donorStore = inject(DonorStoreService);
+  private readonly donorSettings = inject(DonorSettingsStore);
   constructor(private readonly cdr: ChangeDetectorRef) {}
+  protected readonly donorsCount = computed(() => this.donorStore.donors().length);
 
-  protected readonly donors = computed(() => this.donorStore.donors());
+  protected readonly itemsPerPage = 15;
+  protected readonly quickFilter = signal<ReminderQuickFilter>('all');
+  protected readonly searchQuery = signal('');
+  protected readonly appliedMonthsMin = signal(0);
+  protected readonly appliedTotalDonationMin = signal<number | null>(null);
+  protected readonly appliedTotalDonationMax = signal<number | null>(null);
+  protected readonly appliedDonationCountMin = signal<number | null>(null);
+  protected readonly pageIndex = signal(0);
+
+  protected readonly selectedDonorIds = signal<Set<string>>(new Set());
+  protected readonly selectedCount = computed(() => this.selectedDonorIds().size);
+
+  protected readonly previewDonorId = signal<string | null>(null);
+
+  protected readonly filteredDonors = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    const quick = this.quickFilter();
+    const monthsMin = this.appliedMonthsMin();
+    const totalMin = this.appliedTotalDonationMin();
+    const totalMax = this.appliedTotalDonationMax();
+    const donationCountMin = this.appliedDonationCountMin();
+    const all = this.donorStore.donors();
+
+    return all.filter((d) => {
+      const status = this.statusOf(d);
+      if (quick !== 'all') {
+        const match =
+          quick === 'to_remind'
+            ? status === 'to_remind'
+            : quick === 'new'
+              ? status === 'new'
+              : quick === 'active'
+                ? status === 'active'
+                : status === 'inactive';
+        if (!match) return false;
+      }
+
+      if (monthsMin > 0) {
+        const m = this.monthsSinceLast(d);
+        if (m < monthsMin) return false;
+      }
+
+      if (typeof totalMin === 'number' && !Number.isNaN(totalMin) && d.totalDonation < totalMin) return false;
+      if (typeof totalMax === 'number' && !Number.isNaN(totalMax) && d.totalDonation > totalMax) return false;
+
+      if (typeof donationCountMin === 'number' && !Number.isNaN(donationCountMin) && d.donationCount < donationCountMin) return false;
+
+      if (!q) return true;
+      const name = donorDisplayName(d).toLowerCase();
+      const email = (d.email ?? '').toLowerCase();
+      const statusLabel = this.statusLabel(status).toLowerCase();
+      return name.includes(q) || email.includes(q) || statusLabel.includes(q);
+    });
+  });
+
+  protected readonly filteredDonorsLength = computed(() => this.filteredDonors().length);
+
+  protected readonly pagedDonors = computed(() => {
+    const start = this.pageIndex() * this.itemsPerPage;
+    return this.filteredDonors().slice(start, start + this.itemsPerPage);
+  });
+
+  protected readonly pagedRecipientItems = computed<RecipientSelectorItem[]>(() =>
+    this.pagedDonors().map((d) => {
+      const status = this.statusOf(d);
+      const badgeText =
+        status === 'to_remind' && d.lastDonation
+          ? `${this.monthsSinceLast(d)} mois`
+          : status === 'active'
+            ? 'Actif'
+            : status === 'new'
+              ? 'Nouveau'
+              : status === 'inactive'
+                ? 'Inactif'
+                : undefined;
+      const badgeClass =
+        status === 'active' || status === 'new'
+          ? 'db-actif'
+          : status === 'to_remind' || status === 'inactive'
+            ? 'db-relance'
+            : '';
+
+      return {
+        id: d.id,
+        title: donorDisplayName(d),
+        subtitle: this.donorMetaLine(d),
+        avatarText: this.initials(d),
+        badgeText,
+        badgeClass
+      };
+    })
+  );
+
+  protected readonly totalPages = computed(() => {
+    const len = this.filteredDonors().length;
+    return Math.max(1, Math.ceil(len / this.itemsPerPage));
+  });
+
+  protected readonly selectedDonorsForPreview = computed(() => {
+    const selected = this.selectedDonorIds();
+    return this.filteredDonors().filter((d) => selected.has(d.id));
+  });
+
+  protected readonly selectedDonorsForStep3Count = computed(() => this.selectedDonorsForPreview().length);
+  protected readonly afterSendCount = computed(() =>
+    Math.max(0, 300 - this.selectedDonorsForStep3Count())
+  );
+
+  protected prevPage(): void {
+    const p = this.pageIndex();
+    if (p <= 0) return;
+    this.pageIndex.set(p - 1);
+  }
+
+  protected nextPage(): void {
+    const p = this.pageIndex();
+    const max = this.totalPages() - 1;
+    if (p >= max) return;
+    this.pageIndex.set(p + 1);
+  }
+
+  protected onAdvancedFiltersApplied(filters: ReminderAdvancedFilters): void {
+    this.appliedMonthsMin.set(filters.monthsMin);
+    this.appliedTotalDonationMin.set(filters.totalDonationMin);
+    this.appliedTotalDonationMax.set(filters.totalDonationMax);
+    this.appliedDonationCountMin.set(filters.donationCountMin);
+    this.pageIndex.set(0);
+    this.syncPreviewIfNeeded();
+    this.cdr.markForCheck();
+  }
 
   protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
     douce:
@@ -64,37 +203,21 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     const w = window as any;
-    w.toggleAdv = this.toggleAdv.bind(this);
-    w.syncSlider = this.syncSlider.bind(this);
-    w.toggleQF = this.toggleQF.bind(this);
-    w.toggleDonor = this.toggleDonor.bind(this);
-    w.selectAll = this.selectAll.bind(this);
     w.selectPreset = this.selectPreset.bind(this);
-    w.applyFilters = this.applyFilters.bind(this);
     w.insertVar = this.insertVar.bind(this);
     w.generateMail = this.generateMail.bind(this);
     w.updatePreview = (v: string) => this.updatePreviewFromDom(v);
   }
 
   ngAfterViewInit(): void {
-    const monthsVal = document.getElementById('months-val') as HTMLInputElement | null;
-    const monthsSlider = document.getElementById('months-slider') as HTMLInputElement | null;
-    if (monthsVal && monthsSlider) {
-      monthsVal.addEventListener('input', () => {
-        monthsSlider.value = monthsVal.value;
-        this.syncSlider(monthsVal.value);
-      });
-      this.syncSlider(monthsVal.value);
-    }
-    this.updateCounts();
-    const first = this.donorStore.donors()[0];
-    if (first) {
-      this.updatePreviewBody(first.id);
-    }
+    this.syncPreviewIfNeeded();
   }
 
   protected goToStep(step: 1 | 2 | 3): void {
     this.activeStep = step;
+    if (step === 3) {
+      this.syncPreviewIfNeeded();
+    }
   }
 
   protected displayName(d: IDonor): string {
@@ -132,8 +255,32 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return Math.max(0, m);
   }
 
+  private statusOf(d: IDonor): DonorStatus {
+    return this.donorSettings.statusOf(d);
+  }
+
+  private statusLabel(status: DonorStatus): string {
+    switch (status) {
+      case 'active':
+        return 'Actif';
+      case 'to_remind':
+        return 'À relancer';
+      case 'new':
+        return 'Nouveau';
+      case 'inactive':
+        return 'Inactif';
+      default:
+        return '';
+    }
+  }
+
   protected onPreviewDonorChange(event: Event): void {
     const v = (event.target as HTMLSelectElement).value;
+    if (!v) {
+      this.previewDonorId.set(null);
+      return;
+    }
+    this.previewDonorId.set(v);
     this.updatePreviewBody(v);
   }
 
@@ -141,30 +288,19 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     this.updatePreviewBody(value);
   }
 
-  private updateCounts(): void {
-    const checked = document.querySelectorAll('.donor-item.checked').length;
-    this.selectedCount = checked;
-
-    const selCount = document.getElementById('sel-count');
-    if (selCount) selCount.textContent = `${this.selectedCount} sélectionnés`;
-
-    const sendCount = document.getElementById('send-count');
-    if (sendCount) sendCount.textContent = String(this.selectedCount);
-
-    const sendCount2 = document.getElementById('send-count-2');
-    if (sendCount2) sendCount2.textContent = String(this.selectedCount);
-
-    const recapDest = document.getElementById('recap-dest');
-    if (recapDest) recapDest.textContent = String(this.selectedCount);
-
-    const footerInfo = document.getElementById('footer-info');
-    const total = this.donorStore.donors().length;
-    if (footerInfo) footerInfo.textContent = `${this.selectedCount} donateurs sélectionnés sur ${total}`;
-
-    const recapStats = document.querySelectorAll('.recap-stat');
-    const afterVal = recapStats[2]?.querySelector('.recap-val');
-    const planMails = 300;
-    if (afterVal) afterVal.textContent = String(Math.max(0, planMails - this.selectedCount));
+  private syncPreviewIfNeeded(): void {
+    if (this.activeStep !== 3) return;
+    const options = this.selectedDonorsForPreview();
+    const first = options[0];
+    if (!first) {
+      this.previewDonorId.set(null);
+      return;
+    }
+    const current = this.previewDonorId();
+    if (!current || !options.some((d) => d.id === current)) {
+      this.previewDonorId.set(first.id);
+      this.updatePreviewBody(first.id);
+    }
   }
 
   toggleAdv(): void {
@@ -187,29 +323,38 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  toggleQF(el: HTMLElement): void {
-    document.querySelectorAll('.qf').forEach((q) => q.classList.remove('on'));
-    el.classList.add('on');
+  protected setQuickFilter(v: ReminderQuickFilter): void {
+    this.quickFilter.set(v);
+    this.pageIndex.set(0);
+    this.syncPreviewIfNeeded();
   }
 
-  toggleDonor(el: HTMLElement): void {
-    el.classList.toggle('checked');
-    const check = el.querySelector('.d-check') as HTMLElement | null;
-    if (el.classList.contains('checked')) {
-      if (check) check.textContent = '✓';
+  protected onSearchInput(v: string): void {
+    this.searchQuery.set(v);
+    this.pageIndex.set(0);
+    this.syncPreviewIfNeeded();
+  }
+
+  protected toggleDonor(id: string): void {
+    const next = new Set(this.selectedDonorIds());
+    if (next.has(id)) {
+      next.delete(id);
     } else {
-      if (check) check.textContent = '';
+      next.add(id);
     }
-    this.updateCounts();
+    this.selectedDonorIds.set(next);
+    this.syncPreviewIfNeeded();
   }
 
-  selectAll(): void {
-    document.querySelectorAll('.donor-item').forEach((item) => {
-      item.classList.add('checked');
-      const check = item.querySelector('.d-check') as HTMLElement | null;
-      if (check) check.textContent = '✓';
-    });
-    this.updateCounts();
+  protected selectAllFiltered(): void {
+    const next = new Set(this.filteredDonors().map((d) => d.id));
+    this.selectedDonorIds.set(next);
+    this.syncPreviewIfNeeded();
+  }
+
+  protected deselectAll(): void {
+    this.selectedDonorIds.set(new Set());
+    this.syncPreviewIfNeeded();
   }
 
   selectPreset(el: HTMLElement, tone: ReminderTemplateTone): void {
@@ -226,8 +371,33 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   applyFilters(): void {
     const months = (document.getElementById('months-val') as HTMLInputElement | null)?.value;
     if (months) {
-      console.log(`Filtre: dernier don > ${months} mois`);
+      const num = Number(months);
+      if (!Number.isNaN(num)) {
+        this.appliedMonthsMin.set(num);
+      }
+    } else {
+      this.appliedMonthsMin.set(0);
     }
+
+    const montantInputs = document.querySelectorAll('.adv-montant .adv-minput') as NodeListOf<HTMLInputElement>;
+    const minVal = montantInputs[0]?.value;
+    const maxVal = montantInputs[1]?.value;
+    this.appliedTotalDonationMin.set(minVal ? Number(minVal) : null);
+    this.appliedTotalDonationMax.set(maxVal ? Number(maxVal) : null);
+
+    const selects = document.querySelectorAll('.adv-panel .adv-select') as NodeListOf<HTMLSelectElement>;
+    const donationSelect = selects[0];
+    const label = donationSelect?.selectedOptions?.[0]?.textContent?.trim() ?? '';
+    if (!label || label.toLowerCase().includes('peu importe')) {
+      this.appliedDonationCountMin.set(null);
+    } else {
+      const m = label.match(/au moins\s+(\d+)/i);
+      this.appliedDonationCountMin.set(m ? Number(m[1]) : null);
+    }
+
+    this.pageIndex.set(0);
+    this.syncPreviewIfNeeded();
+    this.cdr.markForCheck();
   }
 
   insertVar(v: string): void {

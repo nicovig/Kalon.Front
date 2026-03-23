@@ -1,6 +1,6 @@
-import { NewDonorInputIndividual } from '../../donor/donor.store';
-import { ImportFieldKey } from './import-field.model';
-import { CombinedImportFieldKey } from './import-combined-field.model';
+import { NewDonorInput } from '../../donor/donor.store';
+import { ImportFieldKey } from './model/import-field.model';
+import { CombinedImportFieldKey } from './model/import-combined-field.model';
 import { mapRowToNewDonorInput } from './import-row-to-donor';
 import { parseAmountFromCell, parseDateFromCell } from './import-parse-cells';
 
@@ -8,7 +8,7 @@ export function mapCombinedRowToActions(
   row: string[],
   bindings: CombinedImportFieldKey[]
 ): {
-  donorInput: NewDonorInputIndividual | null;
+  donorInput: NewDonorInput | null;
   donation: { amount: number; date: Date } | null;
 } {
   const donorBindings = bindings.map((b) =>

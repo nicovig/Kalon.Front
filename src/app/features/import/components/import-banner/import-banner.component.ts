@@ -10,20 +10,22 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ImportFlowService } from '../core/import-flow.service';
+import { ImportFlowService } from '../../core/import-flow.service';
+import { ImportMode } from '../../core/model/import-mode.model';
+import { ImportPopUpComponent } from '../import-pop-up/import-pop-up.component';
 
 @Component({
-  selector: 'import-donor-banner',
+  selector: 'import-banner',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './import-donor-banner.component.html',
-  styleUrls: ['./import-donor-banner.component.css'],
+  imports: [CommonModule, ImportPopUpComponent],
+  templateUrl: './import-banner.component.html',
+  styleUrls: ['./import-banner.component.css'],
   host: {
-    '[class.import-donor-banner--xxl]': 'variant === "xxl"'
+    '[class.import-banner--xxl]': 'variant === "xxl"'
   },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportDonorBannerComponent {
+export class ImportBannerComponent {
   private readonly flow = inject(ImportFlowService);
   private readonly router = inject(Router);
 
@@ -36,6 +38,8 @@ export class ImportDonorBannerComponent {
   @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
 
   protected dragOver = false;
+  protected modePickerOpen = false;
+  private fileForModeSelection: File | null = null;
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -73,11 +77,25 @@ export class ImportDonorBannerComponent {
 
   private dispatchFile(file: File): void {
     if (this.navigate) {
-      this.flow.setPendingFile(file);
-      void this.router.navigate(['/import']);
+      this.fileForModeSelection = file;
+      this.modePickerOpen = true;
     } else {
       this.fileSelected.emit(file);
     }
+  }
+
+  protected closeModePicker(): void {
+    this.modePickerOpen = false;
+    this.fileForModeSelection = null;
+  }
+
+  protected onModePicked(mode: ImportMode): void {
+    const file = this.fileForModeSelection;
+    if (!file) return;
+    this.modePickerOpen = false;
+    this.fileForModeSelection = null;
+    this.flow.setPendingFile(file);
+    void this.router.navigate(['/import'], { queryParams: { mode } });
   }
 
   private isAccepted(file: File): boolean {

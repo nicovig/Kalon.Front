@@ -1,0 +1,165 @@
+<div class="left-panel">
+  <div class="lp-header">
+    <div class="lp-title">
+      {{ title }}
+      <span class="selected-count">{{ selectedCount }} sélectionné(s)</span>
+    </div>
+
+    <div class="search-box">
+      <span>🔍</span>
+      <input
+        type="text"
+        [placeholder]="searchPlaceholder"
+        [value]="searchQuery"
+        (input)="onSearchInput(($any($event.target)).value)"
+      />
+    </div>
+
+    <div class="quick-filters">
+      <div class="qf" [class.on]="quickFilter === 'all'" (click)="setQuickFilter('all')">Tous</div>
+      <div class="qf" [class.on]="quickFilter === 'to_remind'" (click)="setQuickFilter('to_remind')">
+        À relancer
+      </div>
+      <div class="qf" [class.on]="quickFilter === 'new'" (click)="setQuickFilter('new')">Nouveaux</div>
+      <div class="qf" [class.on]="quickFilter === 'active'" (click)="setQuickFilter('active')">Actifs</div>
+      <div class="qf" [class.on]="quickFilter === 'inactive'" (click)="setQuickFilter('inactive')">
+        Inactifs
+      </div>
+    </div>
+
+    <div class="adv-toggle" (click)="toggleAdvanced()">
+      <span class="adv-arrow" [class.open]="advancedOpen" id="adv-arrow">›</span>
+      Filtres avancés
+    </div>
+
+    <div class="adv-panel" [class.open]="advancedOpen" id="adv-panel">
+      <div class="adv-row">
+        <div class="adv-lbl">Dernier don il y a plus de</div>
+        <div class="range-row">
+          <div class="range-input">
+            <input
+              type="number"
+              id="months-val"
+              [value]="monthsVal"
+              min="1"
+              max="60"
+              (input)="onMonthsNumberInput(($any($event.target)).value)"
+            />
+            <span>mois</span>
+          </div>
+          <div style="flex: 1">
+            <input
+              type="range"
+              class="slider"
+              id="months-slider"
+              #monthsSlider
+              min="1"
+              max="60"
+              [value]="monthsVal"
+              (input)="onMonthsSliderInput(($any($event.target)).value)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="adv-row">
+        <div class="adv-lbl">Total des dons (€)</div>
+        <div class="adv-montant">
+          <input
+            type="number"
+            class="adv-minput"
+            placeholder="Min (ex: 20)"
+            [value]="totalMinInput"
+            (input)="totalMinInput = ($any($event.target)).value"
+          />
+          <input
+            type="number"
+            class="adv-minput"
+            placeholder="Max (ex: 500)"
+            [value]="totalMaxInput"
+            (input)="totalMaxInput = ($any($event.target)).value"
+          />
+        </div>
+      </div>
+
+      <div class="adv-row">
+        <div class="adv-lbl">Nombre de dons</div>
+        <select
+          class="adv-select"
+          [value]="donationCountSel"
+          (change)="donationCountSel = ($any($event.target)).value"
+        >
+          <option value="any">Peu importe</option>
+          <option value="1">Au moins 1 don</option>
+          <option value="2">Au moins 2 dons</option>
+          <option value="5">Au moins 5 dons (fidèles)</option>
+        </select>
+      </div>
+
+      <div class="adv-row">
+        <div class="adv-lbl">Dernière campagne</div>
+        <select class="adv-select">
+          <option>Toutes les campagnes</option>
+          <option>Campagne été 2024</option>
+          <option>Appel de fonds 2023</option>
+          <option>Collecte de Noël 2023</option>
+        </select>
+      </div>
+
+      <button-label-component type="adv-apply" (click)="applyFilters()">Appliquer les filtres →</button-label-component>
+    </div>
+
+    <div class="lp-select-actions">
+      <span class="sel-action" (click)="onSelectAllFilteredClick()">Tout sélectionner</span>
+      <span class="sel-action sel-action--muted" (click)="onDeselectAllClick()">Tout déselectionner</span>
+    </div>
+  </div>
+
+  <div class="donor-list" id="donor-list">
+    @if (filteredDonorsLength === 0) {
+      <p class="donor-list-empty">{{ emptyMessage }}</p>
+    }
+
+    @for (item of pagedItems; track item.id; let i = $index) {
+      <div
+        class="donor-item"
+        [class.checked]="selectedDonorIds.has(item.id)"
+        (click)="toggleDonor.emit(item.id)"
+      >
+        <kalon-checkbox [checked]="selectedDonorIds.has(item.id)"></kalon-checkbox>
+        <div [class]="'d-av ' + (item.avatarClass || ('da' + ((i % 7) + 1)) )">{{ item.avatarText || '?' }}</div>
+        <div class="d-info">
+          <div class="d-name">{{ item.title }}</div>
+          <div class="d-meta">{{ item.subtitle || '—' }}</div>
+        </div>
+
+        @if (item.badgeText) {
+          <span class="d-badge" [class]="('d-badge ' + (item.badgeClass || ''))">{{ item.badgeText }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  @if (totalPages > 1) {
+    <div class="lp-pagination">
+      <button-label-component type="ghost" (click)="onPrevPageClick()" [disabled]="pageIndex === 0"
+        >←</button-label-component
+      >
+      <div class="lp-pagination-label">
+        Page {{ pageIndex + 1 }} / {{ totalPages }}
+      </div>
+      <button-label-component
+        type="ghost"
+        (click)="onNextPageClick()"
+        [disabled]="pageIndex >= totalPages - 1"
+      >
+        →
+      </button-label-component>
+    </div>
+  }
+
+  <div class="lp-footer">
+    <span class="sel-info">{{ selectedCount }} {{ selectedLabel }} sélectionnés sur {{ donorsCount }}</span>
+  </div>
+</div>
+

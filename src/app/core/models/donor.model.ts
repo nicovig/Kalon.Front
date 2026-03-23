@@ -1,4 +1,5 @@
 export type DonorKind = 'individual' | 'company';
+export type DonorStatus = 'active' | 'to_remind' | 'new' | 'inactive';
 
 export interface IDonor {
   id: string;
@@ -10,7 +11,7 @@ export interface IDonor {
   address?: IDonorAddress;
   enterprise?: IDonorEnterprise;
   creationDate: Date;
-  statut: 'active' | 'to_remind' | 'new' | 'inactive';
+  statut: DonorStatus;
   totalDonation: number;
   lastDonation?: Date;
   donationCount: number;

@@ -1,5 +1,5 @@
 import { normalizeHeaderLabel } from './import-column-guess';
-import { DonationImportFieldKey } from './import-donation-field.model';
+import { DonationImportFieldKey } from './model/import-donation-field.model';
 
 type DRule = { field: DonationImportFieldKey; weight: number; test: (n: string) => boolean };
 

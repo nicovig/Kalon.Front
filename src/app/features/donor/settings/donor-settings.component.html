@@ -1,0 +1,71 @@
+<button-label-component type="ghost" (click)="openModal()">Paramètres</button-label-component>
+
+@if (open()) {
+  <app-popup-shell [maxWidth]="'720px'" [zIndex]="2065" (dismiss)="closeModal()">
+    <div popup-header>
+      <div class="ds-title">Paramètres des statuts donateurs</div>
+      <p class="ds-sub">Définissez vos propres règles pour classer vos donateurs.</p>
+    </div>
+
+    <div class="ds-grid">
+      <div class="ds-row">
+        <label class="ds-label" for="new-days">
+          <span class="badge b-new">Nouveau</span>
+          <span>pendant (jours)</span>
+        </label>
+        <input
+          id="new-days"
+          class="ds-input"
+          type="number"
+          min="1"
+          max="365"
+          [ngModel]="newForDays()"
+          (ngModelChange)="onNewForDaysChange($event)"
+        />
+      </div>
+
+      <div class="ds-row">
+        <label class="ds-label" for="to-remind-months">
+          <span class="badge b-relance">À relancer</span>
+          <span>après (mois)</span>
+        </label>
+        <input
+          id="to-remind-months"
+          class="ds-input"
+          type="number"
+          min="1"
+          max="120"
+          [ngModel]="toRemindAfterMonths()"
+          (ngModelChange)="onToRemindAfterMonthsChange($event)"
+        />
+      </div>
+
+      <div class="ds-row">
+        <label class="ds-label" for="inactive-months">
+          <span class="badge b-relance">Inactif</span>
+          <span>après (mois)</span>
+        </label>
+        <input
+          id="inactive-months"
+          class="ds-input"
+          type="number"
+          min="2"
+          max="240"
+          [ngModel]="inactiveAfterMonths()"
+          (ngModelChange)="onInactiveAfterMonthsChange($event)"
+        />
+      </div>
+    </div>
+
+    <div class="ds-active-note">
+      <span class="badge b-active">Actif</span>
+      <span>Le statut actif est attribué automatiquement quand aucune règle ci-dessus ne s’applique.</span>
+    </div>
+
+    <div class="ds-actions">
+      <button-label-component type="ghost" (click)="resetDefaults()">Valeurs par défaut</button-label-component>
+      <button-label-component type="primary" (click)="save()">Enregistrer</button-label-component>
+    </div>
+  </app-popup-shell>
+}
+

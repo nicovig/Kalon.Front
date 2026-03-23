@@ -10,8 +10,9 @@ import { DonationStoreService } from '../donation/donation.store';
 import { DonorStoreService } from '../donor/donor.store';
 import { DonorCreateLauncherComponent } from '../donor/donor-create-launcher.component';
 import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
-import { ImportDonorBannerComponent } from '../import/import-donor-banner/import-donor-banner.component';
+import { ImportBannerComponent } from '../import/components/import-banner/import-banner.component';
 import { donorDisplayName, IDonor } from '../../core/models/donor.model';
+import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
 
 @Component({
   selector: 'dashboard-page',
@@ -28,7 +29,7 @@ import { donorDisplayName, IDonor } from '../../core/models/donor.model';
     CardComponent,
     DonorCreateLauncherComponent,
     EmptyDonorsWelcomeComponent,
-    ImportDonorBannerComponent
+    ImportBannerComponent
   ]
 })
 export class DashboardPageComponent {
@@ -36,13 +37,17 @@ export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
   private readonly donationStore = inject(DonationStoreService);
   private readonly donorStore = inject(DonorStoreService);
+  private readonly donorSettings = inject(DonorSettingsStore);
 
   protected readonly currentUser = this.authService.currentUser;
 
   protected readonly latestDonationsComputed = computed(() => this.donationStore.donations());
 
   protected readonly kpiActiveDonors = computed(
-    () => this.donorStore.donors().filter((d) => d.statut === 'active').length
+    () =>
+      this.donorStore
+        .donors()
+        .filter((d) => this.donorSettings.statusOf(d) === 'active').length
   );
 
   protected readonly kpiYearDonationsTotal = computed(() => {
@@ -54,7 +59,10 @@ export class DashboardPageComponent {
   });
 
   protected readonly kpiToRemind = computed(
-    () => this.donorStore.donors().filter((d) => d.statut === 'to_remind').length
+    () =>
+      this.donorStore
+        .donors()
+        .filter((d) => this.donorSettings.statusOf(d) === 'to_remind').length
   );
 
   protected readonly kpiReceipts = 0;
@@ -76,7 +84,7 @@ export class DashboardPageComponent {
   protected readonly priorityRelanceDonors = computed(() =>
     this.donorStore
       .donors()
-      .filter((d) => d.statut === 'to_remind')
+      .filter((d) => this.donorSettings.statusOf(d) === 'to_remind')
       .sort(
         (a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0)
       )

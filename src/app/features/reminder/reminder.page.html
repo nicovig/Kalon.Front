@@ -6,125 +6,33 @@
 <div class="reminder-page">
   <!-- LAYOUT SPLIT -->
   <div class="layout">
-    <!-- ══ GAUCHE — SÉLECTION DONATEURS ══ -->
-    <div class="left-panel">
-      <div class="lp-header">
-        <div class="lp-title">
-          Sélectionner les destinataires
-          <span class="selected-count" id="sel-count">0 sélectionné</span>
-        </div>
-
-        <!-- Recherche -->
-        <div class="search-box">
-          <span>🔍</span>
-          <input type="text" placeholder="Rechercher un donateur…" />
-        </div>
-
-        <!-- Filtres rapides -->
-        <div class="quick-filters">
-          <div class="qf on" onclick="toggleQF(this)">Tous</div>
-          <div class="qf" onclick="toggleQF(this)">À relancer</div>
-          <div class="qf" onclick="toggleQF(this)">Nouveaux</div>
-          <div class="qf" onclick="toggleQF(this)">Actifs</div>
-          <div class="qf" onclick="toggleQF(this)">Inactifs</div>
-        </div>
-
-        <!-- Filtres avancés -->
-        <div class="adv-toggle" onclick="toggleAdv()">
-          <span class="adv-arrow" id="adv-arrow">›</span>
-          Filtres avancés
-        </div>
-
-        <div class="adv-panel" id="adv-panel">
-          <!-- Dernier don -->
-          <div class="adv-row">
-            <div class="adv-lbl">Dernier don il y a plus de</div>
-            <div class="range-row">
-              <div class="range-input">
-                <input type="number" id="months-val" value="12" min="1" max="60" />
-                <span>mois</span>
-              </div>
-              <div style="flex: 1">
-                <input
-                  type="range"
-                  class="slider"
-                  id="months-slider"
-                  min="1"
-                  max="60"
-                  value="12"
-                  oninput="syncSlider(this.value)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Montant total -->
-          <div class="adv-row">
-            <div class="adv-lbl">Total des dons (€)</div>
-            <div class="adv-montant">
-              <input type="number" class="adv-minput" placeholder="Min (ex: 20)" />
-              <input type="number" class="adv-minput" placeholder="Max (ex: 500)" />
-            </div>
-          </div>
-
-          <!-- Nombre de dons -->
-          <div class="adv-row">
-            <div class="adv-lbl">Nombre de dons</div>
-            <select class="adv-select">
-              <option>Peu importe</option>
-              <option>Au moins 1 don</option>
-              <option>Au moins 2 dons</option>
-              <option>Au moins 5 dons (fidèles)</option>
-            </select>
-          </div>
-
-          <!-- Campagne -->
-          <div class="adv-row">
-            <div class="adv-lbl">Dernière campagne</div>
-            <select class="adv-select">
-              <option>Toutes les campagnes</option>
-              <option>Campagne été 2024</option>
-              <option>Appel de fonds 2023</option>
-              <option>Collecte de Noël 2023</option>
-            </select>
-          </div>
-
-          <button-label-component type="adv-apply" (click)="applyFilters()"
-            >Appliquer les filtres →</button-label-component
-          >
-        </div>
-      </div>
-
-      <div class="donor-list" id="donor-list">
-        @if (donors().length === 0) {
-          <p class="donor-list-empty">Aucun donateur pour le moment. Créez ou importez des donateurs pour les relancer.</p>
-        }
-        @for (d of donors(); track d.id; let i = $index) {
-          <div class="donor-item" onclick="toggleDonor(this)">
-            <div class="d-check"></div>
-            <div [class]="'d-av da' + ((i % 7) + 1)">{{ initials(d) }}</div>
-            <div class="d-info">
-              <div class="d-name">{{ displayName(d) }}</div>
-              <div class="d-meta">{{ donorMetaLine(d) }}</div>
-            </div>
-            @if (d.statut === 'to_remind' && d.lastDonation) {
-              <span class="d-badge db-relance">{{ monthsSinceLast(d) }} mois</span>
-            } @else if (d.statut === 'active') {
-              <span class="d-badge db-actif">Actif</span>
-            } @else if (d.statut === 'new') {
-              <span class="d-badge db-actif">Nouveau</span>
-            } @else if (d.statut === 'inactive') {
-              <span class="d-badge db-relance">Inactif</span>
-            }
-          </div>
-        }
-      </div>
-
-      <div class="lp-footer">
-        <span class="sel-info" id="footer-info">4 donateurs sélectionnés sur 34</span>
-        <span class="sel-all" onclick="selectAll()">Tout sélectionner</span>
-      </div>
-    </div>
+    <reminder-recipient-selector
+      [pagedItems]="pagedRecipientItems()"
+      [filteredDonorsLength]="filteredDonorsLength()"
+      [donorsCount]="donorsCount()"
+      [selectedCount]="selectedCount()"
+      [selectedDonorIds]="selectedDonorIds()"
+      [quickFilter]="quickFilter()"
+      [searchQuery]="searchQuery()"
+      [title]="'Sélectionner les destinataires'"
+      [searchPlaceholder]="'Rechercher un donateur…'"
+      [emptyMessage]="'Aucun donateur pour le moment. Créez ou importez des donateurs pour les relancer.'"
+      [selectedLabel]="'donateurs'"
+      [pageIndex]="pageIndex()"
+      [totalPages]="totalPages()"
+      [appliedMonthsMin]="appliedMonthsMin()"
+      [appliedTotalDonationMin]="appliedTotalDonationMin()"
+      [appliedTotalDonationMax]="appliedTotalDonationMax()"
+      [appliedDonationCountMin]="appliedDonationCountMin()"
+      (quickFilterChange)="setQuickFilter($event)"
+      (searchQueryChange)="onSearchInput($event)"
+      (toggleDonor)="toggleDonor($event)"
+      (selectAllFiltered)="selectAllFiltered()"
+      (deselectAll)="deselectAll()"
+      (prevPage)="prevPage()"
+      (nextPage)="nextPage()"
+      (applyAdvancedFilters)="onAdvancedFiltersApplied($event)"
+    />
 
     <!-- ══ DROITE — MAIL ══ -->
     <div class="right-panel">
@@ -148,9 +56,11 @@
           <span class="step-index">3</span>
           <span class="step-label">Aperçu &amp; envoi</span>
         </button-label-component>
-        <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn">
-          <span class="step-index" id="send-count">4</span>
-          <span class="send-step-label">Envoyer à <span id="send-count-2">4</span> donateurs 💌</span>
+        <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn" [disabled]="selectedDonorsForStep3Count() === 0">
+          <span class="step-index" id="send-count">{{ selectedDonorsForStep3Count() }}</span>
+          <span class="send-step-label"
+            >Envoyer à <span id="send-count-2">{{ selectedDonorsForStep3Count() }}</span> donateurs 💌</span
+          >
         </button-label-component>
       </div>
 
@@ -201,9 +111,13 @@
           <div class="preview-head">
             <div class="preview-ttl">👁 Aperçu pour</div>
             <div class="preview-donor">
-              @if (donors().length) {
-                <select class="preview-select" (change)="onPreviewDonorChange($event)">
-                  @for (d of donors(); track d.id) {
+              @if (selectedDonorsForPreview().length) {
+                <select
+                  class="preview-select"
+                  [value]="previewDonorId() ?? ''"
+                  (change)="onPreviewDonorChange($event)"
+                >
+                  @for (d of selectedDonorsForPreview(); track d.id) {
                     <option [value]="d.id">{{ displayName(d) }}</option>
                   }
                 </select>
@@ -229,17 +143,22 @@
 
         <div class="send-recap" *ngIf="activeStep === 3">
           <div class="recap-stat">
-            <div class="recap-val" id="recap-dest">4</div>
+          <div class="recap-val">{{ selectedDonorsForStep3Count() }}</div>
             <div class="recap-lbl">destinataires</div>
           </div>
           <div class="recap-sep"></div>
           <div class="recap-stat">
-            <div class="recap-val">300</div>
+          <div class="recap-val">300</div>
             <div class="recap-lbl">mails restants</div>
           </div>
           <div class="recap-sep"></div>
           <div class="recap-stat">
-            <div class="recap-val" style="color: var(--mint-dk)">207</div>
+          <div
+            class="recap-val"
+            style="color: var(--mint-dk)"
+          >
+            {{ afterSendCount() }}
+          </div>
             <div class="recap-lbl">après envoi</div>
           </div>
           <div class="recap-sep"></div>
