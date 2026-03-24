@@ -1,56 +1,25 @@
-@if (type === 'button') {
-  <button
-    class="card card-button"
-    [ngClass]="{
-      'card-advanced': paddingClass === 'advanced',
-      'card-bare': variant === 'bare'
-    }"
-    type="button"
-    [disabled]="disabled"
-    (click)="onCardClick()"
-  >
-    @if (title || subtitle) {
-      <div class="card-head">
-        <div>
-          @if (title) {
-            <div class="card-title">{{ title }}</div>
-          }
-          @if (subtitle) {
-            <div class="card-sub">{{ subtitle }}</div>
-          }
-        </div>
-        <ng-content select="[card-header-extra]" />
+<div
+  class="card"
+  [ngClass]="{
+    'card-advanced': paddingClass === 'advanced',
+    'card-bare': variant === 'bare'
+  }"
+>
+  @if (title || subtitle) {
+    <div class="card-head">
+      <div>
+        @if (title) {
+          <div class="card-title">{{ title }}</div>
+        }
+        @if (subtitle) {
+          <div class="card-sub">{{ subtitle }}</div>
+        }
       </div>
-    }
-
-    <div class="card-body">
-      <ng-content />
+      <ng-content select="[card-header-extra]" />
     </div>
-  </button>
-} @else {
-  <div
-    class="card"
-    [ngClass]="{
-      'card-advanced': paddingClass === 'advanced',
-      'card-bare': variant === 'bare'
-    }"
-  >
-    @if (title || subtitle) {
-      <div class="card-head">
-        <div>
-          @if (title) {
-            <div class="card-title">{{ title }}</div>
-          }
-          @if (subtitle) {
-            <div class="card-sub">{{ subtitle }}</div>
-          }
-        </div>
-        <ng-content select="[card-header-extra]" />
-      </div>
-    }
+  }
 
-    <div class="card-body">
-      <ng-content />
-    </div>
+  <div class="card-body">
+    <ng-content />
   </div>
-}
+</div>

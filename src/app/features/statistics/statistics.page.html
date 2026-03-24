@@ -35,10 +35,6 @@
         <div class="st-kpi-helper">Part mécènes : {{ companyAmountShare() }}%</div>
       </div>
     </card>
-
-    <!-- <card title="📊 Export CSV" paddingClass="advanced" type="button" [disabled]="!canExportCsv()" (click)="exportFilteredDonationsCsv()">
-      <div class="st-kpi-spacer"></div>
-    </card> -->
   </div>
 
   <card
@@ -125,6 +121,7 @@
 
     <div class="st-filter-actions">
       <button-label-component type="ghost" (click)="clearFilters()">Réinitialiser les filtres</button-label-component>
+      <button-label-component type="primary" (click)="exportFilteredDonationsCsv()">Exporter en CSV</button-label-component>
     </div>
   </card>
 

@@ -15,7 +15,6 @@
 .st-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  /* grid-template-columns: repeat(5, minmax(0, 1fr)); */
   gap: 12px;
 }
 
@@ -27,10 +26,6 @@
 .st-kpis card ::ng-deep .card {
   min-height: 126px;
   height: 100%;
-}
-
-.st-kpi-spacer {
-  height: 25px;
 }
 
 .st-kpi-val {
@@ -54,6 +49,12 @@
   font-weight: 700;
   white-space: nowrap;
   text-align: right;
+}
+
+.st-export-kpi {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
 }
 
 .st-filters {
@@ -96,9 +97,9 @@
 }
 
 .st-filter-actions {
-  margin-top: 8px;
   display: flex;
-  justify-content: flex-end;
+  margin-top: 8px;
+  justify-content: space-between;
 }
 
 .st-kpi-helper--left {

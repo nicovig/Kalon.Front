@@ -6,19 +6,6 @@
   overflow: hidden;
 }
 
-.card.card-button {
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
-}
-
 .card-head {
   display: flex;
   align-items: center;
@@ -56,35 +43,4 @@
 
 .card-bare .card-body {
   padding: 0;
-}
-
-.card-button {
-  background: var(--pink);
-  color: white;
-  box-shadow: 0 4px 14px rgba(255, 77, 125, 0.35);
-  border-color: var(--pink);
-}
-
-.card-button:hover {
-  background: var(--pink-dk);
-  border-color: var(--pink-dk);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(255, 77, 125, 0.45);
-}
-
-.card-button:disabled {
-  background: var(--ink-30);
-  color: rgba(255, 255, 255, 0.72);
-  border-color: var(--ink-30);
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.card-button .card-sub {
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.card-button .card-title {
-  color: white;
 }
