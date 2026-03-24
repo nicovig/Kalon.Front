@@ -19,7 +19,6 @@ import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.compon
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
-import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
 import { DonorStoreService } from '../donor/donor.store';
 import { donorDisplayName, DonorStatus, IDonor } from '../../core/models/donor.model';
 import {
@@ -45,7 +44,6 @@ import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
     FormSelectComponent,
     MailEditorComponent,
     FormTextareaComponent,
-    EmptyDonorsWelcomeComponent,
     ReminderRecipientSelectorComponent
   ]
 })

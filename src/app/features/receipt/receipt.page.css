@@ -1,0 +1,228 @@
+.receipt-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.rp-header {
+  padding: 20px 26px 16px;
+  border-bottom: 2px solid var(--ink-10);
+  background: white;
+  flex-shrink: 0;
+}
+
+.rp-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.rp-sub {
+  font-size: 13px;
+  color: var(--ink-70);
+  margin-top: 2px;
+}
+
+.rp-steps {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 26px 0;
+  width: 100%;
+}
+
+.rp-steps button-label-component {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.rp-steps button-label-component .btn {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
+.step-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--ink-10);
+  color: var(--ink-70);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-label,
+.send-step-label {
+  white-space: nowrap;
+}
+
+.rp-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 26px;
+}
+
+.surface-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--ink-10);
+  box-shadow: var(--sh-sm);
+  padding: 18px;
+}
+
+.surface-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.surface-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--violet-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.surface-title {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.surface-desc {
+  font-size: 12.5px;
+  color: var(--ink-70);
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.template-card {
+  border: 2px solid var(--ink-10);
+  background: white;
+  border-radius: var(--r-md);
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.template-card--active {
+  border-color: var(--violet);
+  background: var(--violet-lt);
+}
+
+.template-emoji {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.template-name {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.template-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-70);
+}
+
+.editor-block {
+  margin-top: 12px;
+}
+
+.editor-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  margin-bottom: 6px;
+}
+
+.preview-head {
+  padding: 0 0 12px;
+  border-bottom: 2px solid var(--ink-10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.preview-ttl {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.preview-donor {
+  min-width: 240px;
+}
+
+.preview-select {
+  display: block;
+}
+
+.preview-select ::ng-deep .fs-select {
+  min-height: 36px;
+}
+
+.preview-donor-empty {
+  font-size: 13px;
+  color: var(--ink-70);
+}
+
+.preview-body {
+  padding-top: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+@media (max-width: 1200px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,16 +2,16 @@
   <app-popup-shell [maxWidth]="'min(440px, calc(100% - 32px))'" [zIndex]="2100" (dismiss)="onDismissWelcome()">
     <div popup-header>
       <div class="edw-head">
-        <div class="edw-emoji" aria-hidden="true">😢</div>
         <div class="app-popup-title">Pas encore de donateurs ?</div>
+        <div class="edw-emoji" aria-hidden="true">😢</div>
       </div>
       <p class="app-popup-sub edw-sub">
-        Il semble que vous n’avez pas encore de donateurs… un peu vide, comme un frigo un dimanche soir.
+        Il semble que vous n’ayez pas encore de donateurs. Un peu vide, comme un frigo un dimanche soir.
         <span class="edw-line">Pas de panique : on vous aide à remplir tout ça 💪</span>
       </p>
     </div>
     <div class="edw-body">
-      <p class="edw-hint">Importez un fichier (Excel / CSV) ou créez un donateur à la main — vous choisissez.</p>
+      <p class="edw-hint">Importez un fichier (Excel / CSV) ou créez un donateur à la main, vous choisissez.</p>
       <div class="edw-actions">
         <button-label-component type="primary" (click)="goImport()">Importer des données</button-label-component>
         <button-label-component type="ghost" (click)="openCreate()">Créer un donateur</button-label-component>

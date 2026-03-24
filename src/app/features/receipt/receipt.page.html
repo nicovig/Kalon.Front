@@ -1,0 +1,152 @@
+<topbar [title]="'Les reçus fiscaux'" [subtitle]="'Préparez vos reçus avant génération PDF backend'"></topbar>
+
+<div class="receipt-page">
+  <div class="layout">
+    <reminder-recipient-selector
+      [pagedItems]="pagedRecipientItems()"
+      [filteredDonorsLength]="filteredDonorsLength()"
+      [donorsCount]="donorsCount()"
+      [selectedCount]="selectedCount()"
+      [selectedDonorIds]="selectedDonorIds()"
+      [quickFilter]="quickFilter()"
+      [searchQuery]="searchQuery()"
+      [title]="'Sélectionner les destinataires'"
+      [searchPlaceholder]="'Rechercher un donateur…'"
+      [emptyMessage]="'Aucun donateur pour le moment. Créez ou importez des donateurs pour générer des reçus.'"
+      [selectedLabel]="'donateurs'"
+      [pageIndex]="pageIndex()"
+      [totalPages]="totalPages()"
+      [appliedMonthsMin]="appliedMonthsMin()"
+      [appliedTotalDonationMin]="appliedTotalDonationMin()"
+      [appliedTotalDonationMax]="appliedTotalDonationMax()"
+      [appliedDonationCountMin]="appliedDonationCountMin()"
+      (quickFilterChange)="setQuickFilter($event)"
+      (searchQueryChange)="onSearchInput($event)"
+      (toggleDonor)="toggleDonor($event)"
+      (selectAllFiltered)="selectAllFiltered()"
+      (deselectAll)="deselectAll()"
+      (prevPage)="prevPage()"
+      (nextPage)="nextPage()"
+      (applyAdvancedFilters)="onAdvancedFiltersApplied($event)"
+    />
+
+    <div class="right-panel">
+      <div class="rp-header">
+        <div>
+          <div class="rp-title">Créer les reçus fiscaux</div>
+          <div class="rp-sub">Flux mocké en attendant la génération PDF côté API</div>
+        </div>
+      </div>
+
+      <div class="rp-steps">
+        <button-label-component type="step" [active]="activeStep === 1" (click)="goToStep(1)">
+          <span class="step-index">1</span>
+          <span class="step-label">Sélection du modèle</span>
+        </button-label-component>
+        <button-label-component type="step" [active]="activeStep === 2" (click)="goToStep(2)">
+          <span class="step-index">2</span>
+          <span class="step-label">Rédaction du texte</span>
+        </button-label-component>
+        <button-label-component type="step" [active]="activeStep === 3" (click)="goToStep(3)">
+          <span class="step-index">3</span>
+          <span class="step-label">Aperçu et envoi</span>
+        </button-label-component>
+        @if (activeStep === 3) {
+          <button-label-component type="send" [disabled]="selectedDonorsForStep3Count() === 0">
+            <span class="step-index">{{ selectedDonorsForStep3Count() }}</span>
+            <span class="send-step-label">Envoyer à {{ selectedDonorsForStep3Count() }} donateurs 🧾</span>
+          </button-label-component>
+        }
+      </div>
+
+      <div class="rp-body">
+        @if (activeStep === 1) {
+          <div class="surface-card">
+            <div class="surface-head">
+              <div class="surface-icon">🗂️</div>
+              <div>
+                <div class="surface-title">Choisissez un modèle</div>
+                <div class="surface-desc">Ces modèles sont personnalisables et seront injectés dans le PDF généré.</div>
+              </div>
+            </div>
+            <div class="template-grid">
+              @for (tpl of templateOptions; track tpl.id) {
+                <button
+                  type="button"
+                  class="template-card"
+                  [class.template-card--active]="selectedTemplateId() === tpl.id"
+                  (click)="setTemplate(tpl.id)"
+                >
+                  <div class="template-emoji">{{ tpl.emoji }}</div>
+                  <div class="template-name">{{ tpl.title }}</div>
+                  <div class="template-desc">{{ tpl.description }}</div>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeStep === 2) {
+          <div class="surface-card">
+            <div class="surface-head">
+              <div class="surface-icon">✍️</div>
+              <div>
+                <div class="surface-title">Rédiger le texte du reçu</div>
+                <div class="surface-desc">Le texte sera injecté dans le PDF généré plus tard par le backend.</div>
+              </div>
+            </div>
+            <div class="editor-block">
+              <div class="editor-label">Corps du reçu</div>
+              <form-textarea
+                [rows]="8"
+                [value]="receiptBody()"
+                (valueChange)="receiptBody.set($event)"
+                variant="light"
+                [placeholder]="'Saisissez le texte principal du reçu fiscal...'"
+              ></form-textarea>
+            </div>
+            <div class="editor-block">
+              <div class="editor-label">Signature / pied de page</div>
+              <form-textarea
+                [rows]="2"
+                [value]="receiptFooter()"
+                (valueChange)="receiptFooter.set($event)"
+                variant="light"
+                placeholder="Ex: Le trésorier de l'association"
+              ></form-textarea>
+            </div>
+          </div>
+        }
+
+        @if (activeStep === 3) {
+          <div class="surface-card">
+            <div class="preview-head">
+              <div class="preview-ttl">👁️ Aperçu mocké</div>
+              <div class="preview-donor">
+                @if (selectedDonorsForPreview().length) {
+                  <form-select-component
+                    class="preview-select"
+                    [label]="null"
+                    [options]="previewDonorOptions()"
+                    [ngModel]="previewDonorId() ?? ''"
+                    (ngModelChange)="onPreviewDonorChange($event)"
+                  />
+                } @else {
+                  <span class="preview-donor-empty">Aucun destinataire</span>
+                }
+              </div>
+            </div>
+            <div class="preview-body">
+              <p><strong>Modèle :</strong> {{ currentTemplateTitle() }}</p>
+              <p><strong>Donateur :</strong> {{ donorPreviewName() }}</p>
+              <p><strong>Total dons :</strong> {{ donorPreviewAmount() }}</p>
+              <hr />
+              <p>{{ receiptBody() }}</p>
+              <p>{{ receiptFooter() }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
