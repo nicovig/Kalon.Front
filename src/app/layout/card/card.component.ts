@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -14,4 +14,15 @@ export class CardComponent {
   @Input() subtitle = '';
   @Input() paddingClass: 'default' | 'advanced' = 'default';
   @Input() variant: 'default' | 'bare' = 'default';
+  @Input() type: 'text' | 'button' = 'text';
+  @Input() disabled = false;
+
+  @Output() click = new EventEmitter<void>();
+
+  protected onCardClick(): void {
+    if (this.type !== 'button' || this.disabled) {
+      return;
+    }
+    this.click.emit();
+  }
 }

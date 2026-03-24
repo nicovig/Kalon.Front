@@ -9,51 +9,54 @@
 
     <div class="ds-grid">
       <div class="ds-row">
-        <label class="ds-label" for="new-days">
+        <label class="ds-inline" for="new-days">
           <span class="badge b-new">Nouveau</span>
-          <span>pendant (jours)</span>
+          <span class="ds-inline-text">pendant</span>
+          <form-text-component
+            id="new-days"
+            class="ds-input ds-input--inline"
+            [type]="'text'"
+            [icon]="null"
+            [value]="'' + newForDays()"
+            [width]="'84px'"
+            (valueChange)="onNewForDaysChange($event)"
+          ></form-text-component>
+          <span class="ds-inline-text">jours</span>
         </label>
-        <input
-          id="new-days"
-          class="ds-input"
-          type="number"
-          min="1"
-          max="365"
-          [ngModel]="newForDays()"
-          (ngModelChange)="onNewForDaysChange($event)"
-        />
       </div>
 
       <div class="ds-row">
-        <label class="ds-label" for="to-remind-months">
+        <label class="ds-inline" for="to-remind-months">
           <span class="badge b-relance">À relancer</span>
-          <span>après (mois)</span>
+          <span class="ds-inline-text">après</span>
+          <form-text-component
+            id="to-remind-months"
+            class="ds-input ds-input--inline"
+            [type]="'text'"
+            [icon]="null"
+            [value]="'' + toRemindAfterMonths()"
+            [width]="'84px'"
+            (valueChange)="onToRemindAfterMonthsChange($event)"
+          ></form-text-component>
+          <span class="ds-inline-text">mois</span>
         </label>
-        <input
-          id="to-remind-months"
-          class="ds-input"
-          type="number"
-          min="1"
-          max="120"
-          [ngModel]="toRemindAfterMonths()"
-          (ngModelChange)="onToRemindAfterMonthsChange($event)"
-        />
       </div>
 
       <div class="ds-row">
-        <label class="ds-label" for="inactive-months">
+        <label class="ds-inline" for="inactive-months">
           <span class="badge b-relance">Inactif</span>
-          <span>après (mois)</span>
+          <span class="ds-inline-text">après</span>
+          <form-text-component
+            id="inactive-months"
+            class="ds-input ds-input--inline"
+            [type]="'text'"
+            [icon]="null"
+            [value]="'' + inactiveAfterMonths()"
+            [width]="'84px'"
+            (valueChange)="onInactiveAfterMonthsChange($event)"
+          ></form-text-component>
+          <span class="ds-inline-text">mois</span>
         </label>
-        <input
-          id="inactive-months"
-          class="ds-input"
-          type="number"
-          min="2"
-          max="240"
-          [ngModel]="inactiveAfterMonths()"
-          (ngModelChange)="onInactiveAfterMonthsChange($event)"
-        />
       </div>
     </div>
 

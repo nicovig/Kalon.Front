@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
 import { DonorSettingsStore } from './donor-settings.store';
 import { DonorStoreService } from '../donor.store';
 import { ToastService } from '../../../layout/toast/toast.service';
+import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 
 @Component({
   selector: 'donor-settings-launcher',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonLabelComponent, PopupShellComponent],
+  imports: [CommonModule, ButtonLabelComponent, PopupShellComponent, FormTextComponent],
   templateUrl: './donor-settings.component.html',
   styleUrls: ['./donor-settings.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

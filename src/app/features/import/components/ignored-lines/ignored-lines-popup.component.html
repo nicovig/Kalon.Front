@@ -8,7 +8,7 @@
 
   <div class="il-body">
     <div class="il-summary" role="status" aria-live="polite">
-      {{ ignoredLines().length }} ligne(s) ignorée(s)
+      {{ ignoredLines().length }} {{ ignoredLines().length === 1 ? 'ligne' : 'lignes' }} ignorée{{ ignoredLines().length === 1 ? '' : 's' }}
     </div>
 
     @if (sheetName()) {
@@ -28,6 +28,21 @@
             @if (wantsEmailInput(line)) {
               <label class="il-field">
                 <div class="il-field-label">Email</div>
+                <form-text-component
+                  class="il-input"
+                  [type]="'text'"
+                  [icon]="null"
+                  [width]="'100%'"
+                  [placeholder]="'Email du donateur'"
+                  [value]="line.email ?? ''"
+                  (valueChange)="onEmailInput(line, $event)"
+                />
+              </label>
+            }
+
+            @if (wantsEnterpriseNameInput(line)) {
+              <label class="il-field">
+                <div class="il-field-label">Email</div>
                 <input
                   class="il-input"
                   type="text"
@@ -38,28 +53,17 @@
               </label>
             }
 
-            @if (wantsEnterpriseNameInput(line)) {
-              <label class="il-field">
-                <div class="il-field-label">Nom entreprise</div>
-                <input
-                  class="il-input"
-                  type="text"
-                  placeholder="Nom de l'entreprise"
-                  [value]="line.enterpriseName ?? ''"
-                  (input)="onEnterpriseNameInput(line, ($any($event.target)).value)"
-                />
-              </label>
-            }
-
             @if (wantsSiretInput(line)) {
               <label class="il-field">
                 <div class="il-field-label">SIRET</div>
-                <input
+                <form-text-component
                   class="il-input"
-                  type="text"
-                  placeholder="SIRET"
+                  [type]="'text'"
+                  [icon]="null"
+                  [width]="'100%'"
+                  [placeholder]="'SIRET'"
                   [value]="line.siret ?? ''"
-                  (input)="onSiretInput(line, ($any($event.target)).value)"
+                  (valueChange)="onSiretInput(line, $event)"
                 />
               </label>
             }
@@ -68,22 +72,26 @@
               <div class="il-name-grid">
                 <label class="il-field">
                   <div class="il-field-label">{{ line.donorKind === 'company' ? 'Prénom contact' : 'Prénom' }}</div>
-                  <input
+                  <form-text-component
                     class="il-input"
-                    type="text"
-                    placeholder="Prénom"
+                    [type]="'text'"
+                    [icon]="null"
+                    [width]="'100%'"
+                    [placeholder]="'Prénom'"
                     [value]="line.firstname ?? ''"
-                    (input)="onFirstnameInput(line, ($any($event.target)).value)"
+                    (valueChange)="onFirstnameInput(line, $event)"
                   />
                 </label>
                 <label class="il-field">
                   <div class="il-field-label">{{ line.donorKind === 'company' ? 'Nom contact' : 'Nom' }}</div>
-                  <input
+                  <form-text-component
                     class="il-input"
-                    type="text"
-                    placeholder="Nom"
+                    [type]="'text'"
+                    [icon]="null"
+                    [width]="'100%'"
+                    [placeholder]="'Nom'"
                     [value]="line.lastname ?? ''"
-                    (input)="onLastnameInput(line, ($any($event.target)).value)"
+                    (valueChange)="onLastnameInput(line, $event)"
                   />
                 </label>
               </div>
@@ -92,12 +100,14 @@
             @if (wantsDonationAmountInput(line)) {
               <label class="il-field">
                 <div class="il-field-label">Montant</div>
-                <input
+                <form-text-component
                   class="il-input"
-                  type="text"
-                  placeholder="Ex : 25,00"
+                  [type]="'text'"
+                  [icon]="null"
+                  [width]="'100%'"
+                  [placeholder]="'Ex : 25,00'"
                   [value]="line.donationAmount ?? ''"
-                  (input)="onDonationAmountInput(line, ($any($event.target)).value)"
+                  (valueChange)="onDonationAmountInput(line, $event)"
                 />
               </label>
             }
@@ -105,12 +115,14 @@
             @if (wantsDonationDateInput(line)) {
               <label class="il-field">
                 <div class="il-field-label">Date</div>
-                <input
+                <form-text-component
                   class="il-input"
-                  type="text"
-                  placeholder="Ex : 23/03/2026"
+                  [type]="'text'"
+                  [icon]="null"
+                  [width]="'100%'"
+                  [placeholder]="'Ex : 23/03/2026'"
                   [value]="line.donationDate ?? ''"
-                  (input)="onDonationDateInput(line, ($any($event.target)).value)"
+                  (valueChange)="onDonationDateInput(line, $event)"
                 />
               </label>
             }

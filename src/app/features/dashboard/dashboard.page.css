@@ -6,7 +6,7 @@ import-banner-component {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  margin-bottom: 22px;
+  padding: 17px 0;
 }
 
 /* ══ CONTENT GRID ══ */

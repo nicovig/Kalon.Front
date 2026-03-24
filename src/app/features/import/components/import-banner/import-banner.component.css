@@ -1,11 +1,3 @@
-.idb-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
 :host {
   display: block;
   width: 100%;
@@ -19,115 +11,48 @@
   flex-direction: column;
 }
 
-:host.import-banner--xxl .idb {
-  flex: 1;
-  min-height: min(52vh, 420px);
+.idb-drop {
+  width: 100%;
+}
+
+.idb-drop ::ng-deep .fd-zone {
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   text-align: center;
+  padding: 16px 18px;
+  gap: 10px;
+}
+
+.idb-drop ::ng-deep .fd-icon {
+  font-size: 1.4rem;
+}
+
+.idb-drop ::ng-deep .fd-title {
+  font-size: 0.95rem;
+}
+
+.idb-drop ::ng-deep .fd-hint {
+  font-size: 0.82rem;
+  max-width: 30rem;
+  margin: 0 auto;
+}
+
+:host.import-banner--xxl .idb-drop ::ng-deep .fd-zone {
+  min-height: min(52vh, 420px);
   padding: clamp(24px, 5vw, 48px) clamp(20px, 4vw, 40px);
   gap: clamp(16px, 3vw, 28px);
 }
 
-:host.import-banner--xxl .idb-emoji {
+:host.import-banner--xxl .idb-drop ::ng-deep .fd-icon {
   font-size: clamp(2.5rem, 8vw, 4rem);
 }
 
-:host.import-banner--xxl .idb-body strong {
+:host.import-banner--xxl .idb-drop ::ng-deep .fd-title {
   font-size: clamp(1.15rem, 3vw, 1.5rem);
 }
 
-:host.import-banner--xxl .idb-body span {
+:host.import-banner--xxl .idb-drop ::ng-deep .fd-hint {
   font-size: clamp(0.95rem, 2vw, 1.1rem);
   max-width: 36rem;
   margin: 0 auto;
-}
-
-:host.import-banner--xxl .idb-pill {
-  margin-left: 0;
-  margin-top: 8px;
-  padding: 12px 28px;
-  font-size: 1rem;
-}
-
-.idb {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: white;
-  border: 2px dashed var(--violet-md);
-  border-radius: var(--r-lg);
-  padding: 16px 22px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.idb::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(74, 29, 150, 0.03), rgba(255, 77, 125, 0.03));
-  pointer-events: none;
-}
-
-.idb:hover {
-  border-style: solid;
-  box-shadow: var(--sh-sm);
-}
-
-.idb--drag {
-  border-style: solid;
-  border-color: var(--pink);
-  background: var(--pink-lt);
-  box-shadow: var(--sh-md);
-}
-
-.idb-emoji {
-  font-size: 26px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.idb-body {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.idb-body strong {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-  display: block;
-  font-family: var(--font-title);
-}
-
-.idb-body span {
-  font-size: 13px;
-  color: var(--ink-70);
-}
-
-.idb-pill {
-  flex-shrink: 0;
-  margin-left: auto;
-  background: var(--violet);
-  color: white;
-  padding: 9px 18px;
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  font-family: var(--font-title);
-  position: relative;
-  z-index: 1;
 }

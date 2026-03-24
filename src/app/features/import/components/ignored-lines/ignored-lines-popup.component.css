@@ -11,12 +11,9 @@
 }
 
 .il-list {
-  border: 2px solid var(--ink-10);
-  border-radius: var(--r-lg);
-  padding: 10px;
   max-height: min(50vh, 420px);
   overflow: auto;
-  background: color-mix(in srgb, var(--cream) 70%, white 30%);
+  padding-right: 10px;
 }
 
 .il-item {
@@ -26,7 +23,7 @@
   display: grid;
   gap: 6px;
   margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--cream) 70%, white 30%);
 }
 
 .il-item:last-child {
@@ -119,24 +116,33 @@
 }
 
 .il-input {
+  display: block;
+  width: 100%;
+}
+
+.il-input ::ng-deep .search {
   width: 100%;
   box-sizing: border-box;
   border-radius: var(--r-sm);
   border: 2px solid var(--ink-10);
   background: rgba(255, 255, 255, 0.85);
   padding: 10px 12px;
+  gap: 0;
+}
+
+.il-input ::ng-deep .input {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--ink);
-  outline: none;
 }
 
-.il-input:focus {
+.il-input ::ng-deep .search:focus-within {
   border-color: var(--violet);
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--violet) 40%, transparent);
 }
 
-.il-input::placeholder {
+.il-input ::ng-deep .input::placeholder {
   color: color-mix(in srgb, var(--ink-70) 70%, transparent);
   font-weight: 650;
 }

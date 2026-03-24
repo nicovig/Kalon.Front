@@ -998,13 +998,13 @@ export class ImportPageComponent implements OnInit {
       this.openIgnoredLinesPopup(ignored, null);
       return;
     }
-    const createdPart = donorsCreated > 0 ? `${donorsCreated} donateur(s) créé(s)` : '';
-    const updatedPart = donorsUpdated > 0 ? `${donorsUpdated} donateur(s) mis à jour` : '';
+    const createdPart = donorsCreated > 0 ? `${donorsCreated} ${donorsCreated === 1 ? 'donateur' : 'donateurs'} créé${donorsCreated === 1 ? '' : 's'}` : '';
+    const updatedPart = donorsUpdated > 0 ? `${donorsUpdated} ${donorsUpdated === 1 ? 'donateur' : 'donateurs'} mis à jour${donorsUpdated === 1 ? '' : 's'}` : '';
     const donorsPart = [createdPart, updatedPart].filter(Boolean).join(' — ');
     this.toast.show(
       `${donorsPart}${
-        donationsCreated > 0 ? `, ${donationsCreated} don(s) associé(s)` : ''
-      }${skipped > 0 ? ` — ${skipped} ligne(s) ignorée(s)` : ''}.`,
+        donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'don' : 'dons'} associé${donationsCreated === 1 ? '' : 's'}` : ''
+      }${skipped > 0 ? ` — ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
       'success',
       5500
     );

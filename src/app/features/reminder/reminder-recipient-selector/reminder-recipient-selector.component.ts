@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild, ElementRef, OnChanges, SimpleChanges, AfterViewInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CheckboxComponent } from '../../button/checkbox/checkbox.component';
-import { ButtonLabelComponent } from '../../button/button-label/button-label.component';
+import { FormsModule } from '@angular/forms';
+import { CheckboxComponent } from '../../../layout/button/checkbox/checkbox.component';
+import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
+import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
+import { FormSelectComponent, FormSelectOption } from '../../../layout/forms/select/form-select.component';
+import { FormSliderComponent } from '../../../layout/forms/slider/form-slider.component';
+import { FormNumberComponent } from '../../../layout/forms/number/form-number.component';
 
 export type ReminderQuickFilter = 'all' | 'to_remind' | 'new' | 'active' | 'inactive';
 export type RecipientSelectorItem = {
@@ -27,9 +32,18 @@ export type ReminderAdvancedFilters = {
   templateUrl: './reminder-recipient-selector.component.html',
   styleUrls: ['./reminder-recipient-selector.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ButtonLabelComponent, CheckboxComponent]
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonLabelComponent,
+    CheckboxComponent,
+    FormTextComponent,
+    FormSelectComponent,
+    FormSliderComponent,
+    FormNumberComponent
+  ]
 })
-export class ReminderRecipientSelectorComponent implements OnChanges, AfterViewInit {
+export class ReminderRecipientSelectorComponent implements OnChanges {
   @Input() pagedItems: RecipientSelectorItem[] = [];
   @Input() filteredDonorsLength = 0;
   @Input() donorsCount = 0;
@@ -69,13 +83,25 @@ export class ReminderRecipientSelectorComponent implements OnChanges, AfterViewI
   totalMinInput = '';
   totalMaxInput = '';
   donationCountSel: 'any' | '1' | '2' | '5' = 'any';
+  campaignSel = 'all';
 
-  @ViewChild('monthsSlider', { read: ElementRef }) monthsSlider?: ElementRef<HTMLInputElement>;
+  readonly donationCountOptions: FormSelectOption[] = [
+    { value: 'any', label: 'Peu importe' },
+    { value: '1', label: 'Au moins 1 don' },
+    { value: '2', label: 'Au moins 2 dons' },
+    { value: '5', label: 'Au moins 5 dons (fidèles)' }
+  ];
+
+  readonly campaignOptions: FormSelectOption[] = [
+    { value: 'all', label: 'Toutes les campagnes' },
+    { value: 'summer-2024', label: 'Campagne été 2024' },
+    { value: 'fundraising-2023', label: 'Appel de fonds 2023' },
+    { value: 'christmas-2023', label: 'Collecte de Noël 2023' }
+  ];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['appliedMonthsMin']) {
-      this.monthsVal = this.appliedMonthsMin > 0 ? this.appliedMonthsMin : 12;
-      queueMicrotask(() => this.syncSliderBackground());
+      this.monthsVal = this.appliedMonthsMin >= 0 ? this.appliedMonthsMin : 12;
     }
     if (changes['appliedTotalDonationMin']) {
       this.totalMinInput = this.appliedTotalDonationMin == null ? '' : String(this.appliedTotalDonationMin);
@@ -87,10 +113,6 @@ export class ReminderRecipientSelectorComponent implements OnChanges, AfterViewI
       if (this.appliedDonationCountMin == null) this.donationCountSel = 'any';
       else this.donationCountSel = this.appliedDonationCountMin >= 5 ? '5' : this.appliedDonationCountMin === 2 ? '2' : '1';
     }
-  }
-
-  ngAfterViewInit(): void {
-    this.syncSliderBackground();
   }
 
   setQuickFilter(v: ReminderQuickFilter): void {
@@ -124,21 +146,11 @@ export class ReminderRecipientSelectorComponent implements OnChanges, AfterViewI
   onMonthsNumberInput(raw: string): void {
     const n = Number(raw);
     this.monthsVal = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(60, n)) : 12;
-    this.syncSliderBackground();
   }
 
   onMonthsSliderInput(value: string): void {
     const n = Number(value);
     this.monthsVal = Number.isFinite(n) ? Math.max(1, Math.min(60, n)) : 12;
-    this.syncSliderBackground();
-  }
-
-  private syncSliderBackground(): void {
-    const slider = this.monthsSlider?.nativeElement;
-    if (!slider) return;
-    const num = this.monthsVal;
-    const pct = ((num - 1) / 59) * 100;
-    slider.style.background = `linear-gradient(to right, var(--violet) 0%, var(--violet) ${pct}%, var(--ink-30) ${pct}%)`;
   }
 
   applyFilters(): void {

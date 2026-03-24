@@ -18,8 +18,8 @@
 }
 
 .ds-row {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  align-items: center;
 }
 
 .ds-label {
@@ -32,19 +32,44 @@
   gap: 8px;
 }
 
-.ds-input {
-  border: 2px solid var(--ink-10);
-  border-radius: 10px;
-  padding: 9px 12px;
-  font-size: 0.95rem;
-  font-family: var(--font-body);
-  color: var(--ink);
-  background: white;
-  outline: none;
+.ds-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  color: var(--ink-70);
+  font-size: 0.86rem;
+  font-weight: 600;
 }
 
-.ds-input:focus {
+.ds-inline-text {
+  line-height: 1;
+}
+
+.ds-input--inline {
+  width: 84px;
+}
+
+.ds-input--inline ::ng-deep .search {
+  width: 84px;
+  border: 2px solid var(--ink-10);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: white;
+  gap: 0;
+}
+
+.ds-input--inline ::ng-deep .search:focus-within {
   border-color: var(--violet-md);
+  box-shadow: none;
+}
+
+.ds-input--inline ::ng-deep .input {
+  text-align: center;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .ds-actions {

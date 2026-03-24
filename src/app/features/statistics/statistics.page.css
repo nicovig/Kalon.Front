@@ -1,0 +1,187 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.st-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.st-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* grid-template-columns: repeat(5, minmax(0, 1fr)); */
+  gap: 12px;
+}
+
+.st-kpis card {
+  height: 100%;
+  display: block;
+}
+
+.st-kpis card ::ng-deep .card {
+  min-height: 126px;
+  height: 100%;
+}
+
+.st-kpi-spacer {
+  height: 25px;
+}
+
+.st-kpi-val {
+  font-family: var(--font-title);
+  font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.st-kpi-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.st-kpi-helper {
+  font-size: 0.82rem;
+  color: var(--ink-70);
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.st-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.st-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.st-filter--search {
+  grid-column: 1 / span 2;
+}
+
+.st-filter--period {
+  grid-column: 3;
+}
+
+.st-filter--date-range {
+  grid-column: 4;
+}
+
+.st-date-range-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.st-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.st-filter-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.st-kpi-helper--left {
+  text-align: left;
+}
+
+.st-filters .st-filter form-number-component,
+.st-filters .st-filter form-date-component,
+.st-filters .st-filter form-text-component,
+.st-filters .st-filter form-select-component {
+  display: block;
+  width: 100%;
+}
+
+.st-filters .st-filter form-number-component ::ng-deep .fn-input {
+  min-height: 44px;
+  font-size: 0.86rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.st-filters .st-filter form-date-component ::ng-deep .fd-input {
+  min-height: 44px;
+  font-size: 0.86rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.st-filters .st-filter form-text-component ::ng-deep .search {
+  min-height: 44px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  background: white;
+  padding: 8px 10px;
+}
+
+.st-filters .st-filter form-text-component ::ng-deep .input {
+  font-size: 0.86rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+  .st-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .st-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .st-filter--search {
+    grid-column: 1 / span 2;
+  }
+
+  .st-filter--period,
+  .st-filter--date-range {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .st-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .st-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .st-filter--search,
+  .st-filter--period,
+  .st-filter--date-range {
+    grid-column: auto;
+  }
+
+  .st-date-range-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .st-kpis {
+    grid-template-columns: 1fr;
+  }
+}

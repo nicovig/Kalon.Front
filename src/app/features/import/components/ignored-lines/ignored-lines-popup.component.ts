@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, effect, input, output, signal } fro
 import { CommonModule } from '@angular/common';
 import { PopupShellComponent } from '../../../../layout/popup/popup-shell.component';
 import { ButtonLabelComponent } from '../../../../layout/button/button-label/button-label.component';
+import { FormTextComponent } from '../../../../layout/forms/text/form-text.component';
 import type { IgnoredImportLine } from '../../core/model/ignored-import-line.model';
 
 @Component({
   selector: 'import-ignored-lines-popup',
   standalone: true,
-  imports: [CommonModule, PopupShellComponent, ButtonLabelComponent],
+  imports: [CommonModule, PopupShellComponent, ButtonLabelComponent, FormTextComponent],
   templateUrl: './ignored-lines-popup.component.html',
   styleUrls: ['./ignored-lines-popup.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

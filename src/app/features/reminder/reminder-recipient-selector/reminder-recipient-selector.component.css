@@ -35,32 +35,27 @@
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--ink-10);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.search-box form-text-component {
+  display: block;
+  width: 100%;
+}
+
+.search-box ::ng-deep .search {
+  width: 100%;
+  border: 2px solid transparent;
   border-radius: 30px;
   padding: 8px 14px;
-  margin-bottom: 10px;
-  border: 2px solid transparent;
-  transition: border-color 0.15s;
+  background: var(--ink-10);
 }
-.search-box:focus-within {
+
+.search-box ::ng-deep .search:focus-within {
   border-color: var(--violet-md);
   background: white;
-}
-.search-box input {
-  background: none;
-  border: none;
-  outline: none;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--ink);
-  flex: 1;
-  font-weight: 500;
-}
-.search-box input::placeholder {
-  color: var(--ink-30);
+  box-shadow: none;
 }
 
 .quick-filters {
@@ -161,17 +156,33 @@
 .range-input:focus-within {
   border-color: var(--violet-md);
 }
-.range-input input {
-  background: none;
+
+.range-input form-text-component {
+  display: block;
+  width: 44px;
+}
+
+.range-input ::ng-deep .search {
+  width: 44px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.range-input ::ng-deep .search:focus-within {
   border: none;
-  outline: none;
+  padding: 0;
+  background: transparent;
+}
+
+.range-input ::ng-deep .input {
+  text-align: center;
   font-family: var(--font-title);
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
-  width: 44px;
-  text-align: center;
 }
+
 .range-input span {
   font-size: 11px;
   color: var(--ink-70);
@@ -179,42 +190,34 @@
 }
 
 .slider {
-  -webkit-appearance: none;
-  appearance: none;
+  display: block;
   width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, var(--violet) 0%, var(--violet) 60%, var(--ink-30) 60%);
-  outline: none;
-  cursor: pointer;
-}
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--violet);
-  cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(74, 29, 150, 0.3);
 }
 
 .adv-select {
+  display: block;
+  width: 100%;
+}
+
+.adv-select ::ng-deep .fs-select {
   background: white;
   border: 2px solid var(--ink-10);
   border-radius: 8px;
   padding: 6px 10px;
   font-family: var(--font-body);
   font-size: 13px;
+  font-weight: 400;
   color: var(--ink);
   outline: none;
   cursor: pointer;
   width: 100%;
+  min-height: 36px;
   transition: border-color 0.13s;
 }
-.adv-select:focus {
+
+.adv-select ::ng-deep .fs-select:focus {
   border-color: var(--violet-md);
+  box-shadow: none;
 }
 
 .adv-montant {

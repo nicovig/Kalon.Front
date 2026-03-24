@@ -1,0 +1,11 @@
+<input
+  type="range"
+  class="fs-slider"
+  [id]="id || null"
+  [min]="min"
+  [max]="max"
+  [value]="value"
+  [disabled]="disabled"
+  [style.background]="trackBackground"
+  (input)="onInput(($any($event.target)).value)"
+/>

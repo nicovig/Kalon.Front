@@ -1,4 +1,4 @@
-<button-label-component type="primary" (click)="openDonorModal()">+ Nouveau donateur</button-label-component>
+<button-label-component type="primary" (click)="openDonorModal()">Nouveau donateur</button-label-component>
 @if (donorModalOpen()) {
   <create-donor-popup (closed)="onDonorPopupClosed()" (donorCreated)="onDonorCreated($event)" />
 }

@@ -915,15 +915,27 @@
   gap: 6px;
 }
 .preview-select {
+  display: block;
+  min-width: 220px;
+}
+
+.preview-select ::ng-deep .fs-select {
   background: white;
   border: 2px solid var(--ink-10);
   border-radius: 8px;
   padding: 3px 8px;
   font-family: var(--font-title);
   font-size: 12px;
+  font-weight: 600;
   color: var(--ink);
   outline: none;
   cursor: pointer;
+  min-height: 30px;
+}
+
+.preview-select ::ng-deep .fs-select:focus {
+  border-color: var(--pink);
+  box-shadow: none;
 }
 .preview-body {
   padding: 16px 18px;

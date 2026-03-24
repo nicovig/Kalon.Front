@@ -1,0 +1,144 @@
+<topbar
+  [title]="'Statistiques des financements'"
+  [subtitle]="'Vue 360 des dons par type et statut de donateurs, sur la période de votre choix'"
+></topbar>
+
+<div class="st-shell">
+  <div class="st-kpis">
+    <card
+      title="Dons filtrés"
+      [subtitle]="'Nombre de dons dans le périmètre courant'"
+      paddingClass="advanced"
+    >
+      <div class="st-kpi-val">{{ totalDonationsCount() }}</div>
+    </card>
+
+    <card
+      title="Montant total"
+      [subtitle]="'Somme des dons sur la sélection'"
+      paddingClass="advanced"
+    >
+      <div class="st-kpi-val">{{ totalAmount() | number: '1.0-0' : 'fr-FR' }} €</div>
+    </card>
+
+    <card
+      title="Donateurs uniques"
+      [subtitle]="'Nombre de contributeurs distincts'"
+      paddingClass="advanced"
+    >
+      <div class="st-kpi-val">{{ uniqueDonorsCount() }}</div>
+    </card>
+
+    <card title="Don moyen" [subtitle]="'Montant moyen par don'" paddingClass="advanced">
+      <div class="st-kpi-row">
+        <div class="st-kpi-val">{{ averageDonation() | number: '1.0-0' : 'fr-FR' }} €</div>
+        <div class="st-kpi-helper">Part mécènes : {{ companyAmountShare() }}%</div>
+      </div>
+    </card>
+
+    <!-- <card title="📊 Export CSV" paddingClass="advanced" type="button" [disabled]="!canExportCsv()" (click)="exportFilteredDonationsCsv()">
+      <div class="st-kpi-spacer"></div>
+    </card> -->
+  </div>
+
+  <card
+    title="Filtrer l’analyse"
+    subtitle="Affinez par période, type/statut de donateur et montant pour cibler précisément vos financements"
+    paddingClass="advanced"
+  >
+    <div class="st-filters">
+      <div class="st-filter st-filter--search">
+        <span class="st-label">Recherche</span>
+        <form-text-component
+          [placeholder]="'Nom ou email du donateur'"
+          [icon]="'🔍'"
+          [value]="searchTerm()"
+          [width]="'100%'"
+          (valueChange)="searchTerm.set($event)"
+        ></form-text-component>
+      </div>
+
+      <div class="st-filter st-filter--period">
+        <span class="st-label">Période</span>
+        <form-select-component
+          [label]="null"
+          [options]="periodOptions"
+          [ngModel]="periodPreset()"
+          (ngModelChange)="onPeriodPresetChange($event)"
+        ></form-select-component>
+      </div>
+
+      <div class="st-filter st-filter--date-range">
+        <span class="st-label">Du - Au</span>
+        <div class="st-date-range-fields">
+          <form-date-component
+            [disabled]="periodPreset() !== 'custom'"
+            [ngModel]="customFromDate()"
+            (ngModelChange)="customFromDate.set($event)"
+          ></form-date-component>
+          <form-date-component
+            [disabled]="periodPreset() !== 'custom'"
+            [ngModel]="customToDate()"
+            (ngModelChange)="customToDate.set($event)"
+          ></form-date-component>
+        </div>
+      </div>
+
+      <div class="st-filter">
+        <span class="st-label">Type de donateur</span>
+        <form-select-component
+          [label]="null"
+          [options]="donorKindOptions"
+          [ngModel]="donorKindFilter()"
+          (ngModelChange)="donorKindFilter.set($event)"
+        ></form-select-component>
+      </div>
+
+      <div class="st-filter">
+        <span class="st-label">Statut de donateur</span>
+        <form-select-component
+          [label]="null"
+          [options]="donorStatusOptions"
+          [ngModel]="donorStatusFilter()"
+          (ngModelChange)="donorStatusFilter.set($event)"
+        ></form-select-component>
+      </div>
+
+      <div class="st-filter">
+        <span class="st-label">Montant min (€)</span>
+        <form-number-component
+          [placeholder]="'Ex: 20'"
+          [value]="minAmountInput()"
+          (valueChange)="minAmountInput.set($event)"
+        ></form-number-component>
+      </div>
+
+      <div class="st-filter">
+        <span class="st-label">Montant max (€)</span>
+        <form-number-component
+          [placeholder]="'Ex: 1000'"
+          [value]="maxAmountInput()"
+          (valueChange)="maxAmountInput.set($event)"
+        ></form-number-component>
+      </div>
+    </div>
+
+    <div class="st-filter-actions">
+      <button-label-component type="ghost" (click)="clearFilters()">Réinitialiser les filtres</button-label-component>
+    </div>
+  </card>
+
+  <card
+    title="Détail des dons"
+    [subtitle]="totalDonationsCount() + ' don(s) trouvé(s) dans la sélection'"
+    paddingClass="advanced"
+  >
+    <table-component
+      [rows]="filteredDonationRows()"
+      [columns]="donationColumns"
+      [showSearch]="false"
+      [pageSizeOptions]="[25, 50, 100]"
+      [initialPageSize]="25"
+    ></table-component>
+  </card>
+</div>

@@ -1,30 +1,4 @@
-<input
-  #fileInput
-  type="file"
-  class="idb-input"
-  accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-  (change)="onInputChange($event)"
-/>
-
-<div
-  class="idb"
-  role="button"
-  tabindex="0"
-  [class.idb--drag]="dragOver"
-  (click)="openPicker()"
-  (keydown.enter)="openPicker()"
-  (keydown.space)="$event.preventDefault(); openPicker()"
-  (dragover)="onDragOver($event)"
-  (dragleave)="onDragLeave($event)"
-  (drop)="onDrop($event)"
->
-  <span class="idb-emoji" aria-hidden="true">📂</span>
-  <div class="idb-body">
-    <strong>Importez vos données depuis un fichier en un clic</strong>
-    <span>Déposez votre fichier — vos données sont migrées en quelques secondes, sans ressaisie.</span>
-  </div>
-  <span class="idb-pill">Parcourir →</span>
-</div>
+<file-drop-zone class="idb-drop" [inline]="false" (fileSelected)="onFileSelected($event)" />
 
 <import-pop-up
   *ngIf="modePickerOpen"

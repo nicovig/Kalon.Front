@@ -1,0 +1,37 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.fs-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--violet) 0%, var(--violet) 60%, var(--ink-30) 60%);
+  outline: none;
+  cursor: pointer;
+}
+
+.fs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--violet);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(74, 29, 150, 0.3);
+}
+
+.fs-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--violet);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(74, 29, 150, 0.3);
+}

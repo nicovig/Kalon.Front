@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.fn-input {
+  background: white;
+  border: 2px solid var(--ink-10);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.13s;
+  box-sizing: border-box;
+}
+
+.fn-input:focus {
+  border-color: var(--violet-md);
+}

@@ -10,6 +10,7 @@ import {
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -17,6 +18,7 @@ import { ButtonLabelComponent } from '../../layout/button/button-label/button-la
 import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
+import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
 import { DonorStoreService } from '../donor/donor.store';
 import { donorDisplayName, DonorStatus, IDonor } from '../../core/models/donor.model';
@@ -25,7 +27,7 @@ import {
   RecipientSelectorItem,
   ReminderQuickFilter,
   ReminderRecipientSelectorComponent
-} from '../../layout/list/reminder-recipient-selector/reminder-recipient-selector.component';
+} from './reminder-recipient-selector/reminder-recipient-selector.component';
 import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
 
 @Component({
@@ -36,9 +38,11 @@ import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    FormsModule,
     ToastComponent,
     TopbarComponent,
     ButtonLabelComponent,
+    FormSelectComponent,
     MailEditorComponent,
     FormTextareaComponent,
     EmptyDonorsWelcomeComponent,
@@ -154,6 +158,13 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     const selected = this.selectedDonorIds();
     return this.filteredDonors().filter((d) => selected.has(d.id));
   });
+
+  protected readonly previewDonorOptions = computed<FormSelectOption[]>(() =>
+    this.selectedDonorsForPreview().map((d) => ({
+      value: d.id,
+      label: this.displayName(d)
+    }))
+  );
 
   protected readonly selectedDonorsForStep3Count = computed(() => this.selectedDonorsForPreview().length);
   protected readonly afterSendCount = computed(() =>
@@ -274,8 +285,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  protected onPreviewDonorChange(event: Event): void {
-    const v = (event.target as HTMLSelectElement).value;
+  protected onPreviewDonorChange(v: string): void {
     if (!v) {
       this.previewDonorId.set(null);
       return;

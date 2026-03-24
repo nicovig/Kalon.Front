@@ -112,15 +112,13 @@
             <div class="preview-ttl">👁 Aperçu pour</div>
             <div class="preview-donor">
               @if (selectedDonorsForPreview().length) {
-                <select
+                <form-select-component
                   class="preview-select"
-                  [value]="previewDonorId() ?? ''"
-                  (change)="onPreviewDonorChange($event)"
-                >
-                  @for (d of selectedDonorsForPreview(); track d.id) {
-                    <option [value]="d.id">{{ displayName(d) }}</option>
-                  }
-                </select>
+                  [label]="null"
+                  [options]="previewDonorOptions()"
+                  [ngModel]="previewDonorId() ?? ''"
+                  (ngModelChange)="onPreviewDonorChange($event)"
+                />
               } @else {
                 <span class="preview-donor-empty">—</span>
               }

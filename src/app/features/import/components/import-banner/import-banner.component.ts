@@ -1,11 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   EventEmitter,
   Input,
   Output,
-  ViewChild,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -13,11 +11,12 @@ import { Router } from '@angular/router';
 import { ImportFlowService } from '../../core/import-flow.service';
 import { ImportMode } from '../../core/model/import-mode.model';
 import { ImportPopUpComponent } from '../import-pop-up/import-pop-up.component';
+import { FileDropComponent } from '../../../../layout/file-drop/file-drop.component';
 
 @Component({
   selector: 'import-banner',
   standalone: true,
-  imports: [CommonModule, ImportPopUpComponent],
+  imports: [CommonModule, ImportPopUpComponent, FileDropComponent],
   templateUrl: './import-banner.component.html',
   styleUrls: ['./import-banner.component.css'],
   host: {
@@ -34,48 +33,10 @@ export class ImportBannerComponent {
   @Input() variant: 'default' | 'xxl' = 'default';
 
   @Output() fileSelected = new EventEmitter<File>();
-
-  @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
-
-  protected dragOver = false;
   protected modePickerOpen = false;
   private fileForModeSelection: File | null = null;
 
-  protected onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.dragOver = true;
-  }
-
-  protected onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    this.dragOver = false;
-  }
-
-  protected onDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.dragOver = false;
-    const f = event.dataTransfer?.files?.[0];
-    if (f && this.isAccepted(f)) {
-      this.dispatchFile(f);
-    }
-  }
-
-  protected openPicker(): void {
-    this.fileInput?.nativeElement.click();
-  }
-
-  protected onInputChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const f = input.files?.[0];
-    input.value = '';
-    if (f && this.isAccepted(f)) {
-      this.dispatchFile(f);
-    }
-  }
-
-  private dispatchFile(file: File): void {
+  protected onFileSelected(file: File): void {
     if (this.navigate) {
       this.fileForModeSelection = file;
       this.modePickerOpen = true;
@@ -98,8 +59,4 @@ export class ImportBannerComponent {
     void this.router.navigate(['/import'], { queryParams: { mode } });
   }
 
-  private isAccepted(file: File): boolean {
-    const n = file.name.toLowerCase();
-    return n.endsWith('.csv') || n.endsWith('.xlsx') || n.endsWith('.xls');
-  }
 }

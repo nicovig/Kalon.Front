@@ -1,0 +1,11 @@
+<input
+  type="number"
+  class="fn-input"
+  [id]="id || null"
+  [placeholder]="placeholder"
+  [value]="value"
+  [min]="min"
+  [max]="max"
+  [disabled]="disabled"
+  (input)="onInput(($any($event.target)).value)"
+/>
