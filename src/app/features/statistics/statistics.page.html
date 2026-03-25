@@ -69,11 +69,13 @@
         <div class="st-date-range-fields">
           <form-date-component
             [disabled]="periodPreset() !== 'custom'"
+            [max]="todayDateString"
             [ngModel]="customFromDate()"
             (ngModelChange)="customFromDate.set($event)"
           ></form-date-component>
           <form-date-component
             [disabled]="periodPreset() !== 'custom'"
+            [max]="todayDateString"
             [ngModel]="customToDate()"
             (ngModelChange)="customToDate.set($event)"
           ></form-date-component>

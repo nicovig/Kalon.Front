@@ -60,6 +60,8 @@ export class StatisticsPageComponent {
   protected readonly maxAmountInput = signal('');
   protected readonly searchTerm = signal('');
 
+  protected readonly todayDateString = new Date().toISOString().split('T')[0];
+
   protected readonly periodOptions: FormSelectOption[] = [
     { value: 'all', label: 'Toute la période' },
     { value: 'thisMonth', label: 'Ce mois-ci' },
@@ -72,7 +74,9 @@ export class StatisticsPageComponent {
 
   protected readonly contactKindOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les types' },
-    { value: 'individual', label: 'Particuliers' },
+    { value: 'donor', label: 'Donateurs' },
+    { value: 'member', label: 'Membres' },
+    { value: 'helper', label: 'Aidants' },
     { value: 'company', label: 'Entreprises / mécènes' }
   ];
 
@@ -110,7 +114,7 @@ export class StatisticsPageComponent {
         const fallbackName = donation.contactDisplayName?.trim() || 'Profil inconnu';
         const contactName = contact ? contactDisplayName(contact) : fallbackName;
         const contactEmail = contact?.email ?? '—';
-        const contactKind = contact?.kind ?? 'individual';
+        const contactKind: ContactKind = contact?.kind ?? 'donor';
         const contactStatus = contact ? this.contactSettings.statusOf(contact) : 'inactive';
         return {
           id: donation.id,

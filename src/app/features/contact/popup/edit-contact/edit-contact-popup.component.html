@@ -1,4 +1,8 @@
-<app-popup-shell [maxWidth]="'760px'" [zIndex]="2000" (dismiss)="onDismiss()">
+<app-popup-shell
+  [maxWidth]="'min(980px, calc(100% - 32px))'"
+  [zIndex]="2000"
+  (dismiss)="onDismiss()"
+>
   <div popup-header>
     <div class="app-popup-title">Modifier le profil</div>
     <p class="app-popup-sub">Mettez à jour la fiche : coordonnées, adresse ou personne morale.</p>

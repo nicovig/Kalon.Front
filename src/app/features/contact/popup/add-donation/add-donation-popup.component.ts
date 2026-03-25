@@ -66,6 +66,8 @@ export class AddDonationPopupComponent {
     date: ['', Validators.required]
   });
 
+  protected readonly todayDateString = new Date().toISOString().split('T')[0];
+
   constructor() {
     const today = new Date();
     this.form.patchValue({ date: dateToInputValue(today) });

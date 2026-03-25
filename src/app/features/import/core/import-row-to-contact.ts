@@ -1,6 +1,82 @@
 import { NewContactInput } from '../../contact/contact.store';
+import { IContact } from '../../../core/models/contact.model';
 import { ImportFieldKey } from './model/import-field.model';
 import { collectImportFieldBag } from './import-map-preview';
+import { parseDateFromCell } from './import-parse-cells';
+
+function normalizeCell(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9]+/g, ' ');
+}
+
+function parseOptionalGender(value: string | undefined): IContact['gender'] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const n = normalizeCell(value);
+  if (!n) {
+    return undefined;
+  }
+  if (/\b(homme|male|m)\b/.test(n)) {
+    return 'male';
+  }
+  if (/\b(femme|female|f)\b/.test(n)) {
+    return 'female';
+  }
+  if (/\b(autre|other|o)\b/.test(n)) {
+    return 'other';
+  }
+  return undefined;
+}
+
+function parseOptionalOut(value: string | undefined): boolean | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const n = normalizeCell(value);
+  if (!n) {
+    return undefined;
+  }
+  if (/\b(oui|yes|true|1|y|decede|deces|mort|sorti|out)\b/.test(n)) {
+    return true;
+  }
+  if (/\b(non|no|false|0|n)\b/.test(n)) {
+    return false;
+  }
+  return undefined;
+}
+
+function parseOptionalPreferredFrequency(
+  value: string | undefined
+): IContact['preferredFrequencySendingReceipt'] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const n = normalizeCell(value);
+  if (!n) {
+    return undefined;
+  }
+  if (/\b(instantly|instant|immediat|immediatement|immediat|tout de suite)\b/.test(n)) {
+    return 'instantly';
+  }
+  if (/\b(monthly|mensuel|mensuelle)\b/.test(n)) {
+    return 'monthly';
+  }
+  if (/\b(quarterly|trimestriel|trimestrielle|trimestre)\b/.test(n)) {
+    return 'quarterly';
+  }
+  if (/\b(semesterly|semestriel|semestrielle|semestre)\b/.test(n)) {
+    return 'semesterly';
+  }
+  if (/\b(yearly|annuel|annuelle|annee|anne)\b/.test(n)) {
+    return 'yearly';
+  }
+  return undefined;
+}
 
 export function mapRowToNewContactInput(
   row: string[],
@@ -17,6 +93,14 @@ export function mapRowToNewContactInput(
   const firstname = (bag.firstname ?? '').trim();
   const lastname = (bag.lastname ?? '').trim();
 
+  const jobTitle = (bag.jobTitle ?? '').trim() || undefined;
+  const birthDate = bag.birthDate ? parseDateFromCell(bag.birthDate) ?? undefined : undefined;
+  const gender = parseOptionalGender(bag.gender);
+  const out = parseOptionalOut(bag.out);
+  const preferredFrequencySendingReceipt = parseOptionalPreferredFrequency(
+    bag.preferredFrequencySendingReceipt
+  );
+
   const enterpriseName = (bag.enterpriseName ?? '').trim();
   const siret = (bag.siret ?? '').trim();
   const contactFirstname = (bag.contactFirstname ?? '').trim();
@@ -26,7 +110,7 @@ export function mapRowToNewContactInput(
     return null;
   }
 
-  const intendedKind = enterpriseName || siret ? 'company' : 'individual';
+  const intendedKind = enterpriseName || siret ? 'company' : 'donor';
 
   let street = (bag.street ?? '').trim();
   if (bag.addressLine?.trim() && !street) {
@@ -67,7 +151,9 @@ export function mapRowToNewContactInput(
         },
         contactFirstname: contactFirstname || undefined,
         contactLastname: contactLastname || undefined
-      }
+      },
+      out,
+      preferredFrequencySendingReceipt
     };
   }
 
@@ -76,16 +162,21 @@ export function mapRowToNewContactInput(
   }
 
   return {
-    kind: 'individual',
+    kind: 'donor',
     firstname: firstname || '—',
     lastname: lastname || '—',
     email,
     phone: (bag.phone ?? '').trim() || undefined,
+    jobTitle,
+    birthDate,
+    gender,
     address: {
       street,
       postalCode,
       city,
       country
-    }
+    },
+    out,
+    preferredFrequencySendingReceipt
   };
 }

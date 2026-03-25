@@ -32,6 +32,9 @@ export class ContactSettingsStore {
   }
 
   statusOf(contact: IContact, now: Date = new Date()): ContactStatus {
+    if (contact.statut === 'out') {
+      return 'out';
+    }
     const rules = this.settingsWrite();
     const reference = contact.lastDonation ?? contact.creationDate;
     const daysSinceCreation = this.diffDays(contact.creationDate, now);

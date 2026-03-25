@@ -2,14 +2,27 @@
   <fieldset class="df-kind" [class.df-kind-locked]="editContact()">
     <legend class="df-kind-legend">Nature du profil</legend>
     <div class="df-kind-row">
-      <radio-option [control]="kindControl" value="individual">Particulier</radio-option>
-      <radio-option [control]="kindControl" value="company">Entreprise ou autre personne morale</radio-option>
+      <radio-option [control]="categoryControl" value="particular" [name]="'contact-category'">Particulier</radio-option>
+      <radio-option [control]="categoryControl" value="company" [name]="'contact-category'">Entreprise ou autre personne morale</radio-option>
     </div>
   </fieldset>
 
-  @if (form.get('kind')?.value === 'individual') {
+  @if (form.get('category')?.value === 'particular') {
     <div class="df-panel">
-      <div class="df-grid">
+      <div class="df-row-3">
+        <div class="df-field">
+          <label class="df-label" for="df-lastname">Nom</label>
+          <form-text-component
+            id="df-lastname"
+            formControlName="lastname"
+            placeholder="Dupont"
+            [required]="true"
+            type="text"
+            [icon]="null"
+            width="100%"
+          ></form-text-component>
+        </div>
+
         <div class="df-field">
           <label class="df-label" for="df-firstname">Prénom</label>
           <form-text-component
@@ -24,19 +37,29 @@
         </div>
 
         <div class="df-field">
-          <label class="df-label" for="df-lastname">Nom</label>
+          <label class="df-label">Genre (optionnel)</label>
+          <div class="df-kind-row">
+            <radio-option [control]="genderControl" value="male" [name]="'contact-gender'">Homme</radio-option>
+            <radio-option [control]="genderControl" value="female" [name]="'contact-gender'">Femme</radio-option>
+            <radio-option [control]="genderControl" value="other" [name]="'contact-gender'">Autre</radio-option>
+          </div>
+        </div>
+      </div>
+
+      <div class="df-row-3">
+        <div class="df-field">
+          <label class="df-label" for="df-phone">Téléphone</label>
           <form-text-component
-            id="df-lastname"
-            formControlName="lastname"
-            placeholder="Dupont"
-            [required]="true"
-            type="text"
+            id="df-phone"
+            formControlName="phone"
+            placeholder="+33 6 12 34 56 78"
+            type="tel"
             [icon]="null"
             width="100%"
           ></form-text-component>
         </div>
 
-        <div class="df-field df-span-2">
+        <div class="df-field">
           <label class="df-label" for="df-email">Email</label>
           <form-text-component
             id="df-email"
@@ -50,15 +73,41 @@
         </div>
 
         <div class="df-field">
-          <label class="df-label" for="df-phone">Téléphone</label>
+          <label class="df-label df-birthdate-label" for="df-birthDate">Date de naissance (optionnel)</label>
+          <form-date-component id="df-birthDate" formControlName="birthDate" width="100%" [max]="todayDateString"></form-date-component>
+        </div>
+      </div>
+
+      <div class="df-row-3 align-items-end">
+        <div class="df-field">
+          <label class="df-label" for="df-jobTitle">Métier (optionnel)</label>
           <form-text-component
-            id="df-phone"
-            formControlName="phone"
-            placeholder="+33 6 12 34 56 78"
-            type="tel"
+            id="df-jobTitle"
+            formControlName="jobTitle"
+            placeholder="Ex: Professeur"
+            type="text"
             [icon]="null"
             width="100%"
           ></form-text-component>
+        </div>
+
+        <div class="df-field">
+          <label class="df-label">Type de profil</label>
+          <div class="df-kind-row df-kind-row--nowrap">
+            <radio-option [control]="kindControl" value="donor" [name]="'contact-kind'">Donateur</radio-option>
+            <radio-option [control]="kindControl" value="member" [name]="'contact-kind'">Membre</radio-option>
+            <radio-option [control]="kindControl" value="helper" [name]="'contact-kind'">Aidant</radio-option>
+          </div>
+        </div>
+
+        <div class="df-field out-toggle-field">
+          <label
+            class="df-label df-genre-out-toggle df-out-toggle"
+            (click)="form.get('out')?.setValue(!form.get('out')?.value)"
+          >
+            <kalon-checkbox [checked]="!!form.get('out')?.value" />
+            Sorti<span class="df-genre-out-toggle-text">(décédé)</span>
+          </label>
         </div>
       </div>
 
@@ -66,57 +115,61 @@
         <div class="df-section-title">Adresse</div>
 
         <div formGroupName="address">
-          <div class="df-grid df-grid-address">
-            <div class="df-field df-span-2">
-              <label class="df-label" for="df-street">Rue</label>
-              <form-text-component
-                id="df-street"
-                formControlName="street"
-                placeholder="12 rue de la Paix"
-                [required]="true"
-                type="text"
-                [icon]="null"
-                width="100%"
-              ></form-text-component>
+          <div class="df-address-grid">
+            <div class="df-address-row">
+              <div class="df-field">
+                <label class="df-label" for="df-street">Rue</label>
+                <form-text-component
+                  id="df-street"
+                  formControlName="street"
+                  placeholder="12 rue de la Paix"
+                  [required]="true"
+                  type="text"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
+
+              <div class="df-field">
+                <label class="df-label" for="df-postalCode">Code postal</label>
+                <form-text-component
+                  id="df-postalCode"
+                  formControlName="postalCode"
+                  placeholder="75001"
+                  [required]="true"
+                  type="text"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
             </div>
 
-            <div class="df-field">
-              <label class="df-label" for="df-postalCode">Code postal</label>
-              <form-text-component
-                id="df-postalCode"
-                formControlName="postalCode"
-                placeholder="75001"
-                [required]="true"
-                type="text"
-                [icon]="null"
-                width="100%"
-              ></form-text-component>
-            </div>
+            <div class="df-address-row df-address-row--half">
+              <div class="df-field">
+                <label class="df-label" for="df-city">Ville</label>
+                <form-text-component
+                  id="df-city"
+                  formControlName="city"
+                  placeholder="Paris"
+                  [required]="true"
+                  type="text"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
 
-            <div class="df-field">
-              <label class="df-label" for="df-city">Ville</label>
-              <form-text-component
-                id="df-city"
-                formControlName="city"
-                placeholder="Paris"
-                [required]="true"
-                type="text"
-                [icon]="null"
-                width="100%"
-              ></form-text-component>
-            </div>
-
-            <div class="df-field df-span-2">
-              <label class="df-label" for="df-country">Pays</label>
-              <form-text-component
-                id="df-country"
-                formControlName="country"
-                placeholder="France"
-                [required]="true"
-                type="text"
-                [icon]="null"
-                width="100%"
-              ></form-text-component>
+              <div class="df-field">
+                <label class="df-label" for="df-country">Pays</label>
+                <form-text-component
+                  id="df-country"
+                  formControlName="country"
+                  placeholder="France"
+                  [required]="true"
+                  type="text"
+                  [icon]="null"
+                  width="100%"
+                ></form-text-component>
+              </div>
             </div>
           </div>
         </div>
@@ -301,6 +354,42 @@
       </div>
     </div>
   }
+
+  <div class="df-subsection">
+    <div class="df-subsection-title">Préférence d'envoi des reçus fiscaux</div>
+    <div class="df-kind-row">
+        <radio-option
+          [control]="preferredFrequencySendingReceiptControl"
+          value="instantly"
+          [name]="'contact-receipt-frequency'"
+          >Immédiatement</radio-option
+        >
+        <radio-option
+          [control]="preferredFrequencySendingReceiptControl"
+          value="monthly"
+          [name]="'contact-receipt-frequency'"
+          >Mensuellement</radio-option
+        >
+        <radio-option
+          [control]="preferredFrequencySendingReceiptControl"
+          value="quarterly"
+          [name]="'contact-receipt-frequency'"
+          >Trimestriellement</radio-option
+        >
+        <radio-option
+          [control]="preferredFrequencySendingReceiptControl"
+          value="semesterly"
+          [name]="'contact-receipt-frequency'"
+          >Semestriellement</radio-option
+        >
+        <radio-option
+          [control]="preferredFrequencySendingReceiptControl"
+          value="yearly"
+          [name]="'contact-receipt-frequency'"
+          >Annuellement</radio-option
+        >
+    </div>
+  </div>
 
   @if (submitted && errorMessage) {
     <div class="df-error" role="alert">{{ errorMessage }}</div>

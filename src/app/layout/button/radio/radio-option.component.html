@@ -1,4 +1,10 @@
 <label class="radio-option">
-  <input type="radio" [formControl]="control" [value]="value" />
-  <span><ng-content></ng-content></span>
+  <input
+    type="radio"
+    [value]="value"
+    [attr.name]="name ?? instanceName"
+    [checked]="control.value === value"
+    (change)="control.setValue(value)"
+  />
+  <span class="radio-option-text"><ng-content></ng-content></span>
 </label>

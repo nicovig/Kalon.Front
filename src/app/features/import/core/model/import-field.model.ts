@@ -8,6 +8,11 @@ export type ImportFieldKey =
   | 'firstname'
   | 'email'
   | 'phone'
+  | 'jobTitle'
+  | 'birthDate'
+  | 'gender'
+  | 'out'
+  | 'preferredFrequencySendingReceipt'
   | 'addressLine'
   | 'street'
   | 'postalCode'
@@ -24,6 +29,11 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'firstname', label: 'Particulier - Prénom' },
   { key: 'email', label: 'Particulier - Email' },
   { key: 'phone', label: 'Particulier - Téléphone' },
+  { key: 'jobTitle', label: 'Profil - Métier' },
+  { key: 'birthDate', label: 'Profil - Date de naissance' },
+  { key: 'gender', label: 'Profil - Genre' },
+  { key: 'out', label: 'Profil - Sorti / Décédé (out)' },
+  { key: 'preferredFrequencySendingReceipt', label: 'Profil - Fréquence d\'envoi des reçus fiscaux' },
   { key: 'addressLine', label: 'Particulier - Adresse (tout en une colonne)' },
   { key: 'street', label: 'Particulier - Rue / voie' },
   { key: 'postalCode', label: 'Particulier - Code postal' },

@@ -35,6 +35,17 @@
   gap: 12px 20px;
 }
 
+.df-kind-row--nowrap {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.df-kind-row--nowrap radio-option,
+.df-kind-row--nowrap radio-option * {
+  white-space: nowrap;
+}
+
 .df-panel {
   display: flex;
   flex-direction: column;
@@ -45,6 +56,30 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.df-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.df-address-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.df-address-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.df-address-row--half {
+  grid-template-columns: 1fr 1fr;
 }
 
 .df-grid-enterprise {
@@ -189,8 +224,58 @@
   flex: 1 1 auto;
 }
 
+.df-genre-out-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.df-genre-out-toggle-text {
+  font-size: 0.8rem;
+  color: var(--ink-70);
+  opacity: 0.8;
+}
+
+.df-birthdate-label {
+  font-size: 0.78rem;
+}
+
+.df-out-toggle {
+  font-size: 0.92rem;
+}
+
+.df-birthdate-out-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.df-birthdate-out-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.df-out-col {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
 .df-subsection-full {
   margin-top: 0;
+}
+
+.align-items-end {
+  align-items: end;
+}
+
+.out-toggle-field {
+  padding-left: 50px;
 }
 
 @media (max-width: 720px) {

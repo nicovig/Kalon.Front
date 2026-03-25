@@ -1,5 +1,5 @@
-export type ContactKind = 'individual' | 'company';
-export type ContactStatus = 'active' | 'to_remind' | 'new' | 'inactive';
+export type ContactKind = 'donor' | 'company' | 'member' | 'helper';
+export type ContactStatus = 'active' | 'to_remind' | 'new' | 'inactive' | 'out'; //out == dead
 
 export interface IContact {
   id: string;
@@ -8,6 +8,9 @@ export interface IContact {
   lastname: string;
   email: string;
   phone?: string;
+  jobTitle?: string;
+  birthDate?: Date;
+  gender?: 'male' | 'female' | 'other';
   address?: IContactAddress;
   enterprise?: IContactEnterprise;
   creationDate: Date;
@@ -15,6 +18,7 @@ export interface IContact {
   totalDonation: number;
   lastDonation?: Date;
   donationCount: number;
+  preferredFrequencySendingReceipt?: 'instantly' | 'monthly' | 'quarterly' | 'semesterly' | 'yearly';
 }
 
 export interface IContactAddress {

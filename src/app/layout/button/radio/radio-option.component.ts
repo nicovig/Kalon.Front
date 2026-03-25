@@ -12,4 +12,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 export class RadioOptionComponent {
   @Input({ required: true }) control!: FormControl<string>;
   @Input({ required: true }) value!: string;
+  @Input() name: string | null = null;
+
+  protected readonly instanceName = `radio-${Math.random().toString(16).slice(2)}`;
 }

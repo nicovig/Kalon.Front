@@ -76,7 +76,13 @@ export class TableComponent {
           col.type === 'contactKind'
             ? value === 'company'
               ? 'entreprise'
-              : 'particulier'
+              : value === 'donor'
+                ? 'donateur'
+                : value === 'member'
+                  ? 'membre'
+                  : value === 'helper'
+                    ? 'aidant'
+                    : 'profil'
             : String(value);
         return text.toLowerCase().includes(term);
       }),

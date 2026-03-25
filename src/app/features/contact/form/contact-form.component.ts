@@ -13,9 +13,11 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { EnterpriseFiscalStatus, IContact } from '../../../core/models/contact.model';
+import { ContactKind, EnterpriseFiscalStatus, IContact } from '../../../core/models/contact.model';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { RadioOptionComponent } from '../../../layout/button/radio/radio-option.component';
+import { CheckboxComponent } from '../../../layout/button/checkbox/checkbox.component';
+import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import type { NewContactInput } from '../contact.store';
 
@@ -26,7 +28,15 @@ export type ContactFormUpdatePayload = { contactId: string; value: NewContactInp
 @Component({
   selector: 'contact-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonLabelComponent, RadioOptionComponent, FormTextComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ButtonLabelComponent,
+    RadioOptionComponent,
+    CheckboxComponent,
+    FormTextComponent,
+    FormDateComponent
+  ],
   templateUrl: './contact-form.component.html',
   styleUrls: ['./contact-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -38,11 +48,17 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   readonly editContact = input<IContact | null>(null);
 
   protected readonly form: FormGroup = this.fb.group({
-    kind: ['individual', Validators.required],
+    category: ['particular', Validators.required],
+    kind: ['donor', Validators.required],
     firstname: [''],
     lastname: [''],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
+    jobTitle: [''],
+    birthDate: [''],
+    gender: ['other'],
+    preferredFrequencySendingReceipt: ['instantly'],
+    out: [false],
     address: this.fb.group({
       street: [''],
       postalCode: [''],
@@ -66,7 +82,14 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     })
   });
 
+  protected readonly categoryControl = this.form.get('category')! as FormControl<string>;
   protected readonly kindControl = this.form.get('kind')! as FormControl<string>;
+  protected readonly genderControl = this.form.get('gender')! as FormControl<string>;
+  protected readonly preferredFrequencySendingReceiptControl = this.form.get(
+    'preferredFrequencySendingReceipt'
+  )! as FormControl<string>;
+
+  protected readonly todayDateString = new Date().toISOString().split('T')[0];
 
   @Output() create = new EventEmitter<NewContactFormValue>();
   @Output() contactUpdate = new EventEmitter<ContactFormUpdatePayload>();
@@ -79,20 +102,23 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const d = this.editContact();
+      const categoryCtrl = this.form.get('category');
       const kindCtrl = this.form.get('kind');
       if (d) {
+        categoryCtrl?.disable({ emitEvent: false });
         kindCtrl?.disable({ emitEvent: false });
         this.patchFromContact(d);
       } else {
+        categoryCtrl?.enable({ emitEvent: false });
         kindCtrl?.enable({ emitEvent: false });
       }
     });
   }
 
   ngOnInit(): void {
-    this.applyKind(this.form.get('kind')?.value ?? 'individual');
-    this.kindSub = this.form.get('kind')?.valueChanges.subscribe((k) => {
-      this.applyKind(k);
+    this.applyCategory(this.form.get('category')?.value ?? 'particular');
+    this.kindSub = this.form.get('category')?.valueChanges.subscribe((c) => {
+      this.applyCategory(c);
       this.cdr.markForCheck();
     });
   }
@@ -104,12 +130,19 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   private patchFromContact(d: IContact): void {
     this.submitted = false;
     this.errorMessage = '';
+    const isCompany = d.kind === 'company';
     this.form.patchValue({
+      category: isCompany ? 'company' : 'particular',
       kind: d.kind,
       email: d.email,
-      phone: d.phone ?? ''
+      phone: d.phone ?? '',
+      jobTitle: d.jobTitle ?? '',
+      birthDate: d.birthDate ? this.dateToInputValue(d.birthDate) : '',
+      gender: d.gender ?? 'other',
+      preferredFrequencySendingReceipt: d.preferredFrequencySendingReceipt ?? 'instantly',
+      out: d.statut === 'out'
     });
-    if (d.kind === 'individual') {
+    if (!isCompany) {
       this.form.patchValue({
         firstname: d.firstname,
         lastname: d.lastname,
@@ -140,7 +173,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
         }
       });
     }
-    this.applyKind(d.kind);
+    this.applyCategory(isCompany ? 'company' : 'particular');
     this.cdr.markForCheck();
   }
 
@@ -152,11 +185,17 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     }
 
     const raw = this.form.getRawValue() as {
-      kind: 'individual' | 'company';
+      category: 'particular' | 'company';
+      kind: ContactKind;
       firstname: string;
       lastname: string;
       email: string;
       phone?: string;
+      jobTitle: string;
+      birthDate: string;
+      gender: 'male' | 'female' | 'other';
+      preferredFrequencySendingReceipt: IContact['preferredFrequencySendingReceipt'];
+      out: boolean;
       address: {
         street: string;
         postalCode: string;
@@ -183,56 +222,11 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     const edit = this.editContact();
-    if (edit) {
-      if (raw.kind === 'individual') {
-        this.contactUpdate.emit({
-          contactId: edit.id,
-          value: {
-            kind: 'individual',
-            firstname: raw.firstname.trim(),
-            lastname: raw.lastname.trim(),
-            email: raw.email.trim(),
-            phone: raw.phone?.trim() || undefined,
-            address: {
-              street: raw.address.street.trim(),
-              postalCode: raw.address.postalCode.trim(),
-              city: raw.address.city.trim(),
-              country: raw.address.country.trim()
-            }
-          }
-        });
-        return;
-      }
-      const en = raw.enterprise;
-      this.contactUpdate.emit({
-        contactId: edit.id,
-        value: {
-          kind: 'company',
-          email: raw.email.trim(),
-          phone: raw.phone?.trim() || undefined,
-          enterprise: {
-            name: en.name.trim(),
-            siret: en.siret.trim(),
-            fiscalStatus: en.fiscalStatus as EnterpriseFiscalStatus,
-            address: {
-              street: en.address.street.trim(),
-              postalCode: en.address.postalCode.trim(),
-              city: en.address.city.trim(),
-              country: en.address.country.trim()
-            },
-            contactFirstname: en.contactFirstname?.trim() || undefined,
-            contactLastname: en.contactLastname?.trim() || undefined,
-            contactEmail: en.contactEmail?.trim() || undefined,
-            contactPhone: en.contactPhone?.trim() || undefined
-          }
-        }
-      });
-      return;
-    }
+    const birthDate = raw.birthDate?.trim() ? this.dateFromInputValue(raw.birthDate) : undefined;
 
-    if (raw.kind === 'individual') {
-      this.create.emit({
-        kind: 'individual',
+    if (raw.category === 'particular') {
+      const value: NewContactInput = {
+        kind: raw.kind as 'donor' | 'member' | 'helper',
         firstname: raw.firstname.trim(),
         lastname: raw.lastname.trim(),
         email: raw.email.trim(),
@@ -242,16 +236,29 @@ export class ContactFormComponent implements OnInit, OnDestroy {
           postalCode: raw.address.postalCode.trim(),
           city: raw.address.city.trim(),
           country: raw.address.country.trim()
-        }
-      });
+        },
+        jobTitle: raw.jobTitle.trim() || undefined,
+        birthDate,
+        gender: raw.gender || undefined,
+        preferredFrequencySendingReceipt: raw.preferredFrequencySendingReceipt,
+        out: raw.out
+      };
+
+      if (edit) {
+        this.contactUpdate.emit({ contactId: edit.id, value });
+      } else {
+        this.create.emit(value);
+      }
       return;
     }
 
     const en = raw.enterprise;
-    this.create.emit({
+    const value: NewContactInput = {
       kind: 'company',
       email: raw.email.trim(),
       phone: raw.phone?.trim() || undefined,
+      preferredFrequencySendingReceipt: raw.preferredFrequencySendingReceipt,
+      out: raw.out,
       enterprise: {
         name: en.name.trim(),
         siret: en.siret.trim(),
@@ -263,19 +270,27 @@ export class ContactFormComponent implements OnInit, OnDestroy {
           country: en.address.country.trim()
         },
         contactFirstname: en.contactFirstname?.trim() || undefined,
-        contactLastname: en.contactLastname?.trim() || undefined
+        contactLastname: en.contactLastname?.trim() || undefined,
+        contactEmail: en.contactEmail?.trim() || undefined,
+        contactPhone: en.contactPhone?.trim() || undefined
       }
-    });
+    };
+
+    if (edit) {
+      this.contactUpdate.emit({ contactId: edit.id, value });
+    } else {
+      this.create.emit(value);
+    }
   }
 
   private firstErrorMessage(): string {
-    const kind = (this.form.get('kind')?.value ?? 'individual') as 'individual' | 'company';
+    const category = (this.form.get('category')?.value ?? 'particular') as 'particular' | 'company';
 
     const email = this.form.get('email');
     if (email?.hasError('required')) return "L'email est obligatoire.";
     if (email?.hasError('email')) return "L'email semble invalide.";
 
-    if (kind === 'individual') {
+    if (category === 'particular') {
       const firstname = this.form.get('firstname');
       if (firstname?.hasError('required')) return 'Le prénom est obligatoire.';
 
@@ -322,12 +337,25 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     return 'Veuillez vérifier les champs du formulaire.';
   }
 
-  private applyKind(kind: 'individual' | 'company'): void {
+  private applyCategory(category: 'particular' | 'company'): void {
     const addressGroup = this.form.get('address') as FormGroup;
     const enterpriseGroup = this.form.get('enterprise') as FormGroup;
     const enterpriseAddress = enterpriseGroup.get('address') as FormGroup;
 
-    if (kind === 'individual') {
+    // "type de profil" (donateur/membre/aidant) ne s'applique que sur les particuliers.
+    // On évite donc toute mutation de valeur incohérente sur `kind`.
+    if (category === 'company') {
+      this.kindControl.disable({ emitEvent: false });
+    } else {
+      if (this.kindControl.disabled) {
+        this.kindControl.enable({ emitEvent: false });
+      }
+      if (!this.kindControl.value) {
+        this.kindControl.setValue('donor', { emitEvent: false });
+      }
+    }
+
+    if (category === 'particular') {
       this.form.get('firstname')?.setValidators([Validators.required]);
       this.form.get('lastname')?.setValidators([Validators.required]);
       addressGroup.get('street')?.setValidators([Validators.required]);
@@ -383,5 +411,24 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     enterpriseAddress.get('country')?.updateValueAndValidity({ emitEvent: false });
 
     this.form.get('email')?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private dateToInputValue(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private dateFromInputValue(s: string): Date | undefined {
+    const trimmed = s.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    const [y, m, d] = trimmed.split('-').map((x) => Number(x));
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+      return undefined;
+    }
+    return new Date(y, m - 1, d);
   }
 }

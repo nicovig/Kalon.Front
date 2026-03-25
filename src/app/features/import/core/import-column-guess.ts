@@ -62,6 +62,49 @@ const RULES: Rule[] = [
       /\bfixe\b/.test(n)
   },
   {
+    field: 'jobTitle',
+    weight: 7,
+    test: (n) =>
+      /\bmetier\b/.test(n) ||
+      /\bprofession\b/.test(n) ||
+      /\bjob\b/.test(n) ||
+      /\bfacon\b/.test(n) ||
+      /\bfonction\b/.test(n)
+  },
+  {
+    field: 'birthDate',
+    weight: 10,
+    test: (n) =>
+      /\bnaissance\b/.test(n) ||
+      /\bbirth\b/.test(n) ||
+      /\bdob\b/.test(n) ||
+      (/\bdate\b/.test(n) && /\bnaiss\b/.test(n))
+  },
+  {
+    field: 'gender',
+    weight: 8,
+    test: (n) => /\bgenre\b/.test(n) || /\bsexe\b/.test(n) || /\bgender\b/.test(n)
+  },
+  {
+    field: 'out',
+    weight: 6,
+    test: (n) =>
+      /\bout\b/.test(n) || /\bdeces\b/.test(n) || /\bdec[eé]s\b/.test(n) || /\bdecede\b/.test(n) || /\bmort\b/.test(n)
+  },
+  {
+    field: 'preferredFrequencySendingReceipt',
+    weight: 6,
+    test: (n) =>
+      (/\brecus\b/.test(n) && /\bfr[ei]quence\b/.test(n)) ||
+      /\bmensuel\b/.test(n) ||
+      /\btrimestriel\b/.test(n) ||
+      /\bsemestriel\b/.test(n) ||
+      /\bannuel\b/.test(n) ||
+      /\bquarterly\b/.test(n) ||
+      /\bmonthly\b/.test(n) ||
+      /\byearly\b/.test(n)
+  },
+  {
     field: 'lastname',
     weight: 9,
     test: (n) =>

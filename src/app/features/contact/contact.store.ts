@@ -3,12 +3,17 @@ import { ContactKind, IContact, IContactAddress, IContactEnterprise } from '../.
 import { ContactSettingsStore } from './settings/contact-settings.store';
 
 export interface NewContactInputIndividual {
-  kind: 'individual';
+  kind: 'donor' | 'member' | 'helper';
   firstname: string;
   lastname: string;
   email: string;
   phone?: string;
   address: IContactAddress;
+  jobTitle?: string;
+  birthDate?: Date;
+  gender?: 'male' | 'female' | 'other';
+  preferredFrequencySendingReceipt?: IContact['preferredFrequencySendingReceipt'];
+  out?: boolean;
 }
 
 export interface NewContactInputCompany {
@@ -16,6 +21,8 @@ export interface NewContactInputCompany {
   email: string;
   phone?: string;
   enterprise: IContactEnterprise;
+  preferredFrequencySendingReceipt?: IContact['preferredFrequencySendingReceipt'];
+  out?: boolean;
 }
 
 export type NewContactInput = NewContactInputIndividual | NewContactInputCompany;
@@ -80,7 +87,7 @@ export class ContactStoreService {
     const updated = this.toContactFromInput(input, {
       id: existing.id,
       creationDate: existing.creationDate,
-      statut: existing.statut,
+      statut: input.out ? 'out' : 'new',
       totalDonation: existing.totalDonation,
       lastDonation: existing.lastDonation,
       donationCount: existing.donationCount
@@ -136,16 +143,21 @@ export class ContactStoreService {
       donationCount: number;
     }
   ): IContact {
-    if (input.kind === 'individual') {
+    if (input.kind !== 'company') {
       return {
         ...meta,
-        kind: 'individual' satisfies ContactKind,
+        kind: input.kind satisfies ContactKind,
+        jobTitle: input.jobTitle?.trim() || undefined,
+        birthDate: input.birthDate,
+        gender: input.gender,
+        preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
         firstname: input.firstname.trim(),
         lastname: input.lastname.trim(),
         email: input.email.trim(),
         phone: input.phone?.trim() || undefined,
         address: this.normalizeAddress(input.address),
-        enterprise: undefined
+        enterprise: undefined,
+        statut: input.out ? 'out' : meta.statut
       };
     }
 
@@ -171,7 +183,9 @@ export class ContactStoreService {
       email: input.email.trim(),
       phone: input.phone?.trim() || undefined,
       address: undefined,
-      enterprise
+      enterprise,
+      preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
+      statut: input.out ? 'out' : meta.statut
     };
   }
 

@@ -1,4 +1,8 @@
-<app-popup-shell [maxWidth]="'760px'" [zIndex]="2000" (dismiss)="onDismiss()">
+<app-popup-shell
+  [maxWidth]="'min(980px, calc(100% - 32px))'"
+  [zIndex]="2000"
+  (dismiss)="onDismiss()"
+>
   <div popup-header>
     <div class="app-popup-title">Nouveau profil</div>
     <p class="app-popup-sub">
