@@ -45,6 +45,16 @@
             ></form-date-component>
           </div>
         </div>
+
+        <div class="add-donation-field">
+          <label class="add-donation-label">Moyen de paiement</label>
+          <div class="add-donation-manual-grid add-donation-manual-grid--payment">
+            <radio-option [control]="paymentMethodControl" value="bank_transfer">Virement</radio-option>
+            <radio-option [control]="paymentMethodControl" value="cash">Espèces</radio-option>
+            <radio-option [control]="paymentMethodControl" value="check">Chèques</radio-option>
+            <radio-option [control]="paymentMethodControl" value="other">Autre</radio-option>
+          </div>
+        </div>
         @if (submitted && form.invalid) {
           <div class="add-donation-error" role="alert">Indiquez un montant valide et une date.</div>
         }

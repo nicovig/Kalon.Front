@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { IDonation } from '../../core/models/donation.model';
+import { DonationPaymentMethod, IDonation } from '../../core/models/donation.model';
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactStoreService } from '../contact/contact.store';
 
@@ -14,14 +14,20 @@ export class DonationStoreService {
     return this.donationsSignal();
   }
 
-  addDonationForContact(contact: IContact, amount: number, date: Date): IDonation {
+  addDonationForContact(
+    contact: IContact,
+    amount: number,
+    date: Date,
+    paymentMethod: DonationPaymentMethod
+  ): IDonation {
     const display = contactDisplayName(contact);
     const donation: IDonation = {
       id: this.newId(),
       contactId: contact.id,
       amount,
       date,
-      contactDisplayName: display
+      contactDisplayName: display,
+      paymentMethod
     };
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
     this.contactStore.recordDonation(contact.id, amount, date);

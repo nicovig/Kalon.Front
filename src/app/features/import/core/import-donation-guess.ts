@@ -35,6 +35,22 @@ const DONATION_RULES: DRule[] = [
       /\bcourriel\b/.test(n) ||
       /\bprofil\b.*\bmail\b/.test(n) ||
       /\bcontact\b.*\bmail\b/.test(n)
+  },
+  {
+    field: 'paymentMethod',
+    weight: 8,
+    test: (n) =>
+      /\bmode\b.*\bpay/.test(n) ||
+      /\bpaiement\b/.test(n) ||
+      /\bvirement\b/.test(n) ||
+      /\btransfer\b/.test(n) ||
+      /\bbank\b.*\btransfer\b/.test(n) ||
+      /\bespeces\b/.test(n) ||
+      /\bespeces\b/.test(n) ||
+      /\bcheq(u|u)e?s?\b/.test(n) ||
+      /\bchq\b/.test(n) ||
+      /\bcheck\b/.test(n) ||
+      /\bautre\b/.test(n)
   }
 ];
 

@@ -278,6 +278,8 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
         return 'Nouveau';
       case 'inactive':
         return 'Inactif';
+      case 'out':
+        return 'Sorti';
       default:
         return '';
     }

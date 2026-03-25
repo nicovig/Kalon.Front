@@ -16,6 +16,8 @@ export class ContactStatusLabelPipe implements PipeTransform {
         return 'Nouveau';
       case 'inactive':
         return 'Inactif';
+      case 'out':
+        return 'Sorti';
       default:
         return status;
     }

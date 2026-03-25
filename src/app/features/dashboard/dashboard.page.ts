@@ -13,6 +13,7 @@ import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome
 import { ImportBannerComponent } from '../import/components/import-banner/import-banner.component';
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
+import { DonationPaymentMethod } from '../../core/models/donation.model';
 
 @Component({
   selector: 'dashboard-page',
@@ -41,7 +42,12 @@ export class DashboardPageComponent {
 
   protected readonly currentUser = this.authService.currentUser;
 
-  protected readonly latestDonationsComputed = computed(() => this.donationStore.donations());
+  protected readonly latestDonationsComputed = computed(() =>
+    this.donationStore.donations().map((d) => ({
+      ...d,
+      paymentMethodLabel: this.paymentMethodLabel(d.paymentMethod)
+    }))
+  );
 
   protected readonly kpiActiveContacts = computed(
     () =>
@@ -109,7 +115,25 @@ export class DashboardPageComponent {
   protected readonly latestDonationsColumns: TableColumn[] = [
     { key: 'date', header: 'Date', type: 'date', searchable: true },
     { key: 'contactDisplayName', header: 'Profil', searchable: true },
+    { key: 'paymentMethodLabel', header: 'Moyen de paiement', type: 'text', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right', searchable: true }
   ];
+
+  private paymentMethodLabel(paymentMethod: DonationPaymentMethod): string {
+    switch (paymentMethod) {
+      case 'bank_transfer':
+        return 'Virement';
+      case 'cash':
+        return 'Espèces';
+      case 'check':
+        return 'Chèques';
+      case 'other':
+        return 'Autre';
+      default: {
+        const _exhaustive: never = paymentMethod;
+        return _exhaustive;
+      }
+    }
+  }
 
 }

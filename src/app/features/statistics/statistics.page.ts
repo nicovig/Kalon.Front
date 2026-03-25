@@ -85,7 +85,8 @@ export class StatisticsPageComponent {
     { value: 'active', label: 'Actifs' },
     { value: 'to_remind', label: 'À relancer' },
     { value: 'new', label: 'Nouveaux' },
-    { value: 'inactive', label: 'Inactifs' }
+    { value: 'inactive', label: 'Inactifs' },
+    { value: 'out', label: 'Sortis' }
   ];
 
   protected readonly donationColumns: TableColumn[] = [
@@ -274,6 +275,8 @@ export class StatisticsPageComponent {
         return 'Nouveau';
       case 'inactive':
         return 'Inactif';
+      case 'out':
+        return 'Sorti';
       default:
         return status;
     }

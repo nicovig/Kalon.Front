@@ -39,7 +39,7 @@ import { ImportFieldKey } from './core/model/import-field.model';
 import { parseAmountFromCell, parseDateFromCell } from './core/import-parse-cells';
 import { parseImportFile } from './core/import-file-parse';
 import { mapRowToNewContactInput } from './core/import-row-to-contact';
-import { mapRowToDonationImport, collectDonationImportBag } from './core/import-row-donation';
+import { mapRowToDonationImport, collectDonationImportBag, parsePaymentMethodFromCell } from './core/import-row-donation';
 import { mapCombinedRowToActions } from './core/import-row-combined';
 import { ImportStepTrailComponent } from './components/import-step-trail/import-step-trail.component';
 import {
@@ -547,9 +547,13 @@ export class ImportPageComponent implements OnInit {
       const contactEmail = (bag.contactEmail ?? '').trim();
       const donationAmountStr = (bag.donationAmount ?? '').trim();
       const donationDateStr = (bag.donationDate ?? '').trim();
+      const donationPaymentMethodRaw = (bag.paymentMethod ?? '').trim();
 
       const amount = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
+      const paymentMethod = donationPaymentMethodRaw
+        ? parsePaymentMethodFromCell(donationPaymentMethodRaw)
+        : ('other' as const);
 
       if (!contactEmail) {
         stillIgnored.push({
@@ -586,7 +590,7 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      this.donationStore.addDonationForContact(contact, amount, date);
+      this.donationStore.addDonationForContact(contact, amount, date, paymentMethod);
       importedCount++;
     }
 
@@ -602,7 +606,9 @@ export class ImportPageComponent implements OnInit {
     let importedCount = 0;
 
     const contactBindings = bindings.map((b) =>
-      b === 'donationDate' || b === 'donationAmount' ? ('skip' as ImportFieldKey) : (b as ImportFieldKey)
+      b === 'donationDate' || b === 'donationAmount' || b === 'paymentMethod'
+        ? ('skip' as ImportFieldKey)
+        : (b as ImportFieldKey)
     );
 
     for (const line of editedLines) {
@@ -705,6 +711,7 @@ export class ImportPageComponent implements OnInit {
 
       let donationDateStr = '';
       let donationAmountStr = '';
+      let donationPaymentMethodStr = '';
       const len = Math.min(row.length, bindings.length);
       for (let i = 0; i < len; i++) {
         if (bindings[i] === 'donationDate') {
@@ -712,6 +719,9 @@ export class ImportPageComponent implements OnInit {
         }
         if (bindings[i] === 'donationAmount') {
           donationAmountStr = String(row[i] ?? '').trim();
+        }
+        if (bindings[i] === 'paymentMethod') {
+          donationPaymentMethodStr = String(row[i] ?? '').trim();
         }
       }
 
@@ -724,9 +734,12 @@ export class ImportPageComponent implements OnInit {
 
       const amount = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
+      const paymentMethod = donationPaymentMethodStr
+        ? parsePaymentMethodFromCell(donationPaymentMethodStr)
+        : ('other' as const);
 
       if (amount !== null && amount > 0 && date) {
-        this.donationStore.addDonationForContact(contact, amount, date);
+        this.donationStore.addDonationForContact(contact, amount, date, paymentMethod);
       }
 
       importedCount++;
@@ -897,7 +910,7 @@ export class ImportPageComponent implements OnInit {
         });
         continue;
       }
-      this.donationStore.addDonationForContact(contact, parsed.amount, parsed.date);
+      this.donationStore.addDonationForContact(contact, parsed.amount, parsed.date, parsed.paymentMethod);
       created++;
     }
     if (created === 0) {
@@ -927,7 +940,9 @@ export class ImportPageComponent implements OnInit {
     const ignored: IgnoredImportLine[] = [];
 
     const contactBindings = bindings.map((b) =>
-      b === 'donationDate' || b === 'donationAmount' ? ('skip' as ImportFieldKey) : (b as ImportFieldKey)
+      b === 'donationDate' || b === 'donationAmount' || b === 'paymentMethod'
+        ? ('skip' as ImportFieldKey)
+        : (b as ImportFieldKey)
     );
 
     for (const [index, row] of rows.entries()) {
@@ -985,7 +1000,7 @@ export class ImportPageComponent implements OnInit {
         contactsCreated++;
       }
       if (donation) {
-        this.donationStore.addDonationForContact(contact, donation.amount, donation.date);
+        this.donationStore.addDonationForContact(contact, donation.amount, donation.date, donation.paymentMethod);
         donationsCreated++;
       }
     }
