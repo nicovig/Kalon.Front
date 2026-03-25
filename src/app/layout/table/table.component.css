@@ -78,7 +78,7 @@ tbody tr:has(.tbl-actions):focus-within .tbl-actions {
   opacity: 1;
 }
 
-.donor-row {
+.contact-row {
   display: flex;
   align-items: center;
   gap: 11px;

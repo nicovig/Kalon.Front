@@ -1,0 +1,9 @@
+<button-label-component type="primary" (click)="openContactModal()">Nouveau profil</button-label-component>
+@if (contactModalOpen()) {
+  <contact-create-popup (closed)="onContactPopupClosed()" (contactCreated)="onContactCreated($event)" />
+}
+@if (donationFollowUpOpen()) {
+  @if (createdContact(); as contact) {
+    <add-donation-popup [contact]="contact" (closed)="onDonationFollowUpClosed()" />
+  }
+}

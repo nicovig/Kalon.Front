@@ -4,16 +4,16 @@
   <div class="layout">
     <reminder-recipient-selector
       [pagedItems]="pagedRecipientItems()"
-      [filteredDonorsLength]="filteredDonorsLength()"
-      [donorsCount]="donorsCount()"
+      [filteredcontactsLength]="filteredcontactsLength()"
+      [contactsCount]="contactsCount()"
       [selectedCount]="selectedCount()"
-      [selectedDonorIds]="selectedDonorIds()"
+      [selectedcontactIds]="selectedcontactIds()"
       [quickFilter]="quickFilter()"
       [searchQuery]="searchQuery()"
       [title]="'Sélectionner les destinataires'"
-      [searchPlaceholder]="'Rechercher un donateur…'"
-      [emptyMessage]="'Aucun donateur pour le moment. Créez ou importez des donateurs pour générer des reçus.'"
-      [selectedLabel]="'donateurs'"
+      [searchPlaceholder]="'Rechercher un profil…'"
+      [emptyMessage]="'Aucun profil pour le moment. Créez ou importez des profils pour générer des reçus.'"
+      [selectedLabel]="'profils'"
       [pageIndex]="pageIndex()"
       [totalPages]="totalPages()"
       [appliedMonthsMin]="appliedMonthsMin()"
@@ -22,7 +22,7 @@
       [appliedDonationCountMin]="appliedDonationCountMin()"
       (quickFilterChange)="setQuickFilter($event)"
       (searchQueryChange)="onSearchInput($event)"
-      (toggleDonor)="toggleDonor($event)"
+      (toggleContact)="togglecontact($event)"
       (selectAllFiltered)="selectAllFiltered()"
       (deselectAll)="deselectAll()"
       (prevPage)="prevPage()"
@@ -52,9 +52,9 @@
           <span class="step-label">Aperçu et envoi</span>
         </button-label-component>
         @if (activeStep === 3) {
-          <button-label-component type="send" [disabled]="selectedDonorsForStep3Count() === 0">
-            <span class="step-index">{{ selectedDonorsForStep3Count() }}</span>
-            <span class="send-step-label">Envoyer à {{ selectedDonorsForStep3Count() }} donateurs 🧾</span>
+          <button-label-component type="send" [disabled]="selectedcontactsForStep3Count() === 0">
+            <span class="step-index">{{ selectedcontactsForStep3Count() }}</span>
+            <span class="send-step-label">Envoyer à {{ selectedcontactsForStep3Count() }} profils 🧾</span>
           </button-label-component>
         }
       </div>
@@ -122,24 +122,24 @@
           <div class="surface-card">
             <div class="preview-head">
               <div class="preview-ttl">👁️ Aperçu mocké</div>
-              <div class="preview-donor">
-                @if (selectedDonorsForPreview().length) {
+              <div class="preview-contact">
+                @if (selectedcontactsForPreview().length) {
                   <form-select-component
                     class="preview-select"
                     [label]="null"
-                    [options]="previewDonorOptions()"
-                    [ngModel]="previewDonorId() ?? ''"
-                    (ngModelChange)="onPreviewDonorChange($event)"
+                    [options]="previewcontactOptions()"
+                    [ngModel]="previewcontactId() ?? ''"
+                    (ngModelChange)="onPreviewcontactChange($event)"
                   />
                 } @else {
-                  <span class="preview-donor-empty">Aucun destinataire</span>
+                  <span class="preview-contact-empty">Aucun destinataire</span>
                 }
               </div>
             </div>
             <div class="preview-body">
               <p><strong>Modèle :</strong> {{ currentTemplateTitle() }}</p>
-              <p><strong>Donateur :</strong> {{ donorPreviewName() }}</p>
-              <p><strong>Total dons :</strong> {{ donorPreviewAmount() }}</p>
+              <p><strong>Profil :</strong> {{ contactPreviewName() }}</p>
+              <p><strong>Total dons :</strong> {{ contactPreviewAmount() }}</p>
               <hr />
               <p>{{ receiptBody() }}</p>
               <p>{{ receiptFooter() }}</p>

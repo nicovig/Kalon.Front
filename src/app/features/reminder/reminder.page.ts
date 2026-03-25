@@ -19,15 +19,15 @@ import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.compon
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
-import { DonorStoreService } from '../donor/donor.store';
-import { donorDisplayName, DonorStatus, IDonor } from '../../core/models/donor.model';
+import { ContactStoreService } from '../contact/contact.store';
+import { contactDisplayName, ContactStatus, IContact } from '../../core/models/contact.model';
 import {
   ReminderAdvancedFilters,
   RecipientSelectorItem,
   ReminderQuickFilter,
   ReminderRecipientSelectorComponent
 } from './reminder-recipient-selector/reminder-recipient-selector.component';
-import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
+import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 
 @Component({
   selector: 'reminder-page',
@@ -49,10 +49,10 @@ import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
   private readonly iaAgent = inject(IaAgentCore);
-  private readonly donorStore = inject(DonorStoreService);
-  private readonly donorSettings = inject(DonorSettingsStore);
+  private readonly contactStore = inject(ContactStoreService);
+  private readonly contactSettings = inject(ContactSettingsStore);
   constructor(private readonly cdr: ChangeDetectorRef) {}
-  protected readonly donorsCount = computed(() => this.donorStore.donors().length);
+  protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
 
   protected readonly itemsPerPage = 15;
   protected readonly quickFilter = signal<ReminderQuickFilter>('all');
@@ -63,19 +63,19 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   protected readonly appliedDonationCountMin = signal<number | null>(null);
   protected readonly pageIndex = signal(0);
 
-  protected readonly selectedDonorIds = signal<Set<string>>(new Set());
-  protected readonly selectedCount = computed(() => this.selectedDonorIds().size);
+  protected readonly selectedcontactIds = signal<Set<string>>(new Set());
+  protected readonly selectedCount = computed(() => this.selectedcontactIds().size);
 
-  protected readonly previewDonorId = signal<string | null>(null);
+  protected readonly previewcontactId = signal<string | null>(null);
 
-  protected readonly filteredDonors = computed(() => {
+  protected readonly filteredcontacts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
     const quick = this.quickFilter();
     const monthsMin = this.appliedMonthsMin();
     const totalMin = this.appliedTotalDonationMin();
     const totalMax = this.appliedTotalDonationMax();
     const donationCountMin = this.appliedDonationCountMin();
-    const all = this.donorStore.donors();
+    const all = this.contactStore.contacts();
 
     return all.filter((d) => {
       const status = this.statusOf(d);
@@ -102,22 +102,22 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
       if (typeof donationCountMin === 'number' && !Number.isNaN(donationCountMin) && d.donationCount < donationCountMin) return false;
 
       if (!q) return true;
-      const name = donorDisplayName(d).toLowerCase();
+      const name = contactDisplayName(d).toLowerCase();
       const email = (d.email ?? '').toLowerCase();
       const statusLabel = this.statusLabel(status).toLowerCase();
       return name.includes(q) || email.includes(q) || statusLabel.includes(q);
     });
   });
 
-  protected readonly filteredDonorsLength = computed(() => this.filteredDonors().length);
+  protected readonly filteredcontactsLength = computed(() => this.filteredcontacts().length);
 
-  protected readonly pagedDonors = computed(() => {
+  protected readonly pagedcontacts = computed(() => {
     const start = this.pageIndex() * this.itemsPerPage;
-    return this.filteredDonors().slice(start, start + this.itemsPerPage);
+    return this.filteredcontacts().slice(start, start + this.itemsPerPage);
   });
 
   protected readonly pagedRecipientItems = computed<RecipientSelectorItem[]>(() =>
-    this.pagedDonors().map((d) => {
+    this.pagedcontacts().map((d) => {
       const status = this.statusOf(d);
       const badgeText =
         status === 'to_remind' && d.lastDonation
@@ -138,8 +138,8 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
 
       return {
         id: d.id,
-        title: donorDisplayName(d),
-        subtitle: this.donorMetaLine(d),
+        title: contactDisplayName(d),
+        subtitle: this.contactMetaLine(d),
         avatarText: this.initials(d),
         badgeText,
         badgeClass
@@ -148,25 +148,25 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   );
 
   protected readonly totalPages = computed(() => {
-    const len = this.filteredDonors().length;
+    const len = this.filteredcontacts().length;
     return Math.max(1, Math.ceil(len / this.itemsPerPage));
   });
 
-  protected readonly selectedDonorsForPreview = computed(() => {
-    const selected = this.selectedDonorIds();
-    return this.filteredDonors().filter((d) => selected.has(d.id));
+  protected readonly selectedcontactsForPreview = computed(() => {
+    const selected = this.selectedcontactIds();
+    return this.filteredcontacts().filter((d) => selected.has(d.id));
   });
 
-  protected readonly previewDonorOptions = computed<FormSelectOption[]>(() =>
-    this.selectedDonorsForPreview().map((d) => ({
+  protected readonly previewcontactOptions = computed<FormSelectOption[]>(() =>
+    this.selectedcontactsForPreview().map((d) => ({
       value: d.id,
       label: this.displayName(d)
     }))
   );
 
-  protected readonly selectedDonorsForStep3Count = computed(() => this.selectedDonorsForPreview().length);
+  protected readonly selectedcontactsForStep3Count = computed(() => this.selectedcontactsForPreview().length);
   protected readonly afterSendCount = computed(() =>
-    Math.max(0, 300 - this.selectedDonorsForStep3Count())
+    Math.max(0, 300 - this.selectedcontactsForStep3Count())
   );
 
   protected prevPage(): void {
@@ -229,11 +229,11 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  protected displayName(d: IDonor): string {
-    return donorDisplayName(d);
+  protected displayName(d: IContact): string {
+    return contactDisplayName(d);
   }
 
-  protected initials(d: IDonor): string {
+  protected initials(d: IContact): string {
     if (d.kind === 'company' && d.enterprise?.name) {
       const parts = d.enterprise.name.trim().split(/\s+/).filter(Boolean);
       const a = parts[0]?.[0] ?? '';
@@ -245,7 +245,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return `${a}${b}`.toUpperCase() || '?';
   }
 
-  protected donorMetaLine(d: IDonor): string {
+  protected contactMetaLine(d: IContact): string {
     if (!d.lastDonation) {
       return `Aucun don enregistré · ${d.totalDonation} € au total`;
     }
@@ -253,7 +253,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return `Dernier don : ${when} · ${d.totalDonation} €`;
   }
 
-  protected monthsSinceLast(d: IDonor): number {
+  protected monthsSinceLast(d: IContact): number {
     if (!d.lastDonation) {
       return 0;
     }
@@ -264,11 +264,11 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return Math.max(0, m);
   }
 
-  private statusOf(d: IDonor): DonorStatus {
-    return this.donorSettings.statusOf(d);
+  private statusOf(d: IContact): ContactStatus {
+    return this.contactSettings.statusOf(d);
   }
 
-  private statusLabel(status: DonorStatus): string {
+  private statusLabel(status: ContactStatus): string {
     switch (status) {
       case 'active':
         return 'Actif';
@@ -283,12 +283,12 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  protected onPreviewDonorChange(v: string): void {
+  protected onPreviewcontactChange(v: string): void {
     if (!v) {
-      this.previewDonorId.set(null);
+      this.previewcontactId.set(null);
       return;
     }
-    this.previewDonorId.set(v);
+    this.previewcontactId.set(v);
     this.updatePreviewBody(v);
   }
 
@@ -298,15 +298,15 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
 
   private syncPreviewIfNeeded(): void {
     if (this.activeStep !== 3) return;
-    const options = this.selectedDonorsForPreview();
+    const options = this.selectedcontactsForPreview();
     const first = options[0];
     if (!first) {
-      this.previewDonorId.set(null);
+      this.previewcontactId.set(null);
       return;
     }
-    const current = this.previewDonorId();
+    const current = this.previewcontactId();
     if (!current || !options.some((d) => d.id === current)) {
-      this.previewDonorId.set(first.id);
+      this.previewcontactId.set(first.id);
       this.updatePreviewBody(first.id);
     }
   }
@@ -343,25 +343,25 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     this.syncPreviewIfNeeded();
   }
 
-  protected toggleDonor(id: string): void {
-    const next = new Set(this.selectedDonorIds());
+  protected togglecontact(id: string): void {
+    const next = new Set(this.selectedcontactIds());
     if (next.has(id)) {
       next.delete(id);
     } else {
       next.add(id);
     }
-    this.selectedDonorIds.set(next);
+    this.selectedcontactIds.set(next);
     this.syncPreviewIfNeeded();
   }
 
   protected selectAllFiltered(): void {
-    const next = new Set(this.filteredDonors().map((d) => d.id));
-    this.selectedDonorIds.set(next);
+    const next = new Set(this.filteredcontacts().map((d) => d.id));
+    this.selectedcontactIds.set(next);
     this.syncPreviewIfNeeded();
   }
 
   protected deselectAll(): void {
-    this.selectedDonorIds.set(new Set());
+    this.selectedcontactIds.set(new Set());
     this.syncPreviewIfNeeded();
   }
 
@@ -449,8 +449,8 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     return 'douce';
   }
 
-  private updatePreviewBody(donorId: string): void {
-    const d = this.donorStore.donors().find((x) => x.id === donorId);
+  private updatePreviewBody(contactId: string): void {
+    const d = this.contactStore.contacts().find((x) => x.id === contactId);
     const container = document.getElementById('preview-body');
     if (!container || !d) {
       return;

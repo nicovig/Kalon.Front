@@ -1,10 +1,10 @@
 <toast-component position="center-third"></toast-component>
-<empty-donors-welcome />
+<empty-contacts-welcome />
 <topbar
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
-  <donor-create-launcher></donor-create-launcher>
+<contact-create-launcher></contact-create-launcher>
 </topbar>
 
 <import-banner />
@@ -12,8 +12,8 @@
 <div class="kpi-grid">
   <dashboard-card-component
     [type]="'violet'"
-    [value]="kpiActiveDonors()"
-    [label]="'Donateurs actifs'"
+    [value]="kpiActiveContacts()"
+    [label]="'Profils actifs'"
     [helper]="'Statut actif dans Kalon'"
     [icon]="'👥'"
   ></dashboard-card-component>
@@ -66,10 +66,10 @@
         </div>
         <div class="q-item">
           <div class="q-lbl">
-            <span>Donateurs</span><span>{{ donorCount() }} / 300</span>
+            <span>Profils</span><span>{{ contactCount() }} / 300</span>
           </div>
           <div class="q-bar">
-            <div class="q-fill fill-pink" [style.width.%]="quotaDonorsPct()"></div>
+            <div class="q-fill fill-pink" [style.width.%]="quotaContactsPct()"></div>
           </div>
         </div>
         <div class="q-item">
@@ -86,26 +86,26 @@
 
     <card
       title="À relancer en priorité"
-      subtitle="Donateurs au statut « à relancer »"
+    subtitle="Profils au statut « à relancer »"
       paddingClass="advanced"
     >
-      @if (priorityRelanceDonors().length === 0) {
-        <p class="relance-empty">Aucun donateur à relancer pour le moment.</p>
+      @if (priorityRelanceContacts().length === 0) {
+      <p class="relance-empty">Aucun profil à relancer pour le moment.</p>
       } @else {
-        @for (d of priorityRelanceDonors(); track d.id) {
+        @for (c of priorityRelanceContacts(); track c.id) {
           <div class="relance-row">
             <div class="r-dot" style="background: var(--yellow)"></div>
             <div>
-              <div class="r-name">{{ donorLabel(d) }}</div>
+              <div class="r-name">{{ contactLabel(c) }}</div>
               <div class="r-since">
-                @if (d.lastDonation) {
-                  Dernier don il y a {{ monthsSinceLastDonation(d) }} mois
+                @if (c.lastDonation) {
+                  Dernier don il y a {{ monthsSinceLastDonation(c) }} mois
                 } @else {
                   Aucun don enregistré
                 }
               </div>
             </div>
-            <div class="r-amt">{{ d.totalDonation }} €</div>
+            <div class="r-amt">{{ c.totalDonation }} €</div>
           </div>
         }
       }

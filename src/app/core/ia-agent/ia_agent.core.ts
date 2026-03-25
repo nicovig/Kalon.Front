@@ -29,7 +29,7 @@ export class IaAgentCore {
     fidelisation: {
       subject: 'Merci pour votre fidélité, {{prenom}} ✨',
       body: `<p>Bonjour {{prenom}},</p>
-<p>Vous faites partie de nos donateurs les plus fidèles, et nous tenions à vous le dire.</p>
+<p>Vous faites partie de nos profils les plus fidèles, et nous tenions à vous le dire.</p>
 <p>Au fil des années, vous avez contribué à hauteur de {{total_dons}} € à notre cause. Cet engagement nous aide chaque jour.</p>
 <p>Si vous le souhaitez, vous pouvez renouveler votre soutien pour cette nouvelle période.</p>
 <p>Merci, du fond du cœur.<br/>L'équipe de {{nom_association}}</p>`

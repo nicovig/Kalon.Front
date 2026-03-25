@@ -107,18 +107,18 @@
     </div>
   </div>
 
-  <div class="donor-list" id="donor-list">
-    @if (filteredDonorsLength === 0) {
-      <p class="donor-list-empty">{{ emptyMessage }}</p>
+  <div class="contact-list" id="contact-list">
+    @if (filteredcontactsLength === 0) {
+      <p class="contact-list-empty">{{ emptyMessage }}</p>
     }
 
     @for (item of pagedItems; track item.id; let i = $index) {
       <div
-        class="donor-item"
-        [class.checked]="selectedDonorIds.has(item.id)"
-        (click)="toggleDonor.emit(item.id)"
+        class="contact-item"
+        [class.checked]="selectedcontactIds.has(item.id)"
+        (click)="toggleContact.emit(item.id)"
       >
-        <kalon-checkbox [checked]="selectedDonorIds.has(item.id)"></kalon-checkbox>
+        <kalon-checkbox [checked]="selectedcontactIds.has(item.id)"></kalon-checkbox>
         <div [class]="'d-av ' + (item.avatarClass || ('da' + ((i % 7) + 1)) )">{{ item.avatarText || '?' }}</div>
         <div class="d-info">
           <div class="d-name">{{ item.title }}</div>
@@ -151,7 +151,7 @@
   }
 
   <div class="lp-footer">
-    <span class="sel-info">{{ selectedCount }} {{ selectedLabel }} sélectionnés sur {{ donorsCount }}</span>
+    <span class="sel-info">{{ selectedCount }} {{ selectedLabel }} sélectionnés sur {{ contactsCount }}</span>
   </div>
 </div>
 

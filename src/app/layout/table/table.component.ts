@@ -3,13 +3,13 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonLabelComponent } from '../button/button-label/button-label.component';
 import { FormTextComponent } from '../forms/text/form-text.component';
-import { DonorKindLabelPipe } from './donor-kind-label.pipe';
-import { DonorStatusLabelPipe } from './donor-status-label.pipe';
+import { ContactKindLabelPipe } from './contact-kind-label.pipe';
+import { ContactStatusLabelPipe } from './contact-status-label.pipe';
 
 export interface TableColumn {
   key: string;
   header: string;
-  type?: 'text' | 'number' | 'date' | 'badge' | 'donorKind';
+  type?: 'text' | 'number' | 'date' | 'badge' | 'contactKind';
   searchable?: boolean;
   align?: 'left' | 'right' | 'center';
 }
@@ -24,8 +24,8 @@ export interface TableColumn {
     FormTextComponent,
     DatePipe,
     DecimalPipe,
-    DonorStatusLabelPipe,
-    DonorKindLabelPipe,
+    ContactStatusLabelPipe,
+    ContactKindLabelPipe,
   ],
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.css'],
@@ -73,7 +73,7 @@ export class TableComponent {
           return false;
         }
         const text =
-          col.type === 'donorKind'
+          col.type === 'contactKind'
             ? value === 'company'
               ? 'entreprise'
               : 'particulier'

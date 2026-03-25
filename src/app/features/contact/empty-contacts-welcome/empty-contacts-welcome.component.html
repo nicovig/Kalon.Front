@@ -1,0 +1,31 @@
+@if (showWelcome()) {
+  <app-popup-shell [maxWidth]="'min(440px, calc(100% - 32px))'" [zIndex]="2100" (dismiss)="onDismissWelcome()">
+    <div popup-header>
+      <div class="edw-head">
+        <div class="app-popup-title">Pas encore de profils ?</div>
+        <div class="edw-emoji" aria-hidden="true">😢</div>
+      </div>
+      <p class="app-popup-sub edw-sub">
+        Il semble que vous n’ayez pas encore de profils. Un peu vide, comme un frigo un dimanche soir.
+        <span class="edw-line">Pas de panique : on vous aide à remplir tout ça 💪</span>
+      </p>
+    </div>
+    <div class="edw-body">
+      <p class="edw-hint">Importez un fichier (Excel / CSV) ou créez un profil à la main, vous choisissez.</p>
+      <div class="edw-actions">
+        <button-label-component type="primary" (click)="goImport()">Importer des données</button-label-component>
+        <button-label-component type="ghost" (click)="openCreate()">Créer un profil</button-label-component>
+      </div>
+    </div>
+  </app-popup-shell>
+}
+
+@if (createOpen()) {
+  <contact-create-popup (closed)="onCreateClosed()" (contactCreated)="onContactCreated($event)" />
+}
+
+@if (donationFollowUpOpen()) {
+  @if (createdContact(); as contact) {
+    <add-donation-popup [contact]="contact" (closed)="onDonationFollowUpClosed()" />
+  }
+}

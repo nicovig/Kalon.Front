@@ -27,13 +27,13 @@ const DONATION_RULES: DRule[] = [
       /\bannee\b/.test(n)
   },
   {
-    field: 'donorEmail',
+    field: 'contactEmail',
     weight: 9,
     test: (n) =>
       /\bemail\b/.test(n) ||
       /\bmail\b/.test(n) ||
       /\bcourriel\b/.test(n) ||
-      /\bdonateur\b.*\bmail\b/.test(n) ||
+      /\bprofil\b.*\bmail\b/.test(n) ||
       /\bcontact\b.*\bmail\b/.test(n)
   }
 ];

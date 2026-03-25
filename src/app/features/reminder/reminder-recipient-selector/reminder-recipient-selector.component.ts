@@ -45,11 +45,11 @@ export type ReminderAdvancedFilters = {
 })
 export class ReminderRecipientSelectorComponent implements OnChanges {
   @Input() pagedItems: RecipientSelectorItem[] = [];
-  @Input() filteredDonorsLength = 0;
-  @Input() donorsCount = 0;
+  @Input() filteredcontactsLength = 0;
+  @Input() contactsCount = 0;
   @Input() selectedCount = 0;
 
-  @Input() selectedDonorIds: Set<string> = new Set();
+  @Input() selectedcontactIds: Set<string> = new Set();
   @Input() quickFilter: ReminderQuickFilter = 'all';
   @Input() searchQuery = '';
   @Input() title = 'Sélectionner les destinataires';
@@ -67,7 +67,7 @@ export class ReminderRecipientSelectorComponent implements OnChanges {
 
   @Output() quickFilterChange = new EventEmitter<ReminderQuickFilter>();
   @Output() searchQueryChange = new EventEmitter<string>();
-  @Output() toggleDonor = new EventEmitter<string>();
+  @Output() toggleContact = new EventEmitter<string>();
 
   @Output() selectAllFiltered = new EventEmitter<void>();
   @Output() deselectAll = new EventEmitter<void>();

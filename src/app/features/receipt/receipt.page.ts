@@ -5,15 +5,15 @@ import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
-import { DonorStoreService } from '../donor/donor.store';
-import { donorDisplayName, DonorStatus, IDonor } from '../../core/models/donor.model';
+import { ContactStoreService } from '../contact/contact.store';
+import { contactDisplayName, ContactStatus, IContact } from '../../core/models/contact.model';
 import {
   ReminderAdvancedFilters,
   RecipientSelectorItem,
   ReminderQuickFilter,
   ReminderRecipientSelectorComponent
 } from '../reminder/reminder-recipient-selector/reminder-recipient-selector.component';
-import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
+import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 
 @Component({
   selector: 'receipt-page',
@@ -32,10 +32,10 @@ import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
   ]
 })
 export class ReceiptPageComponent {
-  private readonly donorStore = inject(DonorStoreService);
-  private readonly donorSettings = inject(DonorSettingsStore);
+  private readonly contactStore = inject(ContactStoreService);
+  private readonly contactSettings = inject(ContactSettingsStore);
 
-  protected readonly donorsCount = computed(() => this.donorStore.donors().length);
+  protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
   protected readonly itemsPerPage = 15;
 
   protected readonly quickFilter = signal<ReminderQuickFilter>('all');
@@ -46,9 +46,9 @@ export class ReceiptPageComponent {
   protected readonly appliedDonationCountMin = signal<number | null>(null);
   protected readonly pageIndex = signal(0);
 
-  protected readonly selectedDonorIds = signal<Set<string>>(new Set());
-  protected readonly selectedCount = computed(() => this.selectedDonorIds().size);
-  protected readonly previewDonorId = signal<string | null>(null);
+  protected readonly selectedcontactIds = signal<Set<string>>(new Set());
+  protected readonly selectedCount = computed(() => this.selectedcontactIds().size);
+  protected readonly previewcontactId = signal<string | null>(null);
 
   protected activeStep: 1 | 2 | 3 = 1;
   protected selectedTemplateId = signal<'standard' | 'impact' | 'legacy'>('standard');
@@ -78,14 +78,14 @@ export class ReceiptPageComponent {
     }
   ];
 
-  protected readonly filteredDonors = computed(() => {
+  protected readonly filteredcontacts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
     const quick = this.quickFilter();
     const monthsMin = this.appliedMonthsMin();
     const totalMin = this.appliedTotalDonationMin();
     const totalMax = this.appliedTotalDonationMax();
     const donationCountMin = this.appliedDonationCountMin();
-    const all = this.donorStore.donors();
+    const all = this.contactStore.contacts();
 
     return all.filter((d) => {
       const status = this.statusOf(d);
@@ -107,20 +107,20 @@ export class ReceiptPageComponent {
       if (typeof donationCountMin === 'number' && !Number.isNaN(donationCountMin) && d.donationCount < donationCountMin) return false;
 
       if (!q) return true;
-      const name = donorDisplayName(d).toLowerCase();
+      const name = contactDisplayName(d).toLowerCase();
       const email = (d.email ?? '').toLowerCase();
       return name.includes(q) || email.includes(q);
     });
   });
 
-  protected readonly filteredDonorsLength = computed(() => this.filteredDonors().length);
-  protected readonly pagedDonors = computed(() => {
+  protected readonly filteredcontactsLength = computed(() => this.filteredcontacts().length);
+  protected readonly pagedcontacts = computed(() => {
     const start = this.pageIndex() * this.itemsPerPage;
-    return this.filteredDonors().slice(start, start + this.itemsPerPage);
+    return this.filteredcontacts().slice(start, start + this.itemsPerPage);
   });
 
   protected readonly pagedRecipientItems = computed<RecipientSelectorItem[]>(() =>
-    this.pagedDonors().map((d) => {
+    this.pagedcontacts().map((d) => {
       const status = this.statusOf(d);
       const badgeText =
         status === 'to_remind' && d.lastDonation
@@ -141,8 +141,8 @@ export class ReceiptPageComponent {
 
       return {
         id: d.id,
-        title: donorDisplayName(d),
-        subtitle: this.donorMetaLine(d),
+        title: contactDisplayName(d),
+        subtitle: this.contactMetaLine(d),
         avatarText: this.initials(d),
         badgeText,
         badgeClass
@@ -151,20 +151,20 @@ export class ReceiptPageComponent {
   );
 
   protected readonly totalPages = computed(() => {
-    const len = this.filteredDonors().length;
+    const len = this.filteredcontacts().length;
     return Math.max(1, Math.ceil(len / this.itemsPerPage));
   });
 
-  protected readonly selectedDonorsForPreview = computed(() => {
-    const selected = this.selectedDonorIds();
-    return this.filteredDonors().filter((d) => selected.has(d.id));
+  protected readonly selectedcontactsForPreview = computed(() => {
+    const selected = this.selectedcontactIds();
+    return this.filteredcontacts().filter((d) => selected.has(d.id));
   });
 
-  protected readonly previewDonorOptions = computed<FormSelectOption[]>(() =>
-    this.selectedDonorsForPreview().map((d) => ({ value: d.id, label: donorDisplayName(d) }))
+  protected readonly previewcontactOptions = computed<FormSelectOption[]>(() =>
+    this.selectedcontactsForPreview().map((d) => ({ value: d.id, label: contactDisplayName(d) }))
   );
 
-  protected readonly selectedDonorsForStep3Count = computed(() => this.selectedDonorsForPreview().length);
+  protected readonly selectedcontactsForStep3Count = computed(() => this.selectedcontactsForPreview().length);
 
   protected goToStep(step: 1 | 2 | 3): void {
     this.activeStep = step;
@@ -187,21 +187,21 @@ export class ReceiptPageComponent {
     this.syncPreviewIfNeeded();
   }
 
-  protected toggleDonor(id: string): void {
-    const next = new Set(this.selectedDonorIds());
+  protected togglecontact(id: string): void {
+    const next = new Set(this.selectedcontactIds());
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    this.selectedDonorIds.set(next);
+    this.selectedcontactIds.set(next);
     this.syncPreviewIfNeeded();
   }
 
   protected selectAllFiltered(): void {
-    this.selectedDonorIds.set(new Set(this.filteredDonors().map((d) => d.id)));
+    this.selectedcontactIds.set(new Set(this.filteredcontacts().map((d) => d.id)));
     this.syncPreviewIfNeeded();
   }
 
   protected deselectAll(): void {
-    this.selectedDonorIds.set(new Set());
+    this.selectedcontactIds.set(new Set());
     this.syncPreviewIfNeeded();
   }
 
@@ -227,21 +227,21 @@ export class ReceiptPageComponent {
     this.syncPreviewIfNeeded();
   }
 
-  protected onPreviewDonorChange(v: string): void {
-    this.previewDonorId.set(v || null);
+  protected onPreviewcontactChange(v: string): void {
+    this.previewcontactId.set(v || null);
   }
 
-  protected donorPreviewName(): string {
-    const id = this.previewDonorId();
+  protected contactPreviewName(): string {
+    const id = this.previewcontactId();
     if (!id) return '—';
-    const d = this.donorStore.donors().find((x) => x.id === id);
-    return d ? donorDisplayName(d) : '—';
+    const d = this.contactStore.contacts().find((x) => x.id === id);
+    return d ? contactDisplayName(d) : '—';
   }
 
-  protected donorPreviewAmount(): string {
-    const id = this.previewDonorId();
+  protected contactPreviewAmount(): string {
+    const id = this.previewcontactId();
     if (!id) return '—';
-    const d = this.donorStore.donors().find((x) => x.id === id);
+    const d = this.contactStore.contacts().find((x) => x.id === id);
     return d ? `${d.totalDonation.toLocaleString('fr-FR')} €` : '—';
   }
 
@@ -250,23 +250,23 @@ export class ReceiptPageComponent {
   }
 
   private syncPreviewIfNeeded(): void {
-    const options = this.selectedDonorsForPreview();
+    const options = this.selectedcontactsForPreview();
     const first = options[0];
     if (!first) {
-      this.previewDonorId.set(null);
+      this.previewcontactId.set(null);
       return;
     }
-    const current = this.previewDonorId();
+    const current = this.previewcontactId();
     if (!current || !options.some((d) => d.id === current)) {
-      this.previewDonorId.set(first.id);
+      this.previewcontactId.set(first.id);
     }
   }
 
-  private statusOf(d: IDonor): DonorStatus {
-    return this.donorSettings.statusOf(d);
+  private statusOf(d: IContact): ContactStatus {
+    return this.contactSettings.statusOf(d);
   }
 
-  private donorMetaLine(d: IDonor): string {
+  private contactMetaLine(d: IContact): string {
     if (!d.lastDonation) {
       return `Aucun don enregistré · ${d.totalDonation} € au total`;
     }
@@ -274,7 +274,7 @@ export class ReceiptPageComponent {
     return `Dernier don : ${when} · ${d.totalDonation} €`;
   }
 
-  private monthsSinceLast(d: IDonor): number {
+  private monthsSinceLast(d: IContact): number {
     if (!d.lastDonation) return 0;
     const now = new Date();
     const from = d.lastDonation;
@@ -283,7 +283,7 @@ export class ReceiptPageComponent {
     return Math.max(0, m);
   }
 
-  private initials(d: IDonor): string {
+  private initials(d: IContact): string {
     if (d.kind === 'company' && d.enterprise?.name) {
       const parts = d.enterprise.name.trim().split(/\s+/).filter(Boolean);
       const a = parts[0]?.[0] ?? '';

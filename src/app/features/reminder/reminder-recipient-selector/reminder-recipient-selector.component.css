@@ -267,26 +267,26 @@
   color: var(--ink-70);
 }
 
-.donor-list {
+.contact-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
   padding: 6px 0;
 }
-.donor-list::-webkit-scrollbar {
+.contact-list::-webkit-scrollbar {
   width: 0px;
   height: 0px;
 }
-.donor-list::-webkit-scrollbar-track {
+.contact-list::-webkit-scrollbar-track {
   background: transparent;
 }
-.donor-list::-webkit-scrollbar-thumb {
+.contact-list::-webkit-scrollbar-thumb {
   background: var(--ink-30);
   border-radius: 2px;
 }
 
-.donor-list-empty {
+.contact-list-empty {
   margin: 0;
   padding: 16px 18px;
   font-size: 13px;
@@ -294,7 +294,7 @@
   color: var(--ink-70);
 }
 
-.donor-item {
+.contact-item {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -304,13 +304,13 @@
   border-bottom: 1px solid var(--ink-10);
   position: relative;
 }
-.donor-item:hover {
+.contact-item:hover {
   background: var(--cream);
 }
-.donor-item.checked {
+.contact-item.checked {
   background: var(--violet-lt);
 }
-.donor-item.checked::before {
+.contact-item.checked::before {
   content: '';
   position: absolute;
   left: 0;

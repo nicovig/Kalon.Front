@@ -1,11 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { IDonation } from '../../core/models/donation.model';
-import { donorDisplayName, IDonor } from '../../core/models/donor.model';
-import { DonorStoreService } from '../donor/donor.store';
+import { contactDisplayName, IContact } from '../../core/models/contact.model';
+import { ContactStoreService } from '../contact/contact.store';
 
 @Injectable({ providedIn: 'root' })
 export class DonationStoreService {
-  private readonly donorStore = inject(DonorStoreService);
+  private readonly contactStore = inject(ContactStoreService);
   private readonly donationsSignal = signal<IDonation[]>([]);
 
   readonly donationsRead = this.donationsSignal.asReadonly();
@@ -14,17 +14,17 @@ export class DonationStoreService {
     return this.donationsSignal();
   }
 
-  addDonationForDonor(donor: IDonor, amount: number, date: Date): IDonation {
-    const display = donorDisplayName(donor);
+  addDonationForContact(contact: IContact, amount: number, date: Date): IDonation {
+    const display = contactDisplayName(contact);
     const donation: IDonation = {
       id: this.newId(),
-      donorId: donor.id,
+      contactId: contact.id,
       amount,
       date,
-      donorDisplayName: display
+      contactDisplayName: display
     };
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
-    this.donorStore.recordDonation(donor.id, amount, date);
+    this.contactStore.recordDonation(contact.id, amount, date);
     return donation;
   }
 

@@ -192,7 +192,7 @@
   color: var(--ink);
 }
 
-.preview-donor {
+.preview-contact {
   min-width: 240px;
 }
 
@@ -204,7 +204,7 @@
   min-height: 36px;
 }
 
-.preview-donor-empty {
+.preview-contact-empty {
   font-size: 13px;
   color: var(--ink-70);
 }

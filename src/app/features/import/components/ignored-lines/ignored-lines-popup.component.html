@@ -33,7 +33,7 @@
                   [type]="'text'"
                   [icon]="null"
                   [width]="'100%'"
-                  [placeholder]="'Email du donateur'"
+                  [placeholder]="'Email du profil'"
                   [value]="line.email ?? ''"
                   (valueChange)="onEmailInput(line, $event)"
                 />
@@ -46,7 +46,7 @@
                 <input
                   class="il-input"
                   type="text"
-                  placeholder="Email du donateur"
+                  placeholder="Email du profil"
                   [value]="line.email ?? ''"
                   (input)="onEmailInput(line, ($any($event.target)).value)"
                 />
@@ -71,7 +71,7 @@
             @if (wantsNameInput(line)) {
               <div class="il-name-grid">
                 <label class="il-field">
-                  <div class="il-field-label">{{ line.donorKind === 'company' ? 'Prénom contact' : 'Prénom' }}</div>
+                  <div class="il-field-label">{{ line.contactKind === 'company' ? 'Prénom contact' : 'Prénom' }}</div>
                   <form-text-component
                     class="il-input"
                     [type]="'text'"
@@ -83,7 +83,7 @@
                   />
                 </label>
                 <label class="il-field">
-                  <div class="il-field-label">{{ line.donorKind === 'company' ? 'Nom contact' : 'Nom' }}</div>
+                  <div class="il-field-label">{{ line.contactKind === 'company' ? 'Nom contact' : 'Nom' }}</div>
                   <form-text-component
                     class="il-input"
                     [type]="'text'"

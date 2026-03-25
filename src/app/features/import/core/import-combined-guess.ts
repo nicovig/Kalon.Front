@@ -4,9 +4,9 @@ import { CombinedImportFieldKey } from './model/import-combined-field.model';
 
 export function guessCombinedMappingForHeaders(headers: string[]): CombinedImportFieldKey[] {
   const raw = headers.map((h): CombinedImportFieldKey => {
-    const donor = guessFieldForHeader(h);
-    if (donor !== 'skip') {
-      return donor;
+    const contact = guessFieldForHeader(h);
+    if (contact !== 'skip') {
+      return contact;
     }
     const d = guessDonationFieldForHeader(h);
     if (d === 'donationAmount' || d === 'donationDate') {

@@ -35,7 +35,7 @@
                   'b-new': getCellValue(row, col) === 'new'
                 }"
               >
-                {{ getCellValue(row, col) | donorStatusLabel }}
+                {{ getCellValue(row, col) | contactStatusLabel }}
               </span>
             }
             @case ('date') {
@@ -52,7 +52,7 @@
                 {{ getCellValue(row, col) | number:'1.0-0':'fr-FR' }}
               </span>
             }
-            @case ('donorKind') {
+            @case ('contactKind') {
               <span
                 class="badge"
                 [ngClass]="{
@@ -60,7 +60,7 @@
                   'b-kind-individual': getCellValue(row, col) === 'individual'
                 }"
               >
-                {{ getCellValue(row, col) | donorKindLabel }}
+                {{ getCellValue(row, col) | contactKindLabel }}
               </span>
             }
             @default {

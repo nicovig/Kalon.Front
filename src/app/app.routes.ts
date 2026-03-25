@@ -23,9 +23,9 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES)
       },
       {
-        path: 'donateurs',
+        path: 'profils',
         loadChildren: () =>
-          import('./features/donor/donor.routes').then((m) => m.DONOR_ROUTES)
+          import('./features/contact/contact.routes').then((m) => m.CONTACT_ROUTES)
       },
       {
         path: 'relances',

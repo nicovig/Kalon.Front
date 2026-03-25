@@ -24,13 +24,13 @@ export function collectDonationImportBag(
 export function mapRowToDonationImport(
   row: string[],
   bindings: DonationImportFieldKey[]
-): { amount: number; date: Date; donorEmail: string } | null {
+): { amount: number; date: Date; contactEmail: string } | null {
   const bag = collectDonationImportBag(row, bindings);
-  const email = (bag.donorEmail ?? '').trim();
+  const email = (bag.contactEmail ?? '').trim();
   const amount = bag.donationAmount ? parseAmountFromCell(bag.donationAmount) : null;
   const date = bag.donationDate ? parseDateFromCell(bag.donationDate) : null;
   if (!email || amount === null || amount <= 0 || !date) {
     return null;
   }
-  return { amount, date, donorEmail: email };
+  return { amount, date, contactEmail: email };
 }

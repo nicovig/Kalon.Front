@@ -1,6 +1,6 @@
 <topbar
   [title]="'Statistiques des financements'"
-  [subtitle]="'Vue 360 des dons par type et statut de donateurs, sur la période de votre choix'"
+  [subtitle]="'Vue 360 des dons par type et statut de profils, sur la période de votre choix'"
 ></topbar>
 
 <div class="st-shell">
@@ -22,11 +22,11 @@
     </card>
 
     <card
-      title="Donateurs uniques"
-      [subtitle]="'Nombre de contributeurs distincts'"
+      title="Profils uniques"
+      [subtitle]="'Nombre de profils distincts'"
       paddingClass="advanced"
     >
-      <div class="st-kpi-val">{{ uniqueDonorsCount() }}</div>
+      <div class="st-kpi-val">{{ uniquecontactsCount() }}</div>
     </card>
 
     <card title="Don moyen" [subtitle]="'Montant moyen par don'" paddingClass="advanced">
@@ -39,14 +39,14 @@
 
   <card
     title="Filtrer l’analyse"
-    subtitle="Affinez par période, type/statut de donateur et montant pour cibler précisément vos financements"
+    subtitle="Affinez par période, type/statut de profil et montant pour cibler précisément vos financements"
     paddingClass="advanced"
   >
     <div class="st-filters">
       <div class="st-filter st-filter--search">
         <span class="st-label">Recherche</span>
         <form-text-component
-          [placeholder]="'Nom ou email du donateur'"
+          [placeholder]="'Nom ou email du profil'"
           [icon]="'🔍'"
           [value]="searchTerm()"
           [width]="'100%'"
@@ -81,22 +81,22 @@
       </div>
 
       <div class="st-filter">
-        <span class="st-label">Type de donateur</span>
+        <span class="st-label">Type de profil</span>
         <form-select-component
           [label]="null"
-          [options]="donorKindOptions"
-          [ngModel]="donorKindFilter()"
-          (ngModelChange)="donorKindFilter.set($event)"
+          [options]="contactKindOptions"
+          [ngModel]="contactKindFilter()"
+          (ngModelChange)="contactKindFilter.set($event)"
         ></form-select-component>
       </div>
 
       <div class="st-filter">
-        <span class="st-label">Statut de donateur</span>
+        <span class="st-label">Statut de profil</span>
         <form-select-component
           [label]="null"
-          [options]="donorStatusOptions"
-          [ngModel]="donorStatusFilter()"
-          (ngModelChange)="donorStatusFilter.set($event)"
+          [options]="contactStatusOptions"
+          [ngModel]="contactStatusFilter()"
+          (ngModelChange)="contactStatusFilter.set($event)"
         ></form-select-component>
       </div>
 

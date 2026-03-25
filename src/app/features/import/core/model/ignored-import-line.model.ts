@@ -1,13 +1,13 @@
 export type IgnoredImportLine = {
   rowNumber: number;
   reason: string;
-  donorKind?: 'individual' | 'company';
+  contactKind?: 'individual' | 'company';
   email?: string;
   enterpriseName?: string;
   siret?: string;
   firstname?: string;
   lastname?: string;
-  donorEmail?: string;
+  contactEmail?: string;
   donationAmount?: string;
   donationDate?: string;
 };

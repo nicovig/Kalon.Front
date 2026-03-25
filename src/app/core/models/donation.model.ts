@@ -1,7 +1,7 @@
 export interface IDonation {
   id: string;
-  donorId: string;
+  contactId: string;
   amount: number;
   date: Date;
-  donorDisplayName: string;
+  contactDisplayName: string;
 }

@@ -16,7 +16,7 @@ export type CombinedPreviewRow = ImportPreviewRow & {
   donationAmount: string;
 };
 
-function donorBindingsFromCombined(bindings: CombinedImportFieldKey[]): ImportFieldKey[] {
+function contactBindingsFromCombined(bindings: CombinedImportFieldKey[]): ImportFieldKey[] {
   return bindings.map((b) =>
     b === 'donationDate' || b === 'donationAmount' ? 'skip' : b
   ) as ImportFieldKey[];
@@ -80,7 +80,7 @@ export function mapDataRowToCombinedPreview(
   row: string[],
   bindings: CombinedImportFieldKey[]
 ): CombinedPreviewRow {
-  const base = mapDataRowToPreview(row, donorBindingsFromCombined(bindings));
+  const base = mapDataRowToPreview(row, contactBindingsFromCombined(bindings));
   let donationDate = '';
   let donationAmount = '';
   const len = Math.min(row.length, bindings.length);

@@ -38,7 +38,7 @@ import {
 import { ImportFieldKey } from './core/model/import-field.model';
 import { parseAmountFromCell, parseDateFromCell } from './core/import-parse-cells';
 import { parseImportFile } from './core/import-file-parse';
-import { mapRowToNewDonorInput } from './core/import-row-to-donor';
+import { mapRowToNewContactInput } from './core/import-row-to-contact';
 import { mapRowToDonationImport, collectDonationImportBag } from './core/import-row-donation';
 import { mapCombinedRowToActions } from './core/import-row-combined';
 import { ImportStepTrailComponent } from './components/import-step-trail/import-step-trail.component';
@@ -48,9 +48,9 @@ import {
 import type { IgnoredImportLine } from './core/model/ignored-import-line.model';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
-import { DonorStoreService } from '../donor/donor.store';
+import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
-import { donorDisplayName } from '../../core/models/donor.model';
+import { contactDisplayName } from '../../core/models/contact.model';
 
 @Component({
   selector: 'import-page',
@@ -76,7 +76,7 @@ import { donorDisplayName } from '../../core/models/donor.model';
 export class ImportPageComponent implements OnInit {
   protected readonly importFlow = inject(ImportFlowService);
   private readonly toast = inject(ToastService);
-  private readonly donorStore = inject(DonorStoreService);
+  private readonly contactStore = inject(ContactStoreService);
   private readonly donationStore = inject(DonationStoreService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -88,7 +88,7 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly fieldOptionsForSelect = computed((): FormSelectOption[] => {
     switch (this.importMode()) {
-      case 'donors':
+      case 'contacts':
         return IMPORT_FIELD_OPTIONS.map((o) => ({ value: o.key, label: o.label }));
       case 'donations':
         return DONATION_IMPORT_FIELD_OPTIONS.map((o) => ({ value: o.key, label: o.label }));
@@ -101,10 +101,10 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly topbarSubtitle = computed(() => {
     switch (this.importMode()) {
-      case 'donors':
-        return 'Déposez votre fichier pour relier chaque colonne aux fiches donateurs';
+      case 'contacts':
+        return 'Déposez votre fichier pour relier chaque colonne aux fiches profils';
       case 'donations':
-        return 'Importez montants et dates ; chaque ligne est reliée à un donateur (lien fait avec l\'email)';
+        return 'Importez montants et dates ; chaque ligne est reliée à un profil (lien fait avec l\'email)';
       case 'combined':
         return 'Un fichier où chaque ligne peut contenir le contact et le don sur la même ligne';
       default:
@@ -114,12 +114,12 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly topbarTitle = computed(() => {
     switch (this.importMode()) {
-      case 'donors':
-        return 'Import de donateurs';
+      case 'contacts':
+        return 'Import de profils';
       case 'donations':
         return 'Import de dons';
       case 'combined':
-        return 'Import de donateurs et dons';
+        return 'Import de profils et dons';
       default:
         return 'Import de données';
     }
@@ -140,7 +140,7 @@ export class ImportPageComponent implements OnInit {
   protected readonly donationsImportPromptOpen = signal(false);
 
   protected readonly previewRows = computed(() => {
-    if (this.importMode() !== 'donors') {
+    if (this.importMode() !== 'contacts') {
       return [];
     }
     const rows = this.sampleRows();
@@ -165,14 +165,14 @@ export class ImportPageComponent implements OnInit {
     const b = this.bindings() as DonationImportFieldKey[];
     return rows.map((r) => {
       const bag = collectDonationImportBag(r, b);
-      const email = (bag.donorEmail ?? '').trim();
-      const donor = email ? this.donorStore.findDonorByLink(email) : undefined;
-      const donorName = donor ? donorDisplayName(donor) : '—';
+      const email = (bag.contactEmail ?? '').trim();
+      const contact = email ? this.contactStore.findContactByLink(email) : undefined;
+      const contactName = contact ? contactDisplayName(contact) : '—';
       return {
         date: bag.donationDate ?? '—',
         amount: bag.donationAmount ?? '—',
-        donorEmail: email || '—',
-        donorName
+        contactEmail: email || '—',
+        contactName
       };
     });
   });
@@ -227,7 +227,7 @@ export class ImportPageComponent implements OnInit {
     }
     const b = this.bindings();
     return (
-      b.includes('donationDate') && b.includes('donationAmount') && b.includes('donorEmail')
+      b.includes('donationDate') && b.includes('donationAmount') && b.includes('contactEmail')
     );
   });
 
@@ -266,19 +266,19 @@ export class ImportPageComponent implements OnInit {
       return 'Sélectionnez au moins un champ "Dans Kalon" pour continuer';
     }
     if (!this.donationsMappingComplete()) {
-      return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du donateur)';
+      return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
     }
     return '';
   });
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap.get('mode');
-    if (qp === 'donors' || qp === 'donations' || qp === 'combined') {
+    if (qp === 'contacts' || qp === 'donations' || qp === 'combined') {
       this.importMode.set(qp);
     }
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => {
       const m = p.get('mode');
-      if (m === 'donors' || m === 'donations' || m === 'combined') {
+      if (m === 'contacts' || m === 'donations' || m === 'combined') {
         if (this.importMode() !== m) {
           this.importMode.set(m);
           this.clearAndRestart();
@@ -325,7 +325,7 @@ export class ImportPageComponent implements OnInit {
   protected reapplyGuess(): void {
     const headers = this.headers();
     const mode = this.importMode();
-    if (mode === 'donors') {
+    if (mode === 'contacts') {
       this.bindings.set(guessMappingForHeaders(headers));
     } else if (mode === 'donations') {
       this.bindings.set(guessDonationMappingForHeaders(headers) as unknown as string[]);
@@ -347,8 +347,8 @@ export class ImportPageComponent implements OnInit {
     let stillIgnored: IgnoredImportLine[] = [];
     let importedCount = 0;
 
-    if (mode === 'donors') {
-      const res = this.importIgnoredDonors(editedLines, rows, b as ImportFieldKey[]);
+    if (mode === 'contacts') {
+      const res = this.importIgnoredContacts(editedLines, rows, b as ImportFieldKey[]);
       stillIgnored = res.stillIgnored;
       importedCount = res.importedCount;
     } else if (mode === 'donations') {
@@ -401,7 +401,7 @@ export class ImportPageComponent implements OnInit {
     this.ignoredAfterSuccess = next;
   }
 
-  private importIgnoredDonors(
+  private importIgnoredContacts(
     editedLines: IgnoredImportLine[],
     rows: string[][],
     bindings: ImportFieldKey[]
@@ -418,7 +418,7 @@ export class ImportPageComponent implements OnInit {
 
       const bag = collectImportFieldBag(row, bindings);
 
-      const donorKind = line.donorKind ?? (((bag.enterpriseName ?? '').trim() || (bag.siret ?? '').trim()) ? 'company' : 'individual');
+      const contactKind = line.contactKind ?? (((bag.enterpriseName ?? '').trim() || (bag.siret ?? '').trim()) ? 'company' : 'individual');
 
       const overrides: Partial<Record<ImportFieldKey, string>> = {};
       const overrideEmail = line.email?.trim();
@@ -426,7 +426,7 @@ export class ImportPageComponent implements OnInit {
         overrides.email = overrideEmail;
       }
 
-      if (donorKind === 'company') {
+      if (contactKind === 'company') {
         const overrideEnterpriseName = line.enterpriseName?.trim();
         const overrideSiret = line.siret?.trim();
         if (overrideEnterpriseName) {
@@ -455,7 +455,7 @@ export class ImportPageComponent implements OnInit {
         }
       }
 
-      const input = mapRowToNewDonorInput(row, bindings, overrides);
+      const input = mapRowToNewContactInput(row, bindings, overrides);
       if (!input) {
         const email = (overrides.email ?? (bag.email ?? '')).trim();
 
@@ -489,7 +489,7 @@ export class ImportPageComponent implements OnInit {
 
         stillIgnored.push({
           ...line,
-          donorKind: intendedKind,
+          contactKind: intendedKind,
           email: email || undefined,
           enterpriseName: intendedKind === 'company' ? enterpriseName || undefined : undefined,
           siret: intendedKind === 'company' ? siret || undefined : undefined,
@@ -500,11 +500,11 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const existing = this.donorStore.findDonorByEmail(input.email);
+      const existing = this.contactStore.findContactByEmail(input.email);
       if (existing) {
-        this.donorStore.updateDonor(existing.id, input) ?? this.donorStore.createDonor(input);
+        this.contactStore.updateContact(existing.id, input) ?? this.contactStore.createContact(input);
       } else {
-        this.donorStore.createDonor(input);
+        this.contactStore.createContact(input);
       }
 
       importedCount++;
@@ -535,7 +535,7 @@ export class ImportPageComponent implements OnInit {
       const overrideDate = line.donationDate;
 
       if (overrideEmail) {
-        bag.donorEmail = overrideEmail;
+        bag.contactEmail = overrideEmail;
       }
       if (overrideAmount !== undefined) {
         bag.donationAmount = overrideAmount;
@@ -544,18 +544,18 @@ export class ImportPageComponent implements OnInit {
         bag.donationDate = overrideDate;
       }
 
-      const donorEmail = (bag.donorEmail ?? '').trim();
+      const contactEmail = (bag.contactEmail ?? '').trim();
       const donationAmountStr = (bag.donationAmount ?? '').trim();
       const donationDateStr = (bag.donationDate ?? '').trim();
 
       const amount = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
 
-      if (!donorEmail) {
+      if (!contactEmail) {
         stillIgnored.push({
           ...line,
-          email: donorEmail || undefined,
-          reason: 'Email du donateur manquant'
+          email: contactEmail || undefined,
+          reason: 'Email du profil manquant'
         });
         continue;
       }
@@ -568,7 +568,7 @@ export class ImportPageComponent implements OnInit {
 
         stillIgnored.push({
           ...line,
-          email: donorEmail,
+          email: contactEmail,
           donationAmount: donationAmountStr || undefined,
           donationDate: donationDateStr || undefined,
           reason
@@ -576,17 +576,17 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const donor = this.donorStore.findDonorByLink(donorEmail);
-      if (!donor) {
+      const contact = this.contactStore.findContactByLink(contactEmail);
+      if (!contact) {
         stillIgnored.push({
           ...line,
-          email: donorEmail,
-          reason: 'Email donateur introuvable dans Kalon'
+          email: contactEmail,
+          reason: 'Email du profil introuvable dans Kalon'
         });
         continue;
       }
 
-      this.donationStore.addDonationForDonor(donor, amount, date);
+      this.donationStore.addDonationForContact(contact, amount, date);
       importedCount++;
     }
 
@@ -601,7 +601,7 @@ export class ImportPageComponent implements OnInit {
     const stillIgnored: IgnoredImportLine[] = [];
     let importedCount = 0;
 
-    const donorBindings = bindings.map((b) =>
+    const contactBindings = bindings.map((b) =>
       b === 'donationDate' || b === 'donationAmount' ? ('skip' as ImportFieldKey) : (b as ImportFieldKey)
     );
 
@@ -612,9 +612,9 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const bag = collectImportFieldBag(row, donorBindings);
-      const donorKind =
-        line.donorKind ??
+      const bag = collectImportFieldBag(row, contactBindings);
+      const contactKind =
+        line.contactKind ??
         ((((bag.enterpriseName ?? '').trim() || (bag.siret ?? '').trim()) ? 'company' : 'individual') as
           | 'company'
           | 'individual');
@@ -626,7 +626,7 @@ export class ImportPageComponent implements OnInit {
         overrides.email = overrideEmail;
       }
 
-      if (donorKind === 'company') {
+      if (contactKind === 'company') {
         const overrideEnterpriseName = line.enterpriseName?.trim();
         const overrideSiret = line.siret?.trim();
         if (overrideEnterpriseName) {
@@ -655,8 +655,8 @@ export class ImportPageComponent implements OnInit {
         }
       }
 
-      const donorInput = mapRowToNewDonorInput(row, donorBindings, overrides);
-      if (!donorInput) {
+      const contactInput = mapRowToNewContactInput(row, contactBindings, overrides);
+      if (!contactInput) {
         const email = (overrides.email ?? (bag.email ?? '')).trim();
         const enterpriseName = (overrides.enterpriseName ?? (bag.enterpriseName ?? '')).trim();
         const siret = (overrides.siret ?? (bag.siret ?? '')).trim();
@@ -687,7 +687,7 @@ export class ImportPageComponent implements OnInit {
 
         stillIgnored.push({
           ...line,
-          donorKind: intendedKind,
+          contactKind: intendedKind,
           email: email || undefined,
           enterpriseName: intendedKind === 'company' ? enterpriseName || undefined : undefined,
           siret: intendedKind === 'company' ? siret || undefined : undefined,
@@ -698,10 +698,10 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const existing = this.donorStore.findDonorByEmail(donorInput.email);
-      const donor = existing
-        ? this.donorStore.updateDonor(existing.id, donorInput) ?? this.donorStore.createDonor(donorInput)
-        : this.donorStore.createDonor(donorInput);
+      const existing = this.contactStore.findContactByEmail(contactInput.email);
+      const contact = existing
+        ? this.contactStore.updateContact(existing.id, contactInput) ?? this.contactStore.createContact(contactInput)
+        : this.contactStore.createContact(contactInput);
 
       let donationDateStr = '';
       let donationAmountStr = '';
@@ -726,7 +726,7 @@ export class ImportPageComponent implements OnInit {
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
 
       if (amount !== null && amount > 0 && date) {
-        this.donationStore.addDonationForDonor(donor, amount, date);
+        this.donationStore.addDonationForContact(contact, amount, date);
       }
 
       importedCount++;
@@ -753,8 +753,8 @@ export class ImportPageComponent implements OnInit {
     const mode = this.importMode();
     const rows = this.allRows();
     const b = this.bindings();
-    if (mode === 'donors') {
-      this.importDonors(rows, b as ImportFieldKey[]);
+    if (mode === 'contacts') {
+      this.importContacts(rows, b as ImportFieldKey[]);
       return;
     }
     if (mode === 'donations') {
@@ -764,7 +764,7 @@ export class ImportPageComponent implements OnInit {
     this.importCombined(rows, b as CombinedImportFieldKey[]);
   }
 
-  private importDonors(rows: string[][], bindings: ImportFieldKey[]): void {
+  private importContacts(rows: string[][], bindings: ImportFieldKey[]): void {
     let created = 0;
     let updated = 0;
     let skipped = 0;
@@ -800,12 +800,12 @@ export class ImportPageComponent implements OnInit {
             ? 'Nom ou prénom manquant'
             : 'Ligne invalide';
 
-      const input = mapRowToNewDonorInput(row, bindings);
+      const input = mapRowToNewContactInput(row, bindings);
       if (!input) {
         skipped++;
         ignored.push({
           rowNumber: index + 1,
-          donorKind: intendedKind,
+          contactKind: intendedKind,
           reason,
           email: email || undefined,
           enterpriseName: intendedKind === 'company' ? (enterpriseName || undefined) : undefined,
@@ -815,31 +815,31 @@ export class ImportPageComponent implements OnInit {
         });
         continue;
       }
-      const existing = this.donorStore.findDonorByEmail(input.email);
+      const existing = this.contactStore.findContactByEmail(input.email);
       if (existing) {
-        const updatedDonor = this.donorStore.updateDonor(existing.id, input);
-        if (updatedDonor) {
+        const updatedContact = this.contactStore.updateContact(existing.id, input);
+        if (updatedContact) {
           updated++;
         } else {
-          this.donorStore.createDonor(input);
+          this.contactStore.createContact(input);
           created++;
         }
       } else {
-        this.donorStore.createDonor(input);
+        this.contactStore.createContact(input);
         created++;
       }
     }
     if (created === 0 && updated === 0) {
       this.toast.show(
-        'Aucun donateur importé : chaque ligne doit avoir au moins un email et un nom ou un prénom.',
+        'Aucun profil importé : chaque ligne doit avoir au moins un email et un nom ou un prénom.',
         'alert',
         6500
       );
       this.openIgnoredLinesPopup(ignored, null);
       return;
     }
-    const addedPart = created > 0 ? `${created} donateur(s) ajouté(s)` : '';
-    const updatedPart = updated > 0 ? `${updated} donateur(s) mis à jour` : '';
+    const addedPart = created > 0 ? `${created} profil(s) ajouté(s)` : '';
+    const updatedPart = updated > 0 ? `${updated} profil(s) mis à jour` : '';
     const counts = [addedPart, updatedPart].filter(Boolean).join(' — ');
     this.toast.show(
       `${counts}${skipped > 0 ? ` — ${skipped} ligne(s) ignorée(s)` : ''}.`,
@@ -856,18 +856,18 @@ export class ImportPageComponent implements OnInit {
     let created = 0;
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
-    let missingDonor = 0;
+    let missingContact = 0;
     for (const [index, row] of rows.entries()) {
       const bag = collectDonationImportBag(row, bindings);
-      const donorEmail = (bag.donorEmail ?? '').trim();
+      const contactEmail = (bag.contactEmail ?? '').trim();
       const donationAmountRaw = (bag.donationAmount ?? '').trim();
       const donationDateRaw = (bag.donationDate ?? '').trim();
       const amount = donationAmountRaw ? parseAmountFromCell(donationAmountRaw) : null;
       const date = donationDateRaw ? parseDateFromCell(donationDateRaw) : null;
 
       const reason =
-        !donorEmail
-          ? 'Email du donateur manquant'
+        !contactEmail
+          ? 'Email du profil manquant'
           : amount === null || amount <= 0
             ? 'Montant invalide (doit être > 0)'
             : !date
@@ -880,30 +880,30 @@ export class ImportPageComponent implements OnInit {
         ignored.push({
           rowNumber: index + 1,
           reason,
-          email: donorEmail || undefined,
+          email: contactEmail || undefined,
           donationAmount: donationAmountRaw || undefined,
           donationDate: donationDateRaw || undefined
         });
         continue;
       }
-      const donor = this.donorStore.findDonorByLink(parsed.donorEmail);
-      if (!donor) {
-        missingDonor++;
+      const contact = this.contactStore.findContactByLink(parsed.contactEmail);
+      if (!contact) {
+        missingContact++;
         skipped++;
         ignored.push({
           rowNumber: index + 1,
-          reason: 'Email donateur introuvable dans Kalon',
-          email: parsed.donorEmail
+          reason: 'Email du profil introuvable dans Kalon',
+          email: parsed.contactEmail
         });
         continue;
       }
-      this.donationStore.addDonationForDonor(donor, parsed.amount, parsed.date);
+      this.donationStore.addDonationForContact(contact, parsed.amount, parsed.date);
       created++;
     }
     if (created === 0) {
       this.toast.show(
-        `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un donateur existant${
-          missingDonor > 0 ? ` (${missingDonor} email(s) introuvable(s))` : ''
+        `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
+          missingContact > 0 ? ` (${missingContact} email(s) introuvable(s))` : ''
         }.`,
         'alert',
         7500
@@ -916,22 +916,22 @@ export class ImportPageComponent implements OnInit {
       'success',
       5000
     );
-    this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/donateurs']));
+    this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/profils']));
   }
 
   private importCombined(rows: string[][], bindings: CombinedImportFieldKey[]): void {
-    let donorsCreated = 0;
-    let donorsUpdated = 0;
+    let contactsCreated = 0;
+    let contactsUpdated = 0;
     let donationsCreated = 0;
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
 
-    const donorBindings = bindings.map((b) =>
+    const contactBindings = bindings.map((b) =>
       b === 'donationDate' || b === 'donationAmount' ? ('skip' as ImportFieldKey) : (b as ImportFieldKey)
     );
 
     for (const [index, row] of rows.entries()) {
-      const bag = collectImportFieldBag(row, donorBindings);
+      const bag = collectImportFieldBag(row, contactBindings);
       const email = (bag.email ?? '').trim();
       const enterpriseName = (bag.enterpriseName ?? '').trim();
       const siret = (bag.siret ?? '').trim();
@@ -960,12 +960,12 @@ export class ImportPageComponent implements OnInit {
             ? 'Nom ou prénom manquant'
             : 'Ligne invalide';
 
-      const { donorInput, donation } = mapCombinedRowToActions(row, bindings);
-      if (!donorInput) {
+      const { contactInput, donation } = mapCombinedRowToActions(row, bindings);
+      if (!contactInput) {
         skipped++;
         ignored.push({
           rowNumber: index + 1,
-          donorKind: intendedKind,
+          contactKind: intendedKind,
           reason,
           email: email || undefined,
           enterpriseName: intendedKind === 'company' ? (enterpriseName || undefined) : undefined,
@@ -975,21 +975,21 @@ export class ImportPageComponent implements OnInit {
         });
         continue;
       }
-      const existing = this.donorStore.findDonorByEmail(donorInput.email);
-      const donor = existing
-        ? this.donorStore.updateDonor(existing.id, donorInput) ?? this.donorStore.createDonor(donorInput)
-        : this.donorStore.createDonor(donorInput);
+      const existing = this.contactStore.findContactByEmail(contactInput.email);
+      const contact = existing
+        ? this.contactStore.updateContact(existing.id, contactInput) ?? this.contactStore.createContact(contactInput)
+        : this.contactStore.createContact(contactInput);
       if (existing) {
-        donorsUpdated++;
+        contactsUpdated++;
       } else {
-        donorsCreated++;
+        contactsCreated++;
       }
       if (donation) {
-        this.donationStore.addDonationForDonor(donor, donation.amount, donation.date);
+        this.donationStore.addDonationForContact(contact, donation.amount, donation.date);
         donationsCreated++;
       }
     }
-    if (donorsCreated === 0 && donorsUpdated === 0) {
+    if (contactsCreated === 0 && contactsUpdated === 0) {
       this.toast.show(
         'Aucune ligne importée : chaque ligne doit avoir au moins un email et un nom ou un prénom.',
         'alert',
@@ -998,11 +998,11 @@ export class ImportPageComponent implements OnInit {
       this.openIgnoredLinesPopup(ignored, null);
       return;
     }
-    const createdPart = donorsCreated > 0 ? `${donorsCreated} ${donorsCreated === 1 ? 'donateur' : 'donateurs'} créé${donorsCreated === 1 ? '' : 's'}` : '';
-    const updatedPart = donorsUpdated > 0 ? `${donorsUpdated} ${donorsUpdated === 1 ? 'donateur' : 'donateurs'} mis à jour${donorsUpdated === 1 ? '' : 's'}` : '';
-    const donorsPart = [createdPart, updatedPart].filter(Boolean).join(' — ');
+    const createdPart = contactsCreated > 0 ? `${contactsCreated} ${contactsCreated === 1 ? 'profil' : 'profils'} créé${contactsCreated === 1 ? '' : 's'}` : '';
+    const updatedPart = contactsUpdated > 0 ? `${contactsUpdated} ${contactsUpdated === 1 ? 'profil' : 'profils'} mis à jour${contactsUpdated === 1 ? '' : 's'}` : '';
+    const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' — ');
     this.toast.show(
-      `${donorsPart}${
+      `${contactsPart}${
         donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'don' : 'dons'} associé${donationsCreated === 1 ? '' : 's'}` : ''
       }${skipped > 0 ? ` — ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
       'success',
@@ -1010,7 +1010,7 @@ export class ImportPageComponent implements OnInit {
     );
     this.openIgnoredLinesPopup(
       ignored,
-      () => void this.router.navigate(['/donateurs'])
+      () => void this.router.navigate(['/profils'])
     );
   }
 
@@ -1028,7 +1028,7 @@ export class ImportPageComponent implements OnInit {
       this.rowCount.set(parsed.rows.length);
       this.headers.set(parsed.headers);
       const mode = this.importMode();
-      if (mode === 'donors') {
+      if (mode === 'contacts') {
         this.bindings.set(guessMappingForHeaders(parsed.headers));
       } else if (mode === 'donations') {
         this.bindings.set(guessDonationMappingForHeaders(parsed.headers) as unknown as string[]);

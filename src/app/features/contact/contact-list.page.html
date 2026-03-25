@@ -1,0 +1,33 @@
+<div class="contact-list-page">
+  <toast-component position="center-third"></toast-component>
+  <empty-contacts-welcome />
+  <topbar
+    [title]="'Les profils'"
+    [subtitle]="'Gérez vos profils avec facilité'"
+  >
+    <div class="contact-topbar-actions">
+      <contact-settings-launcher></contact-settings-launcher>
+      <contact-create-launcher></contact-create-launcher>
+    </div>
+  </topbar>
+
+  <import-banner />
+
+  <table-component
+    [rows]="contactsComputed()"
+    [columns]="contactColumns"
+    [pageSizeOptions]="[25, 50, 100]"
+    [initialPageSize]="25"
+    [showRowActions]="true"
+    (rowEdit)="onEditContact($event)"
+    (rowViewDonations)="onViewDonations($event)"
+  ></table-component>
+</div>
+
+@if (contactToEdit(); as c) {
+  <contact-edit-popup [contact]="c" (closed)="closeEditContact()" />
+}
+
+@if (contactToViewDonations(); as cv) {
+  <contact-donations-popup [contact]="cv" (closed)="closeViewDonations()" />
+}

@@ -1,5 +1,5 @@
 <toast-component position="center-third"></toast-component>
-<topbar [title]="'Les relances'" [subtitle]="'Gérez les relances de vos précieux donateurs'">
+<topbar [title]="'Les relances'" [subtitle]="'Gérez les relances de vos précieux profils'">
 </topbar>
 
 <div class="reminder-page">
@@ -7,16 +7,16 @@
   <div class="layout">
     <reminder-recipient-selector
       [pagedItems]="pagedRecipientItems()"
-      [filteredDonorsLength]="filteredDonorsLength()"
-      [donorsCount]="donorsCount()"
+      [filteredcontactsLength]="filteredcontactsLength()"
+      [contactsCount]="contactsCount()"
       [selectedCount]="selectedCount()"
-      [selectedDonorIds]="selectedDonorIds()"
+      [selectedcontactIds]="selectedcontactIds()"
       [quickFilter]="quickFilter()"
       [searchQuery]="searchQuery()"
       [title]="'Sélectionner les destinataires'"
-      [searchPlaceholder]="'Rechercher un donateur…'"
-      [emptyMessage]="'Aucun donateur pour le moment. Créez ou importez des donateurs pour les relancer.'"
-      [selectedLabel]="'donateurs'"
+      [searchPlaceholder]="'Rechercher un profil…'"
+      [emptyMessage]="'Aucun profil pour le moment. Créez ou importez des profils pour les relancer.'"
+      [selectedLabel]="'profils'"
       [pageIndex]="pageIndex()"
       [totalPages]="totalPages()"
       [appliedMonthsMin]="appliedMonthsMin()"
@@ -25,7 +25,7 @@
       [appliedDonationCountMin]="appliedDonationCountMin()"
       (quickFilterChange)="setQuickFilter($event)"
       (searchQueryChange)="onSearchInput($event)"
-      (toggleDonor)="toggleDonor($event)"
+      (toggleContact)="togglecontact($event)"
       (selectAllFiltered)="selectAllFiltered()"
       (deselectAll)="deselectAll()"
       (prevPage)="prevPage()"
@@ -38,7 +38,7 @@
       <div class="rp-header">
         <div>
           <div class="rp-title">Rédiger le mail de relance</div>
-          <div class="rp-sub">Chaque mail sera personnalisé avec les données du donateur</div>
+          <div class="rp-sub">Chaque mail sera personnalisé avec les données du profil</div>
         </div>
       </div>
 
@@ -55,10 +55,10 @@
           <span class="step-index">3</span>
           <span class="step-label">Aperçu &amp; envoi</span>
         </button-label-component>
-        <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn" [disabled]="selectedDonorsForStep3Count() === 0">
-          <span class="step-index" id="send-count">{{ selectedDonorsForStep3Count() }}</span>
+          <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn" [disabled]="selectedcontactsForStep3Count() === 0">
+          <span class="step-index" id="send-count">{{ selectedcontactsForStep3Count() }}</span>
           <span class="send-step-label"
-            >Envoyer à <span id="send-count-2">{{ selectedDonorsForStep3Count() }}</span> donateurs 💌</span
+            >Envoyer à <span id="send-count-2">{{ selectedcontactsForStep3Count() }}</span> profils 💌</span
           >
         </button-label-component>
       </div>
@@ -109,17 +109,17 @@
         <div class="preview-card" *ngIf="activeStep === 3">
           <div class="preview-head">
             <div class="preview-ttl">👁 Aperçu pour</div>
-            <div class="preview-donor">
-              @if (selectedDonorsForPreview().length) {
+            <div class="preview-contact">
+              @if (selectedcontactsForPreview().length) {
                 <form-select-component
                   class="preview-select"
                   [label]="null"
-                  [options]="previewDonorOptions()"
-                  [ngModel]="previewDonorId() ?? ''"
-                  (ngModelChange)="onPreviewDonorChange($event)"
+                  [options]="previewcontactOptions()"
+                  [ngModel]="previewcontactId() ?? ''"
+                  (ngModelChange)="onPreviewcontactChange($event)"
                 />
               } @else {
-                <span class="preview-donor-empty">—</span>
+                <span class="preview-contact-empty">—</span>
               }
             </div>
           </div>
@@ -129,7 +129,7 @@
             <span class="preview-var">14 mois</span> que vous nous avez soutenus, et nous pensons à
             vous.<br /><br />
             Votre dernier don de <span class="preview-var">320 €</span> a contribué directement à
-            nos actions sur le terrain. Grâce à des donateurs comme vous, nous avons pu [décrire
+            nos actions sur le terrain. Grâce à des profils comme vous, nous avons pu [décrire
             l'impact].<br /><br />
             Si vous souhaitez renouveler votre soutien, votre aide nous serait précieuse.<br /><br />
             Avec toute notre gratitude,<br />
@@ -140,7 +140,7 @@
 
         <div class="send-recap" *ngIf="activeStep === 3">
           <div class="recap-stat">
-          <div class="recap-val">{{ selectedDonorsForStep3Count() }}</div>
+          <div class="recap-val">{{ selectedcontactsForStep3Count() }}</div>
             <div class="recap-lbl">destinataires</div>
           </div>
           <div class="recap-sep"></div>

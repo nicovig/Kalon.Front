@@ -41,7 +41,7 @@ export class IgnoredLinesPopupComponent {
     const lastname = original?.lastname?.trim() ?? '';
     const firstname = original?.firstname?.trim() ?? '';
     const enterpriseName = original?.enterpriseName?.trim();
-    const donorKind = original?.donorKind;
+    const contactKind = original?.contactKind;
 
     if (lastname && firstname) {
       return `${lastname} ${firstname}`;
@@ -52,7 +52,7 @@ export class IgnoredLinesPopupComponent {
     if (firstname) {
       return firstname;
     }
-    if (donorKind === 'company' && enterpriseName) {
+    if (contactKind === 'company' && enterpriseName) {
       return enterpriseName;
     }
     return 'Personne inconnue';
@@ -68,7 +68,12 @@ export class IgnoredLinesPopupComponent {
 
   protected wantsEmailInput(line: IgnoredImportLine): boolean {
     const r = line.reason.toLowerCase();
-    return r.includes('email manquant') || r.includes('email du donateur manquant') || r.includes('email donateur introuvable') || r.includes('ligne invalide');
+    return (
+      r.includes('email manquant') ||
+      r.includes('email du profil manquant') ||
+      r.includes('email du profil introuvable') ||
+      r.includes('ligne invalide')
+    );
   }
 
   protected wantsNameInput(line: IgnoredImportLine): boolean {

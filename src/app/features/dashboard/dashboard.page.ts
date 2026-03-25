@@ -7,12 +7,12 @@ import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { DonationStoreService } from '../donation/donation.store';
-import { DonorStoreService } from '../donor/donor.store';
-import { DonorCreateLauncherComponent } from '../donor/donor-create-launcher.component';
-import { EmptyDonorsWelcomeComponent } from '../donor/empty-donors-welcome/empty-donors-welcome.component';
+import { ContactStoreService } from '../contact/contact.store';
+import { ContactCreateLauncherComponent } from '../contact/contact-create-launcher.component';
+import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome/empty-contacts-welcome.component';
 import { ImportBannerComponent } from '../import/components/import-banner/import-banner.component';
-import { donorDisplayName, IDonor } from '../../core/models/donor.model';
-import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
+import { contactDisplayName, IContact } from '../../core/models/contact.model';
+import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 
 @Component({
   selector: 'dashboard-page',
@@ -27,8 +27,8 @@ import { DonorSettingsStore } from '../donor/settings/donor-settings.store';
     ToastComponent,
     TopbarComponent,
     CardComponent,
-    DonorCreateLauncherComponent,
-    EmptyDonorsWelcomeComponent,
+    ContactCreateLauncherComponent,
+    EmptyContactsWelcomeComponent,
     ImportBannerComponent
   ]
 })
@@ -36,18 +36,18 @@ export class DashboardPageComponent {
 
   private readonly authService = inject(AuthService);
   private readonly donationStore = inject(DonationStoreService);
-  private readonly donorStore = inject(DonorStoreService);
-  private readonly donorSettings = inject(DonorSettingsStore);
+  private readonly contactStore = inject(ContactStoreService);
+  private readonly contactSettings = inject(ContactSettingsStore);
 
   protected readonly currentUser = this.authService.currentUser;
 
   protected readonly latestDonationsComputed = computed(() => this.donationStore.donations());
 
-  protected readonly kpiActiveDonors = computed(
+  protected readonly kpiActiveContacts = computed(
     () =>
-      this.donorStore
-        .donors()
-        .filter((d) => this.donorSettings.statusOf(d) === 'active').length
+      this.contactStore
+        .contacts()
+        .filter((c) => this.contactSettings.statusOf(c) === 'active').length
   );
 
   protected readonly kpiYearDonationsTotal = computed(() => {
@@ -60,18 +60,18 @@ export class DashboardPageComponent {
 
   protected readonly kpiToRemind = computed(
     () =>
-      this.donorStore
-        .donors()
-        .filter((d) => this.donorSettings.statusOf(d) === 'to_remind').length
+      this.contactStore
+        .contacts()
+        .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length
   );
 
   protected readonly kpiReceipts = 0;
 
-  protected readonly donorCount = computed(() => this.donorStore.donors().length);
+  protected readonly contactCount = computed(() => this.contactStore.contacts().length);
 
-  protected readonly quotaDonorsPct = computed(() => {
+  protected readonly quotaContactsPct = computed(() => {
     const limit = 300;
-    const n = this.donorCount();
+    const n = this.contactCount();
     return Math.min(100, Math.round((n / limit) * 100));
   });
 
@@ -81,26 +81,26 @@ export class DashboardPageComponent {
   protected readonly emailSentCount = computed(() => 0);
   protected readonly emailSentQuotaPct = computed(() => 0);
 
-  protected readonly priorityRelanceDonors = computed(() =>
-    this.donorStore
-      .donors()
-      .filter((d) => this.donorSettings.statusOf(d) === 'to_remind')
+  protected readonly priorityRelanceContacts = computed(() =>
+    this.contactStore
+      .contacts()
+      .filter((c) => this.contactSettings.statusOf(c) === 'to_remind')
       .sort(
         (a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0)
       )
       .slice(0, 5)
   );
 
-  protected donorLabel(d: IDonor): string {
-    return donorDisplayName(d);
+  protected contactLabel(c: IContact): string {
+    return contactDisplayName(c);
   }
 
-  protected monthsSinceLastDonation(d: IDonor): number {
-    if (!d.lastDonation) {
+  protected monthsSinceLastDonation(c: IContact): number {
+    if (!c.lastDonation) {
       return 0;
     }
     const now = new Date();
-    const from = d.lastDonation;
+    const from = c.lastDonation;
     let months = (now.getFullYear() - from.getFullYear()) * 12;
     months += now.getMonth() - from.getMonth();
     return Math.max(0, months);
@@ -108,7 +108,7 @@ export class DashboardPageComponent {
 
   protected readonly latestDonationsColumns: TableColumn[] = [
     { key: 'date', header: 'Date', type: 'date', searchable: true },
-    { key: 'donorDisplayName', header: 'Donateur', searchable: true },
+    { key: 'contactDisplayName', header: 'Profil', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right', searchable: true }
   ];
 

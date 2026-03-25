@@ -1,20 +1,20 @@
-import { NewDonorInput } from '../../donor/donor.store';
+import { NewContactInput } from '../../contact/contact.store';
 import { ImportFieldKey } from './model/import-field.model';
 import { CombinedImportFieldKey } from './model/import-combined-field.model';
-import { mapRowToNewDonorInput } from './import-row-to-donor';
+import { mapRowToNewContactInput } from './import-row-to-contact';
 import { parseAmountFromCell, parseDateFromCell } from './import-parse-cells';
 
 export function mapCombinedRowToActions(
   row: string[],
   bindings: CombinedImportFieldKey[]
 ): {
-  donorInput: NewDonorInput | null;
+  contactInput: NewContactInput | null;
   donation: { amount: number; date: Date } | null;
 } {
-  const donorBindings = bindings.map((b) =>
+  const contactBindings = bindings.map((b) =>
     b === 'donationDate' || b === 'donationAmount' ? ('skip' as ImportFieldKey) : (b as ImportFieldKey)
   );
-  const donorInput = mapRowToNewDonorInput(row, donorBindings);
+  const contactInput = mapRowToNewContactInput(row, contactBindings);
   let donationDateStr = '';
   let donationAmountStr = '';
   const len = Math.min(row.length, bindings.length);
@@ -30,5 +30,5 @@ export function mapCombinedRowToActions(
   const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
   const donation =
     amount !== null && amount > 0 && date ? { amount, date } : null;
-  return { donorInput, donation };
+  return { contactInput, donation };
 }
