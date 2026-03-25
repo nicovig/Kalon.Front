@@ -13,6 +13,7 @@ import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { ContactKind, ContactStatus, contactDisplayName, IContact } from '../../core/models/contact.model';
+import { DonationPaymentMethod } from '../../core/models/donation.model';
 
 type PeriodPreset = 'all' | 'thisMonth' | 'last3Months' | 'last6Months' | 'last12Months' | 'civilYear' | 'custom';
 
@@ -24,6 +25,7 @@ type DonationTableRow = {
   contactKind: ContactKind;
   contactStatus: ContactStatus;
   date: Date;
+  paymentMethodLabel: string;
   amount: number;
 };
 
@@ -95,6 +97,7 @@ export class StatisticsPageComponent {
     { key: 'contactEmail', header: 'Email', type: 'text', searchable: true },
     { key: 'contactKind', header: 'Type', type: 'contactKind' },
     { key: 'contactStatus', header: 'Statut', type: 'badge' },
+    { key: 'paymentMethodLabel', header: 'Moyen de paiement', type: 'text', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right' }
   ];
 
@@ -125,6 +128,7 @@ export class StatisticsPageComponent {
           contactKind,
           contactStatus,
           date: donation.date,
+          paymentMethodLabel: this.paymentMethodLabel(donation.paymentMethod),
           amount: donation.amount
         };
       })
@@ -222,7 +226,7 @@ export class StatisticsPageComponent {
     if (!rows.length) {
       return;
     }
-    const headers = ['Date', 'Profil', 'Email', 'Type', 'Statut', 'Montant (€)'];
+    const headers = ['Date', 'Profil', 'Email', 'Type', 'Statut', 'Moyen de paiement', 'Montant (€)'];
     const lines = [headers.join(';')];
     for (const row of rows) {
       const line = [
@@ -231,6 +235,7 @@ export class StatisticsPageComponent {
         row.contactEmail,
         row.contactKind === 'company' ? 'Entreprise' : 'Particulier',
         this.statusLabelFr(row.contactStatus),
+        row.paymentMethodLabel,
         this.formatAmountFr(row.amount)
       ].map((cell) => this.escapeCsvCell(cell));
       lines.push(line.join(';'));
@@ -358,6 +363,23 @@ export class StatisticsPageComponent {
     const out = new Date(d);
     out.setHours(23, 59, 59, 999);
     return out;
+  }
+
+  private paymentMethodLabel(paymentMethod: DonationPaymentMethod): string {
+    switch (paymentMethod) {
+      case 'bank_transfer':
+        return 'Virement';
+      case 'cash':
+        return 'Espèces';
+      case 'check':
+        return 'Chèques';
+      case 'other':
+        return 'Autre';
+      default: {
+        const _exhaustive: never = paymentMethod;
+        return _exhaustive;
+      }
+    }
   }
 }
 

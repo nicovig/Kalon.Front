@@ -15,8 +15,8 @@ import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 import { Subscription } from 'rxjs';
 import { ContactKind, EnterpriseFiscalStatus, IContact } from '../../../core/models/contact.model';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
-import { RadioOptionComponent } from '../../../layout/button/radio/radio-option.component';
-import { CheckboxComponent } from '../../../layout/button/checkbox/checkbox.component';
+import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
+import { ButtonCheckboxComponent } from '../../../layout/button/checkbox/button-checkbox.component';
 import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import type { NewContactInput } from '../contact.store';
@@ -32,8 +32,8 @@ export type ContactFormUpdatePayload = { contactId: string; value: NewContactInp
     CommonModule,
     ReactiveFormsModule,
     ButtonLabelComponent,
-    RadioOptionComponent,
-    CheckboxComponent,
+    ButtonRadioComponent,
+    ButtonCheckboxComponent,
     FormTextComponent,
     FormDateComponent
   ],

@@ -127,6 +127,66 @@
   flex-direction: column;
   gap: 5px;
 }
+
+.adv-horsfrance-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 2px 0;
+}
+
+.adv-horsfrance-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-70);
+  font-family: var(--font-body);
+}
+
+.adv-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dep-list {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--r-sm);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.dep-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  border: 2px solid var(--ink-10);
+  user-select: none;
+  transition:
+    border-color 0.13s ease,
+    background 0.13s ease;
+}
+
+.dep-item:hover {
+  border-color: var(--violet-md);
+}
+
+.dep-code {
+  font-family: var(--font-title);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
 .adv-lbl {
   font-size: 11px;
   font-weight: 700;

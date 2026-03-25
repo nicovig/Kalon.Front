@@ -49,10 +49,10 @@
         <div class="add-donation-field">
           <label class="add-donation-label">Moyen de paiement</label>
           <div class="add-donation-manual-grid add-donation-manual-grid--payment">
-            <radio-option [control]="paymentMethodControl" value="bank_transfer">Virement</radio-option>
-            <radio-option [control]="paymentMethodControl" value="cash">Espèces</radio-option>
-            <radio-option [control]="paymentMethodControl" value="check">Chèques</radio-option>
-            <radio-option [control]="paymentMethodControl" value="other">Autre</radio-option>
+            <button-radio [control]="paymentMethodControl" value="bank_transfer">Virement</button-radio>
+            <button-radio [control]="paymentMethodControl" value="cash">Espèces</button-radio>
+            <button-radio [control]="paymentMethodControl" value="check">Chèques</button-radio>
+            <button-radio [control]="paymentMethodControl" value="other">Autre</button-radio>
           </div>
         </div>
         @if (submitted && form.invalid) {

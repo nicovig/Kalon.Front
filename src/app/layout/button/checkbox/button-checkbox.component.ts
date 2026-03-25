@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'kalon-checkbox',
+  selector: 'button-checkbox',
   standalone: true,
-  templateUrl: './checkbox.component.html',
-  styleUrls: ['./checkbox.component.css'],
+  templateUrl: './button-checkbox.component.html',
+  styleUrls: ['./button-checkbox.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckboxComponent {
+export class ButtonCheckboxComponent {
   @Input() checked = false;
 }
 

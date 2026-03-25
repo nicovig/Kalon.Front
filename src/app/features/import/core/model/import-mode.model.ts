@@ -9,8 +9,8 @@ export const IMPORT_MODE_OPTIONS: {
   {
     mode: 'contacts',
     label: 'Profils',
-    hint: 'Fiche contact : noms, emails, adresses…',
-    blurb: 'Importer ou mettre à jour des fiches contact.'
+    hint: 'Fiche profil : noms, emails, adresses…',
+    blurb: 'Importer ou mettre à jour des fiches profil.'
   },
   {
     mode: 'donations',
@@ -21,8 +21,8 @@ export const IMPORT_MODE_OPTIONS: {
   {
     mode: 'combined',
     label: 'Les deux',
-    hint: 'Une ligne = contact éventuellement avec un don',
-    blurb: 'Un même fichier : chaque ligne peut créer le contact et le don associé.'
+    hint: 'Une ligne = profil éventuellement avec un don',
+    blurb: 'Un même fichier : chaque ligne peut créer le profil et le don associé.'
   }
 ];
 

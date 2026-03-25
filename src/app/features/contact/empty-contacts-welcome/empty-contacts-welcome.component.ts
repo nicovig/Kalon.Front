@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { ContactCreatePopupComponent } from '../popup/create-contact/create-contact-popup.component';
-import { AddDonationPopupComponent } from '../popup/add-donation/add-donation-popup.component';
+import { AddDonationPopupComponent } from '../../donation/add-donation/add-donation-popup.component';
 import { ContactStoreService } from '../contact.store';
 import { ToastService } from '../../../layout/toast/toast.service';
 import { contactDisplayName, IContact } from '../../../core/models/contact.model';

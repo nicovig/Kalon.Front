@@ -5,7 +5,7 @@
 <div class="reminder-page">
   <!-- LAYOUT SPLIT -->
   <div class="layout">
-    <reminder-recipient-selector
+    <recipient-selector
       [pagedItems]="pagedRecipientItems()"
       [filteredcontactsLength]="filteredcontactsLength()"
       [contactsCount]="contactsCount()"
@@ -23,6 +23,8 @@
       [appliedTotalDonationMin]="appliedTotalDonationMin()"
       [appliedTotalDonationMax]="appliedTotalDonationMax()"
       [appliedDonationCountMin]="appliedDonationCountMin()"
+      [appliedDepartmentCodes]="appliedDepartmentCodes()"
+      [appliedHorsFrance]="appliedHorsFrance()"
       (quickFilterChange)="setQuickFilter($event)"
       (searchQueryChange)="onSearchInput($event)"
       (toggleContact)="togglecontact($event)"
@@ -102,7 +104,7 @@
 
         <!-- ÉTAPE 2 : ÉDITEUR -->
         <div class="mail-card" *ngIf="activeStep === 2">
-          <kalon-mail-editor [(subject)]="mailSubject" [(body)]="mailBody"></kalon-mail-editor>
+          <mail-editor [(subject)]="mailSubject" [(body)]="mailBody"></mail-editor>
         </div>
 
         <!-- ÉTAPE 3 : APERÇU + RÉCAP -->

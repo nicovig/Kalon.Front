@@ -89,16 +89,53 @@
       </div>
 
       <div class="adv-row">
-        <div class="adv-lbl">Dernière campagne</div>
-        <form-select-component
-          class="adv-select"
-          [options]="campaignOptions"
-          [ngModel]="campaignSel"
-          (ngModelChange)="campaignSel = $event"
-        />
+        <div class="adv-lbl">Départements (métropole)</div>
+        <div class="dep-list dep-list--metropole">
+          @for (code of metropoleDepartmentCodes; track code) {
+            <div class="dep-item" (click)="toggleDepartmentCode(code)">
+              <button-checkbox [checked]="metropoleSelected.has(code)"></button-checkbox>
+              <span class="dep-code">{{ code }}</span>
+            </div>
+          }
+        </div>
       </div>
 
-      <button-label-component type="adv-apply" (click)="applyFilters()">Appliquer les filtres →</button-label-component>
+      <div class="adv-row">
+        <div class="adv-lbl">DOM</div>
+        <div class="dep-list dep-list--dom">
+          @for (code of domDepartmentCodes; track code) {
+            <div class="dep-item" (click)="toggleDepartmentCode(code)">
+              <button-checkbox [checked]="domSelected.has(code)"></button-checkbox>
+              <span class="dep-code">{{ code }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="adv-row">
+        <div class="adv-lbl">TOM / collectivités (dont NC)</div>
+        <div class="dep-list dep-list--tom">
+          @for (code of tomDepartmentCodes; track code) {
+            <div class="dep-item" (click)="toggleDepartmentCode(code)">
+              <button-checkbox [checked]="tomSelected.has(code)"></button-checkbox>
+              <span class="dep-code">{{ code }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="adv-row">
+        <div class="adv-lbl">Hors France</div>
+        <div class="adv-horsfrance-toggle" (click)="horsFranceSel = !horsFranceSel">
+          <button-checkbox [checked]="horsFranceSel"></button-checkbox>
+          <span class="adv-horsfrance-text">Inclure les profils hors France</span>
+        </div>
+      </div>
+
+      <div class="adv-actions">
+        <button-label-component type="adv-apply" (click)="applyFilters()">Appliquer</button-label-component>
+        <button-label-component type="ghost" (click)="resetAllFilters()">Réinitialiser</button-label-component>
+      </div>
     </div>
 
     <div class="lp-select-actions">
@@ -118,7 +155,7 @@
         [class.checked]="selectedcontactIds.has(item.id)"
         (click)="toggleContact.emit(item.id)"
       >
-        <kalon-checkbox [checked]="selectedcontactIds.has(item.id)"></kalon-checkbox>
+        <button-checkbox [checked]="selectedcontactIds.has(item.id)"></button-checkbox>
         <div [class]="'d-av ' + (item.avatarClass || ('da' + ((i % 7) + 1)) )">{{ item.avatarText || '?' }}</div>
         <div class="d-info">
           <div class="d-name">{{ item.title }}</div>

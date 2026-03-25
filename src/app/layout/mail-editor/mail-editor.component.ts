@@ -5,7 +5,7 @@ import { QuillModule, QuillEditorComponent } from 'ngx-quill';
 import { EmojiHolderComponent } from './emoji-holder/emoji-holder.component';
 
 @Component({
-  selector: 'kalon-mail-editor',
+  selector: 'mail-editor',
   standalone: true,
   imports: [CommonModule, FormsModule, QuillModule, EmojiHolderComponent],
   templateUrl: './mail-editor.component.html',

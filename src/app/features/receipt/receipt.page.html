@@ -2,7 +2,7 @@
 
 <div class="receipt-page">
   <div class="layout">
-    <reminder-recipient-selector
+    <recipient-selector
       [pagedItems]="pagedRecipientItems()"
       [filteredcontactsLength]="filteredcontactsLength()"
       [contactsCount]="contactsCount()"
@@ -20,6 +20,8 @@
       [appliedTotalDonationMin]="appliedTotalDonationMin()"
       [appliedTotalDonationMax]="appliedTotalDonationMax()"
       [appliedDonationCountMin]="appliedDonationCountMin()"
+      [appliedDepartmentCodes]="appliedDepartmentCodes()"
+      [appliedHorsFrance]="appliedHorsFrance()"
       (quickFilterChange)="setQuickFilter($event)"
       (searchQueryChange)="onSearchInput($event)"
       (toggleContact)="togglecontact($event)"

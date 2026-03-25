@@ -28,14 +28,9 @@ export const routes: Routes = [
           import('./features/contact/contact.routes').then((m) => m.CONTACT_ROUTES)
       },
       {
-        path: 'relances',
+        path: 'carte',
         loadChildren: () =>
-          import('./features/reminder/reminder.routes').then((m) => m.REMINDER_ROUTES)
-      },
-      {
-        path: 'recus',
-        loadChildren: () =>
-          import('./features/receipt/receipt.routes').then((m) => m.RECEIPT_ROUTES)
+          import('./features/map/map.routes').then((m) => m.MAP_ROUTES)
       },
       {
         path: 'statistics',
@@ -46,6 +41,21 @@ export const routes: Routes = [
         path: 'import',
         loadChildren: () =>
           import('./features/import/import.routes').then((m) => m.IMPORT_ROUTES)
+      },
+      {
+        path: 'relances',
+        loadChildren: () =>
+          import('./features/reminder/reminder.routes').then((m) => m.REMINDER_ROUTES)
+      },
+      {
+        path: 'recus',
+        loadChildren: () =>
+          import('./features/receipt/receipt.routes').then((m) => m.RECEIPT_ROUTES)
+      },
+      {
+        path: 'recherche',
+        loadChildren: () =>
+          import('./features/search/search.routes').then((m) => m.SEARCH_ROUTES)
       },
       {
         path: 'account',

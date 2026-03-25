@@ -8,11 +8,11 @@ import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select
 import { ContactStoreService } from '../contact/contact.store';
 import { contactDisplayName, ContactStatus, IContact } from '../../core/models/contact.model';
 import {
-  ReminderAdvancedFilters,
+  AdvancedFilters,
   RecipientSelectorItem,
-  ReminderQuickFilter,
-  ReminderRecipientSelectorComponent
-} from '../reminder/reminder-recipient-selector/reminder-recipient-selector.component';
+  QuickFilter,
+  RecipientSelectorComponent
+} from '../../layout/recipient-selector/recipient-selector.component';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 
 @Component({
@@ -28,7 +28,7 @@ import { ContactSettingsStore } from '../contact/settings/contact-settings.store
     ButtonLabelComponent,
     FormTextareaComponent,
     FormSelectComponent,
-    ReminderRecipientSelectorComponent
+    RecipientSelectorComponent
   ]
 })
 export class ReceiptPageComponent {
@@ -38,12 +38,14 @@ export class ReceiptPageComponent {
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
   protected readonly itemsPerPage = 15;
 
-  protected readonly quickFilter = signal<ReminderQuickFilter>('all');
+  protected readonly quickFilter = signal<QuickFilter>('all');
   protected readonly searchQuery = signal('');
   protected readonly appliedMonthsMin = signal(0);
   protected readonly appliedTotalDonationMin = signal<number | null>(null);
   protected readonly appliedTotalDonationMax = signal<number | null>(null);
   protected readonly appliedDonationCountMin = signal<number | null>(null);
+  protected readonly appliedDepartmentCodes = signal<string[] | null>(null);
+  protected readonly appliedHorsFrance = signal(false);
   protected readonly pageIndex = signal(0);
 
   protected readonly selectedcontactIds = signal<Set<string>>(new Set());
@@ -85,6 +87,8 @@ export class ReceiptPageComponent {
     const totalMin = this.appliedTotalDonationMin();
     const totalMax = this.appliedTotalDonationMax();
     const donationCountMin = this.appliedDonationCountMin();
+    const departmentCodes = this.appliedDepartmentCodes();
+    const horsFrance = this.appliedHorsFrance();
     const all = this.contactStore.contacts();
 
     return all.filter((d) => {
@@ -105,6 +109,13 @@ export class ReceiptPageComponent {
       if (typeof totalMin === 'number' && !Number.isNaN(totalMin) && d.totalDonation < totalMin) return false;
       if (typeof totalMax === 'number' && !Number.isNaN(totalMax) && d.totalDonation > totalMax) return false;
       if (typeof donationCountMin === 'number' && !Number.isNaN(donationCountMin) && d.donationCount < donationCountMin) return false;
+
+      if (!horsFrance && this.isOutsideFrance(d)) return false;
+
+      if (departmentCodes?.length) {
+        const dept = this.departmentOf(d);
+        if (!dept || !departmentCodes.includes(dept)) return false;
+      }
 
       if (!q) return true;
       const name = contactDisplayName(d).toLowerCase();
@@ -175,7 +186,7 @@ export class ReceiptPageComponent {
     this.selectedTemplateId.set(id);
   }
 
-  protected setQuickFilter(v: ReminderQuickFilter): void {
+  protected setQuickFilter(v: QuickFilter): void {
     this.quickFilter.set(v);
     this.pageIndex.set(0);
     this.syncPreviewIfNeeded();
@@ -218,13 +229,36 @@ export class ReceiptPageComponent {
     this.pageIndex.set(p + 1);
   }
 
-  protected onAdvancedFiltersApplied(filters: ReminderAdvancedFilters): void {
+  protected onAdvancedFiltersApplied(filters: AdvancedFilters): void {
     this.appliedMonthsMin.set(filters.monthsMin);
     this.appliedTotalDonationMin.set(filters.totalDonationMin);
     this.appliedTotalDonationMax.set(filters.totalDonationMax);
     this.appliedDonationCountMin.set(filters.donationCountMin);
+    this.appliedDepartmentCodes.set(filters.departmentCodes);
+    this.appliedHorsFrance.set(filters.horsFrance);
     this.pageIndex.set(0);
     this.syncPreviewIfNeeded();
+  }
+
+  private departmentOf(d: IContact): string | null {
+    const raw = d.address?.postalCode?.trim();
+    if (!raw) return null;
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length < 2) return null;
+    if ((digits.startsWith('97') || digits.startsWith('98')) && digits.length >= 3) {
+      return digits.slice(0, 3);
+    }
+    if (digits.startsWith('20')) {
+      const third = digits[2] ?? '';
+      return third === '0' || third === '1' ? '2A' : '2B';
+    }
+    return digits.slice(0, 2);
+  }
+
+  private isOutsideFrance(d: IContact): boolean {
+    const c = d.address?.country?.trim().toLowerCase();
+    if (!c) return true;
+    return c !== 'france';
   }
 
   protected onPreviewcontactChange(v: string): void {

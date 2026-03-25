@@ -9,15 +9,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { contactDisplayName, IContact } from '../../../../core/models/contact.model';
-import { DonationStoreService } from '../../../donation/donation.store';
-import { DonationPaymentMethod } from '../../../../core/models/donation.model';
-import { PopupShellComponent } from '../../../../layout/popup/popup-shell.component';
-import { ToastService } from '../../../../layout/toast/toast.service';
-import { ButtonLabelComponent } from '../../../../layout/button/button-label/button-label.component';
-import { FormDateComponent } from '../../../../layout/forms/date/form-date.component';
-import { FormTextComponent } from '../../../../layout/forms/text/form-text.component';
-import { RadioOptionComponent } from '../../../../layout/button/radio/radio-option.component';
+import { contactDisplayName, IContact } from '../../../core/models/contact.model';
+import { DonationStoreService } from '../donation.store';
+import { DonationPaymentMethod } from '../../../core/models/donation.model';
+import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
+import { ToastService } from '../../../layout/toast/toast.service';
+import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
+import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
+import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
+import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
 
 function dateToInputValue(d: Date): string {
   const y = d.getFullYear();
@@ -39,7 +39,7 @@ function dateFromInputValue(s: string): Date {
     ReactiveFormsModule,
     PopupShellComponent,
     ButtonLabelComponent,
-    RadioOptionComponent,
+    ButtonRadioComponent,
     FormTextComponent,
     FormDateComponent
   ],

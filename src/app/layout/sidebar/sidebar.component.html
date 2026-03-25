@@ -6,32 +6,38 @@
       <!-- <div class="logo-tagline"></div> -->
     </div>
   </div>
-
-  <div class="nav-label">Principal</div>
   <a
     class="nav-item"
     [routerLink]="['/']"
     routerLinkActive="active"
     [routerLinkActiveOptions]="{ exact: true }"
   >
-    <span class="nav-icon">🏠</span><span class="nav-text">Tableau de bord</span>
+    <span class="nav-icon">🏠</span><span class="nav-text">Accueil</span>
   </a>
+
+  <div class="nav-label">Données</div>
   <a class="nav-item" [routerLink]="['/profils']" routerLinkActive="active">
     <span class="nav-icon">👥</span><span class="nav-text">Profils</span>
   </a>
+  <a class="nav-item" [routerLink]="['/carte']" routerLinkActive="active">
+    <span class="nav-icon">🗺️</span><span class="nav-text">Carte des profils</span>
+  </a>
+  <a class="nav-item" [routerLink]="['/statistics']" routerLinkActive="active">
+    <span class="nav-icon">📈</span><span class="nav-text">Financements</span>
+  </a>
+  <a class="nav-item" [routerLink]="['/import']" routerLinkActive="active">
+    <span class="nav-icon">📥</span><span class="nav-text">Import</span>
+  </a>
+
+  <div class="nav-label">Financement</div>
   <a class="nav-item" [routerLink]="['/relances']" routerLinkActive="active">
     <span class="nav-icon">💌</span><span class="nav-text">Relances</span> <span class="nav-badge" *ngIf="kpiToRemind() > 0">{{ kpiToRemind() }}</span>
   </a>
   <a class="nav-item" [routerLink]="['/recus']" routerLinkActive="active">
     <span class="nav-icon">🧾</span><span class="nav-text">Reçus fiscaux</span>
   </a>
-
-  <div class="nav-label">Données</div>
-  <a class="nav-item" [routerLink]="['/statistics']" routerLinkActive="active">
-    <span class="nav-icon">📈</span><span class="nav-text">Statistiques</span>
-  </a>
-  <a class="nav-item" [routerLink]="['/import']" routerLinkActive="active">
-    <span class="nav-icon">📥</span><span class="nav-text">Import</span>
+  <a class="nav-item" [routerLink]="['/recherche']" routerLinkActive="active">
+    <span class="nav-icon">🔍</span><span class="nav-text">Recherche intelligente</span>
   </a>
 
   <div class="nav-label">Compte</div>

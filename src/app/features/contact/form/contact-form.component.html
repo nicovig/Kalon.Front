@@ -2,8 +2,8 @@
   <fieldset class="df-kind" [class.df-kind-locked]="editContact()">
     <legend class="df-kind-legend">Nature du profil</legend>
     <div class="df-kind-row">
-      <radio-option [control]="categoryControl" value="particular" [name]="'contact-category'">Particulier</radio-option>
-      <radio-option [control]="categoryControl" value="company" [name]="'contact-category'">Entreprise ou autre personne morale</radio-option>
+      <button-radio [control]="categoryControl" value="particular" [name]="'contact-category'">Particulier</button-radio>
+      <button-radio [control]="categoryControl" value="company" [name]="'contact-category'">Entreprise ou autre personne morale</button-radio>
     </div>
   </fieldset>
 
@@ -39,9 +39,9 @@
         <div class="df-field">
           <label class="df-label">Genre (optionnel)</label>
           <div class="df-kind-row">
-            <radio-option [control]="genderControl" value="male" [name]="'contact-gender'">Homme</radio-option>
-            <radio-option [control]="genderControl" value="female" [name]="'contact-gender'">Femme</radio-option>
-            <radio-option [control]="genderControl" value="other" [name]="'contact-gender'">Autre</radio-option>
+            <button-radio [control]="genderControl" value="male" [name]="'contact-gender'">Homme</button-radio>
+            <button-radio [control]="genderControl" value="female" [name]="'contact-gender'">Femme</button-radio>
+            <button-radio [control]="genderControl" value="other" [name]="'contact-gender'">Autre</button-radio>
           </div>
         </div>
       </div>
@@ -94,9 +94,9 @@
         <div class="df-field">
           <label class="df-label">Type de profil</label>
           <div class="df-kind-row df-kind-row--nowrap">
-            <radio-option [control]="kindControl" value="donor" [name]="'contact-kind'">Donateur</radio-option>
-            <radio-option [control]="kindControl" value="member" [name]="'contact-kind'">Membre</radio-option>
-            <radio-option [control]="kindControl" value="helper" [name]="'contact-kind'">Aidant</radio-option>
+            <button-radio [control]="kindControl" value="donor" [name]="'contact-kind'">Donateur</button-radio>
+            <button-radio [control]="kindControl" value="member" [name]="'contact-kind'">Membre</button-radio>
+            <button-radio [control]="kindControl" value="helper" [name]="'contact-kind'">Aidant</button-radio>
           </div>
         </div>
 
@@ -105,7 +105,7 @@
             class="df-label df-genre-out-toggle df-out-toggle"
             (click)="form.get('out')?.setValue(!form.get('out')?.value)"
           >
-            <kalon-checkbox [checked]="!!form.get('out')?.value" />
+            <button-checkbox [checked]="!!form.get('out')?.value" />
             Sorti<span class="df-genre-out-toggle-text">(décédé)</span>
           </label>
         </div>
@@ -358,35 +358,35 @@
   <div class="df-subsection">
     <div class="df-subsection-title">Préférence d'envoi des reçus fiscaux</div>
     <div class="df-kind-row">
-        <radio-option
+        <button-radio
           [control]="preferredFrequencySendingReceiptControl"
           value="instantly"
           [name]="'contact-receipt-frequency'"
-          >Immédiatement</radio-option
+          >Immédiatement</button-radio
         >
-        <radio-option
+        <button-radio
           [control]="preferredFrequencySendingReceiptControl"
           value="monthly"
           [name]="'contact-receipt-frequency'"
-          >Mensuellement</radio-option
+          >Mensuellement</button-radio
         >
-        <radio-option
+        <button-radio
           [control]="preferredFrequencySendingReceiptControl"
           value="quarterly"
           [name]="'contact-receipt-frequency'"
-          >Trimestriellement</radio-option
+          >Trimestriellement</button-radio
         >
-        <radio-option
+        <button-radio
           [control]="preferredFrequencySendingReceiptControl"
           value="semesterly"
           [name]="'contact-receipt-frequency'"
-          >Semestriellement</radio-option
+          >Semestriellement</button-radio
         >
-        <radio-option
+        <button-radio
           [control]="preferredFrequencySendingReceiptControl"
           value="yearly"
           [name]="'contact-receipt-frequency'"
-          >Annuellement</radio-option
+          >Annuellement</button-radio
         >
     </div>
   </div>
