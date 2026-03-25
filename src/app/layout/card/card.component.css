@@ -27,7 +27,7 @@
 }
 
 .card-body {
-  padding: 14px 0 0;
+  padding: 14px 0 14px;
 }
 
 .card-advanced .card-body {

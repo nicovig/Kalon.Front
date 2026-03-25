@@ -1,0 +1,163 @@
+<topbar [title]="'Où se trouvent vos soutiens ?'" [subtitle]="'Répartition de vos profils par département'"></topbar>
+
+<div class="map-grid">
+  <div class="map-left">
+    <card subtitle="Cliquez sur un département pour voir les profils associés">
+      <div class="france-map-wrap" id="france-map">
+        <svg
+          class="france-svg"
+          [attr.viewBox]="france.viewBox"
+          role="img"
+          aria-label="Carte des départements de France"
+        >
+          @for (loc of france.locations; track loc.id) {
+            <path
+              [attr.d]="loc.path"
+              [attr.id]="loc.id"
+              [attr.aria-label]="loc.name"
+              [attr.fill]="metroFill(loc.id)"
+              [attr.stroke]="metroStroke(loc.id)"
+              stroke-width="1"
+              class="dept-path"
+              (click)="onSelectMetroDepartment(loc.id)"
+              (mouseenter)="onDeptMouseEnter($event, loc.id, loc.name)"
+              (mousemove)="onDeptMouseMove($event)"
+              (mouseleave)="onDeptMouseLeave()"
+            >
+            </path>
+          }
+        </svg>
+
+        <div class="map-legend map-legend--left">
+          <div class="legend-title">Échelle</div>
+          <div class="legend-items">
+            <div class="legend-item">
+              <span class="legend-swatch" style="background: var(--violet-lt)"></span>
+              <span>{{ legendBandLabels()[0] }}</span>
+            </div>
+            <div class="legend-item">
+              <span
+                class="legend-swatch"
+                style="background: color-mix(in srgb, var(--violet-lt) 60%, var(--violet-md) 40%)"
+              ></span>
+              <span>{{ legendBandLabels()[1] }}</span>
+            </div>
+            <div class="legend-item">
+              <span
+                class="legend-swatch"
+                style="background: color-mix(in srgb, var(--violet-lt) 25%, var(--violet-md) 75%)"
+              ></span>
+              <span>{{ legendBandLabels()[2] }}</span>
+            </div>
+            <div class="legend-item">
+              <span
+                class="legend-swatch"
+                style="background: color-mix(in srgb, var(--violet-md) 70%, var(--violet) 30%)"
+              ></span>
+              <span>{{ legendBandLabels()[3] }}</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch" style="background: var(--violet)"></span>
+              <span>{{ legendBandLabels()[4] }}</span>
+            </div>
+          </div>
+        </div>
+
+        @if (deptTooltip(); as t) {
+          <div class="map-tooltip" [style.left.px]="t.x" [style.top.px]="t.y" role="tooltip">
+            {{ t.label }}
+          </div>
+        }
+      </div>
+    </card>
+
+    <div class="non-metro-row">
+      <card title="DOM-TOM" subtitle="Code postal → DOM/TOM">
+        <div class="list-block">
+          <div class="horsfr-count">{{ domTomTotalContactsCount() }} profil(s)</div>
+
+          @if (domTomDepartmentsWithContacts().length > 0) {
+            <div class="chips">
+              @for (d of domTomDepartmentsWithContacts().slice(0, 10); track d.id) {
+                <div class="chip" (click)="onSelectNonMetro()" title="{{ d.id }}">
+                  <span class="chip-code">{{ d.id }}</span>
+                  <span class="chip-count">{{ d.count }}</span>
+                </div>
+              }
+            </div>
+            <div class="hint">
+              +{{ max(0, domTomDepartmentsWithContacts().length - 10) }} autres
+            </div>
+          }
+        </div>
+      </card>
+
+      <card title="Hors France" subtitle="Inclut les pays non France">
+        <div class="list-block">
+          <div class="horsfr-count">{{ horsFranceContacts().length }} profil(s)</div>
+          @if (horsFranceContacts().length > 0) {
+            <div class="horsfr-preview">
+              @for (c of horsFranceContacts().slice(0, 6); track c.id) {
+                <div class="mini-contact mini-contact--clickable" role="button" tabindex="0" (click)="openEditContact(c)">
+                  {{ contactLabel(c) }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </card>
+
+      <card title="Adresses peu fiables" subtitle="Code postal / adresse incertain">
+        <div class="list-block">
+          <div class="horsfr-count">{{ unreliableAddressContacts().length }} profil(s)</div>
+          @if (unreliableAddressContacts().length > 0) {
+            <div class="horsfr-preview">
+              @for (c of unreliableAddressContacts().slice(0, 6); track c.id) {
+                <div class="mini-contact mini-contact--clickable" role="button" tabindex="0" (click)="openEditContact(c)">
+                  {{ contactLabel(c) }}
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-small">Aucun profil</div>
+          }
+        </div>
+      </card>
+    </div>
+  </div>
+
+  <div class="map-right">
+    <card title="Sélectionnez un département" subtitle="Vous verrez ici les profils associés.">
+      @if (selection().kind === 'metro' && selectionDeptLabel()) {
+        <div class="details">
+          <div class="details-title">
+            {{ selectionDeptLabel() }}
+          </div>
+          <div class="details-sub">{{ metroContactsPreview().length }} profil(s)</div>
+        </div>
+      }
+
+      <div class="contacts-list">
+        @if (selection().kind === 'metro') {
+          @if (metroContactsPreview().length === 0) {
+            <div class="empty-small">Aucun profil sur ce département</div>
+          } @else {
+            @for (c of metroContactsPreview().slice(0, 40); track c.id) {
+              <div class="contact-row" role="button" tabindex="0" (click)="openEditContact(c)">
+                <div class="contact-name">{{ contactLabel(c) }}</div>
+                <div class="contact-meta">{{ c.email }}</div>
+              </div>
+            }
+            @if (metroContactsPreview().length > 40) {
+              <div class="hint">Affichage partiel (40/{{ metroContactsPreview().length }})</div>
+            }
+          }
+        }
+      </div>
+    </card>
+  </div>
+
+  @if (contactToEdit(); as c) {
+    <contact-edit-popup [contact]="c" (closed)="closeEditContact()" />
+  }
+</div>
