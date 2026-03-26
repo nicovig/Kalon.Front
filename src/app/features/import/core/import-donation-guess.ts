@@ -52,6 +52,19 @@ const DONATION_RULES: DRule[] = [
       /\bcheck\b/.test(n) ||
       /\bautre\b/.test(n)
   }
+  ,
+  {
+    field: 'donationType',
+    weight: 7,
+    test: (n) =>
+      /\btype\b.*\b(don|de)?\b/.test(n) ||
+      /\bdon\b.*\b(nature|en nature|sponsoring|sponsor|mobilier|mat[ée]riel|equipement|équipement)\b/.test(n) ||
+      /\b(en nature|nature)\b/.test(n) ||
+      /\b(mobilier|mat[ée]riel|equipement|équipement)\b/.test(n) ||
+      /\bsponsoring\b/.test(n) ||
+      /\bsponsor\b/.test(n) ||
+      /\b(financier|financi[èe]re|finances?)\b/.test(n)
+  }
 ];
 
 export function guessDonationFieldForHeader(headerCell: string): DonationImportFieldKey {

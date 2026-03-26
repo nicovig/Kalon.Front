@@ -18,7 +18,7 @@ export type CombinedPreviewRow = ImportPreviewRow & {
 
 function contactBindingsFromCombined(bindings: CombinedImportFieldKey[]): ImportFieldKey[] {
   return bindings.map((b) =>
-    b === 'donationDate' || b === 'donationAmount' || b === 'paymentMethod' ? 'skip' : b
+    b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod' ? 'skip' : b
   ) as ImportFieldKey[];
 }
 

@@ -39,7 +39,12 @@ import { ImportFieldKey } from './core/model/import-field.model';
 import { parseAmountFromCell, parseDateFromCell } from './core/import-parse-cells';
 import { parseImportFile } from './core/import-file-parse';
 import { mapRowToNewContactInput } from './core/import-row-to-contact';
-import { mapRowToDonationImport, collectDonationImportBag, parsePaymentMethodFromCell } from './core/import-row-donation';
+import {
+  mapRowToDonationImport,
+  collectDonationImportBag,
+  parseDonationTypeFromCell,
+  parsePaymentMethodFromCell
+} from './core/import-row-donation';
 import { mapCombinedRowToActions } from './core/import-row-combined';
 import { ImportStepTrailComponent } from './components/import-step-trail/import-step-trail.component';
 import {
@@ -547,13 +552,14 @@ export class ImportPageComponent implements OnInit {
       const contactEmail = (bag.contactEmail ?? '').trim();
       const donationAmountStr = (bag.donationAmount ?? '').trim();
       const donationDateStr = (bag.donationDate ?? '').trim();
+      const donationTypeRaw = (bag.donationType ?? '').trim();
       const donationPaymentMethodRaw = (bag.paymentMethod ?? '').trim();
 
-      const amount = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
+      const donationType = donationTypeRaw ? parseDonationTypeFromCell(donationTypeRaw) : ('financial' as const);
+
+      const amountRaw = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
-      const paymentMethod = donationPaymentMethodRaw
-        ? parsePaymentMethodFromCell(donationPaymentMethodRaw)
-        : ('other' as const);
+      const paymentMethod = donationPaymentMethodRaw ? parsePaymentMethodFromCell(donationPaymentMethodRaw) : null;
 
       if (!contactEmail) {
         stillIgnored.push({
@@ -564,11 +570,10 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      if (amount === null || amount <= 0 || !date) {
-        const reason =
-          amount === null || amount <= 0
-            ? 'Montant invalide (doit être > 0)'
-            : 'Date invalide';
+      if (!date || (donationType === 'financial' && (amountRaw === null || amountRaw <= 0))) {
+        const reason = !date
+          ? 'Date invalide'
+          : 'Montant invalide (doit être > 0)';
 
         stillIgnored.push({
           ...line,
@@ -590,7 +595,8 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      this.donationStore.addDonationForContact(contact, amount, date, paymentMethod);
+      const amount = donationType === 'financial' ? (amountRaw as number) : (amountRaw && amountRaw > 0 ? amountRaw : 0);
+      this.donationStore.addDonationForContact(contact, amount, date, paymentMethod, donationType);
       importedCount++;
     }
 
@@ -606,7 +612,7 @@ export class ImportPageComponent implements OnInit {
     let importedCount = 0;
 
     const contactBindings = bindings.map((b) =>
-      b === 'donationDate' || b === 'donationAmount' || b === 'paymentMethod'
+      b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod'
         ? ('skip' as ImportFieldKey)
         : (b as ImportFieldKey)
     );
@@ -711,6 +717,7 @@ export class ImportPageComponent implements OnInit {
 
       let donationDateStr = '';
       let donationAmountStr = '';
+      let donationTypeStr = '';
       let donationPaymentMethodStr = '';
       const len = Math.min(row.length, bindings.length);
       for (let i = 0; i < len; i++) {
@@ -719,6 +726,9 @@ export class ImportPageComponent implements OnInit {
         }
         if (bindings[i] === 'donationAmount') {
           donationAmountStr = String(row[i] ?? '').trim();
+        }
+        if (bindings[i] === 'donationType') {
+          donationTypeStr = String(row[i] ?? '').trim();
         }
         if (bindings[i] === 'paymentMethod') {
           donationPaymentMethodStr = String(row[i] ?? '').trim();
@@ -732,14 +742,18 @@ export class ImportPageComponent implements OnInit {
         donationAmountStr = line.donationAmount.trim();
       }
 
-      const amount = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
+      const donationType = donationTypeStr ? parseDonationTypeFromCell(donationTypeStr) : ('financial' as const);
+      const amountRaw = donationAmountStr ? parseAmountFromCell(donationAmountStr) : null;
       const date = donationDateStr ? parseDateFromCell(donationDateStr) : null;
-      const paymentMethod = donationPaymentMethodStr
-        ? parsePaymentMethodFromCell(donationPaymentMethodStr)
-        : ('other' as const);
+      const paymentMethod = donationPaymentMethodStr ? parsePaymentMethodFromCell(donationPaymentMethodStr) : null;
 
-      if (amount !== null && amount > 0 && date) {
-        this.donationStore.addDonationForContact(contact, amount, date, paymentMethod);
+      if (date && donationType === 'financial' && amountRaw !== null && amountRaw > 0) {
+        this.donationStore.addDonationForContact(contact, amountRaw, date, paymentMethod, donationType);
+      }
+
+      if (date && donationType !== 'financial') {
+        const amount = amountRaw && amountRaw > 0 ? amountRaw : 0;
+        this.donationStore.addDonationForContact(contact, amount, date, paymentMethod, donationType);
       }
 
       importedCount++;
@@ -875,16 +889,18 @@ export class ImportPageComponent implements OnInit {
       const contactEmail = (bag.contactEmail ?? '').trim();
       const donationAmountRaw = (bag.donationAmount ?? '').trim();
       const donationDateRaw = (bag.donationDate ?? '').trim();
+      const donationTypeRaw = (bag.donationType ?? '').trim();
+      const donationType = donationTypeRaw ? parseDonationTypeFromCell(donationTypeRaw) : ('financial' as const);
       const amount = donationAmountRaw ? parseAmountFromCell(donationAmountRaw) : null;
       const date = donationDateRaw ? parseDateFromCell(donationDateRaw) : null;
 
       const reason =
         !contactEmail
           ? 'Email du profil manquant'
-          : amount === null || amount <= 0
-            ? 'Montant invalide (doit être > 0)'
-            : !date
-              ? 'Date invalide'
+          : !date
+            ? 'Date invalide'
+            : donationType === 'financial' && (amount === null || amount <= 0)
+              ? 'Montant invalide (doit être > 0)'
               : 'Ligne invalide';
 
       const parsed = mapRowToDonationImport(row, bindings);
@@ -910,7 +926,13 @@ export class ImportPageComponent implements OnInit {
         });
         continue;
       }
-      this.donationStore.addDonationForContact(contact, parsed.amount, parsed.date, parsed.paymentMethod);
+      this.donationStore.addDonationForContact(
+        contact,
+        parsed.amount,
+        parsed.date,
+        parsed.paymentMethod,
+        parsed.donationType
+      );
       created++;
     }
     if (created === 0) {
@@ -940,7 +962,7 @@ export class ImportPageComponent implements OnInit {
     const ignored: IgnoredImportLine[] = [];
 
     const contactBindings = bindings.map((b) =>
-      b === 'donationDate' || b === 'donationAmount' || b === 'paymentMethod'
+      b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod'
         ? ('skip' as ImportFieldKey)
         : (b as ImportFieldKey)
     );
@@ -1000,7 +1022,13 @@ export class ImportPageComponent implements OnInit {
         contactsCreated++;
       }
       if (donation) {
-        this.donationStore.addDonationForContact(contact, donation.amount, donation.date, donation.paymentMethod);
+        this.donationStore.addDonationForContact(
+          contact,
+          donation.amount,
+          donation.date,
+          donation.paymentMethod,
+          donation.donationType
+        );
         donationsCreated++;
       }
     }

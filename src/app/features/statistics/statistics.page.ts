@@ -365,7 +365,8 @@ export class StatisticsPageComponent {
     return out;
   }
 
-  private paymentMethodLabel(paymentMethod: DonationPaymentMethod): string {
+  private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {
+    if (!paymentMethod) return '—';
     switch (paymentMethod) {
       case 'bank_transfer':
         return 'Virement';

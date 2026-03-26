@@ -24,5 +24,70 @@
 
     <emoji-holder (emojiSelected)="insertVariable($event)"></emoji-holder>
   </div>
+
+  <div class="editor-insert-lines">
+    <div class="editor-insert-row">
+      <span class="editor-insert-label">Insertion de texte</span>
+      @if (snippetOptions.length > 0) {
+        <form-select-component
+          [label]="null"
+          [options]="snippetSelectOptions"
+          [ngModel]="selectedSnippetId"
+          (ngModelChange)="onSnippetSelectionChange($event)"
+        />
+      } @else {
+        <span class="editor-insert-empty">Aucun texte pré-enregistré</span>
+      }
+      <button-label-component
+        type="ghost"
+        (click)="insertSelectedSnippet()"
+        [disabled]="snippetOptions.length === 0 || !selectedSnippetId"
+      >
+        Insérer
+      </button-label-component>
+    </div>
+
+    <div class="editor-insert-row">
+      <span class="editor-insert-label">Images</span>
+      @if (imageOptions.length > 0) {
+        <form-select-component
+          [label]="null"
+          [options]="imageOptions"
+          [ngModel]="selectedImageId"
+          (ngModelChange)="onImageSelectionChange($event)"
+        />
+      } @else {
+        <span class="editor-insert-empty">Aucune image</span>
+      }
+      <button-label-component
+        type="ghost"
+        (click)="insertSelectedImage()"
+        [disabled]="imageOptions.length === 0 || !selectedImageDataUrl"
+      >
+        Insérer
+      </button-label-component>
+    </div>
+
+    <div class="editor-insert-row">
+      <span class="editor-insert-label">Documents</span>
+      @if (documentOptions.length > 0) {
+        <form-select-component
+          [label]="null"
+          [options]="documentOptions"
+          [ngModel]="selectedDocumentId"
+          (ngModelChange)="onDocumentSelectionChange($event)"
+        />
+      } @else {
+        <span class="editor-insert-empty">Aucun document</span>
+      }
+      <button-label-component
+        type="ghost"
+        (click)="insertSelectedDocument()"
+        [disabled]="documentOptions.length === 0 || !selectedDocumentDataUrl"
+      >
+        Insérer
+      </button-label-component>
+    </div>
+  </div>
 </div>
 

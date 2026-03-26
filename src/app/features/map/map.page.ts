@@ -5,6 +5,7 @@ import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
 import { ContactEditPopupComponent } from '../contact/popup/edit-contact/edit-contact-popup.component';
+import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome/empty-contacts-welcome.component';
 import franceDepartmentsSvg from '@svg-maps/france.departments';
 import worldMapSvg from '@svg-maps/world';
 
@@ -29,7 +30,7 @@ type DeptTooltip = { label: string; x: number; y: number };
   templateUrl: './map.page.html',
   styleUrls: ['./map.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TopbarComponent, CardComponent, ContactEditPopupComponent]
+  imports: [CommonModule, TopbarComponent, CardComponent, ContactEditPopupComponent, EmptyContactsWelcomeComponent]
 })
 export class MapPageComponent {
   private readonly contactStore = inject(ContactStoreService);

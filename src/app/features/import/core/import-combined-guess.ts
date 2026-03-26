@@ -9,7 +9,7 @@ export function guessCombinedMappingForHeaders(headers: string[]): CombinedImpor
       return contact;
     }
     const d = guessDonationFieldForHeader(h);
-    if (d === 'donationAmount' || d === 'donationDate' || d === 'paymentMethod') {
+    if (d === 'donationAmount' || d === 'donationDate' || d === 'donationType' || d === 'paymentMethod') {
       return d;
     }
     return 'skip';

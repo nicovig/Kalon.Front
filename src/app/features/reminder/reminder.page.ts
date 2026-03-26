@@ -15,7 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
-import { MailEditorComponent } from '../../layout/mail-editor/mail-editor.component';
+import { MailEditorComponent, MailEditorSnippet } from '../../layout/mail-editor/mail-editor.component';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
@@ -28,6 +28,7 @@ import {
   RecipientSelectorComponent
 } from '../../layout/recipient-selector/recipient-selector.component';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
+import { AccountMailAssetsStore } from '../account/account-mail-assets.store';
 
 @Component({
   selector: 'reminder-page',
@@ -51,6 +52,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   private readonly iaAgent = inject(IaAgentCore);
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly accountMailAssetsStore = inject(AccountMailAssetsStore);
   constructor(private readonly cdr: ChangeDetectorRef) {}
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
 
@@ -233,13 +235,74 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
       "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
     remerciement: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
     urgence: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",
-    saisonnier: 'Exemple : contexte de la période et prochaines actions à soutenir…'
+    saisonnier: 'Exemple : contexte de la période et prochaines actions à soutenir…',
+    adhesion_renewal:
+      "Exemple : adhésion sportive, annoncer la nouvelle saison, valoriser l'impact pour les membres et proposer un renouvellement…"
   };
   protected iaContextPlaceholder = this.iaContextPlaceholders['douce'];
   protected activeStep: 1 | 2 | 3 = 1;
   protected mailSubject = 'Vous nous manquez, {{prenom}} 💛';
   protected mailBody = '<p>Bonjour {{prenom}},</p>';
   protected iaPrompt = '';
+  protected readonly selectedMailTone = signal<ReminderTemplateTone>('douce');
+
+  protected readonly selectedTextBlockId = signal('');
+  protected readonly selectedImageId = signal('');
+  protected readonly selectedDocumentId = signal('');
+
+  protected readonly textBlockOptions = computed<FormSelectOption[]>(() =>
+    this.accountMailAssetsStore.textBlocks().map((s) => ({
+      value: s.id,
+      label: s.label
+    }))
+  );
+
+  protected readonly imageOptions = computed<FormSelectOption[]>(() =>
+    this.accountMailAssetsStore.images().map((i) => ({
+      value: i.id,
+      label: i.label
+    }))
+  );
+
+  protected readonly documentOptions = computed<FormSelectOption[]>(() =>
+    this.accountMailAssetsStore.documents().map((d) => ({
+      value: d.id,
+      label: d.label
+    }))
+  );
+
+  protected readonly selectedImageDataUrl = computed(() => {
+    const id = this.selectedImageId();
+    return this.accountMailAssetsStore.images().find((i) => i.id === id)?.dataUrl ?? '';
+  });
+
+  protected readonly selectedDocumentDataUrl = computed(() => {
+    const id = this.selectedDocumentId();
+    return this.accountMailAssetsStore.documents().find((d) => d.id === id)?.dataUrl ?? '';
+  });
+
+  protected readonly selectedDocumentFileName = computed(() => {
+    const id = this.selectedDocumentId();
+    const doc = this.accountMailAssetsStore.documents().find((d) => d.id === id);
+    return doc?.fileName ?? doc?.label ?? '';
+  });
+
+  protected readonly mailEditorSnippets = computed<MailEditorSnippet[]>(() =>
+    this.accountMailAssetsStore.textBlocks().map((s) => ({
+      id: s.id,
+      label: s.label,
+      text: s.content
+    }))
+  );
+
+  private selectedFooterTextBlock(): string {
+    const blocks = this.accountMailAssetsStore.textBlocks();
+    return (
+      blocks.find((s) => s.id === this.selectedTextBlockId())?.content ??
+      blocks[0]?.content ??
+      "L'équipe de {{nom_association}}"
+    );
+  }
 
   @ViewChild(MailEditorComponent)
   private mailEditor?: MailEditorComponent;
@@ -250,6 +313,12 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     w.insertVar = this.insertVar.bind(this);
     w.generateMail = this.generateMail.bind(this);
     w.updatePreview = (v: string) => this.updatePreviewFromDom(v);
+    const firstTextBlockId = this.accountMailAssetsStore.textBlocks()[0]?.id;
+    const firstImageId = this.accountMailAssetsStore.images()[0]?.id;
+    const firstDocumentId = this.accountMailAssetsStore.documents()[0]?.id;
+    if (firstTextBlockId) this.selectedTextBlockId.set(firstTextBlockId);
+    if (firstImageId) this.selectedImageId.set(firstImageId);
+    if (firstDocumentId) this.selectedDocumentId.set(firstDocumentId);
   }
 
   ngAfterViewInit(): void {
@@ -407,6 +476,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
 
     const prompt = el.dataset['prompt'] ?? '';
     this.iaPrompt = prompt;
+    this.selectedMailTone.set(tone);
 
     this.iaContextPlaceholder = this.iaContextPlaceholders[tone] ?? this.iaContextPlaceholders['douce'];
     this.cdr.markForCheck();
@@ -459,14 +529,16 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     btn.disabled = true;
     try {
       const presetEl = document.querySelector('.ia-preset.sel') as HTMLElement | null;
-      const presetLabel = presetEl?.textContent?.trim() ?? '';
-      const tone = this.resolveTone(presetLabel);
+      const tone = this.selectedMailTone();
       const response = await firstValueFrom(
         this.iaAgent.generateReminderTemplate({ tone })
       );
 
       this.mailSubject = response.subject;
-      this.mailBody = response.body;
+      const signatureFooter = `<p>${this.selectedFooterTextBlock()}</p>`;
+      this.mailBody = response.body.includes('{{signature_footer}}')
+        ? response.body.replace('{{signature_footer}}', signatureFooter)
+        : response.body + signatureFooter;
       this.activeStep = 2;
       btnText.textContent = '✓ Mail généré — modifiez-le librement';
       btn.style.background = 'var(--mint-dk)';
@@ -482,6 +554,7 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     if (normalized.includes('remerci')) return 'remerciement';
     if (normalized.includes('urgence')) return 'urgence';
     if (normalized.includes('saisonnier')) return 'saisonnier';
+    if (normalized.includes('renouvel') || normalized.includes('adhes')) return 'adhesion_renewal';
     return 'douce';
   }
 

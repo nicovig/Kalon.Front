@@ -2,13 +2,14 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 100%;
+  height: auto;
+  min-height: 0;
 }
 
 .mail-editor-body {
   display: flex;
   gap: 10px;
-  height: 100%;
+  min-height: 320px;
 }
 
 .subject-row {
@@ -41,6 +42,94 @@
 .subject-input::placeholder {
   color: var(--ink-30);
   font-weight: 500;
+}
+
+.snippet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.snippet-select {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-sm);
+  min-height: 36px;
+  padding: 6px 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+  background: white;
+  outline: none;
+}
+
+.snippet-select:focus {
+  border-color: var(--violet-md);
+}
+
+.snippet-btn {
+  border: 2px solid var(--ink-10);
+  background: white;
+  color: var(--ink);
+  border-radius: var(--r-sm);
+  min-height: 36px;
+  padding: 0 12px;
+  font-family: var(--font-title);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.snippet-btn:hover:enabled {
+  border-color: var(--violet-md);
+  color: var(--violet);
+}
+
+.snippet-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-insert-lines {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editor-insert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editor-insert-row form-select-component {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-insert-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  font-family: var(--font-title);
+  white-space: nowrap;
+}
+
+.editor-insert-empty {
+  flex: 1;
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  background: white;
+  color: var(--ink-30);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .editor {

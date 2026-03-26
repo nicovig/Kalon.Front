@@ -109,6 +109,26 @@
             </div>
             <div class="editor-block">
               <div class="editor-label">Signature / pied de page</div>
+              <div class="editor-helpers">
+                <div class="helper-row">
+                  <div class="helper-label">Logo (URL)</div>
+                  <input
+                    class="helper-input"
+                    type="text"
+                    [ngModel]="associationLogoUrl()"
+                    (ngModelChange)="associationLogoUrl.set($event)"
+                    placeholder="https://.../logo.png"
+                  />
+                </div>
+                <div class="helper-row">
+                  <form-select-component
+                    [label]="'Signature'"
+                    [options]="signatureOptions()"
+                    [ngModel]="selectedReceiptSignatureId()"
+                    (ngModelChange)="onReceiptSignatureChange($event)"
+                  />
+                </div>
+              </div>
               <form-textarea
                 [rows]="2"
                 [value]="receiptFooter()"
@@ -144,6 +164,15 @@
               <p><strong>Total dons :</strong> {{ contactPreviewAmount() }}</p>
               <hr />
               <p>{{ receiptBody() }}</p>
+              @if (associationLogoUrl()) {
+                <p class="receipt-logo-preview">
+                  <img
+                    [src]="associationLogoUrl()"
+                    alt="Logo"
+                    class="receipt-logo-img"
+                  />
+                </p>
+              }
               <p>{{ receiptFooter() }}</p>
             </div>
           </div>

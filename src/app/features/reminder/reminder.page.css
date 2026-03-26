@@ -775,9 +775,12 @@
   border-radius: var(--r-lg);
   border: 2px solid var(--ink-10);
   box-shadow: var(--sh-sm);
-  overflow: hidden;
+  overflow: visible;
   padding: 15px;
-  height: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .mail-objet {
@@ -1000,4 +1003,51 @@
   font-size: 13px;
   color: #8a6000;
   font-weight: 600;
+}
+
+.doc-mail-helpers {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--ink-10);
+  background: white;
+  margin-bottom: 10px;
+}
+
+.doc-mail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.doc-mail-row + .doc-mail-row {
+  margin-top: 10px;
+}
+
+.doc-mail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  font-family: var(--font-title);
+  white-space: nowrap;
+}
+
+.doc-mail-input {
+  flex: 1;
+  background: none;
+  border: 2px solid var(--ink-10);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  outline: none;
+}
+
+.doc-mail-input:focus {
+  border-color: var(--violet-md);
 }

@@ -67,6 +67,15 @@ body {
   content: 'Fira Code';
 }
 
+.ql-container.ql-snow {
+  border: none;
+}
+
+.ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 2px solid var(--ink-10);
+}
+
 /* Roboto */
 [quill-editor-toolbar] .ql-font span[data-label="Roboto"]::before {
   font-family: "Roboto";

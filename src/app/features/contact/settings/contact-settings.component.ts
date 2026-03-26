@@ -51,6 +51,7 @@ export class ContactSettingsComponent {
     this.open.set(false);
   }
 
+
   protected resetDefaults(): void {
     this.settingsStore.reset();
     const s = this.settingsStore.settings();

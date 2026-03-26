@@ -1,0 +1,193 @@
+<card [title]="'Gestion des mails'" [subtitle]="'Gérez vos images, documents et blocs de texte réutilisables.'">
+  <section class="mail-mgmt">
+    <div class="mail-mgmt-grid">
+      <div class="mail-panel">
+        <div class="panel-title">Images</div>
+
+        <div class="mail-row">
+          <form-text-component
+            [type]="'text'"
+            [icon]="null"
+            [placeholder]="'Label image (optionnel)'"
+            [value]="imageLabel()"
+            (valueChange)="imageLabel.set($event)"
+            [width]="'100%'"
+          ></form-text-component>
+        </div>
+
+        <div class="upload-row">
+          <button-label-component type="ghost" (click)="openImagePicker()">Choisir une image</button-label-component>
+          <span class="upload-hint">{{ imageSelectedFileName() || 'Aucun fichier choisi' }}</span>
+          <input #imageInput class="file-hidden" type="file" accept="image/*" (change)="onImageSelected($event)" />
+        </div>
+
+        <div class="asset-list asset-list--panel">
+          @if (images().length === 0) {
+            <div class="empty-list">Aucune image pour le moment.</div>
+          } @else {
+            @for (img of images(); track img.id) {
+              <div class="asset-item">
+                <div class="asset-main">
+                  <img [src]="img.dataUrl" [alt]="img.label" class="asset-thumb" />
+                  <div>
+                    <div class="asset-label">{{ img.label }}</div>
+                    <div class="asset-meta">{{ img.fileName }}</div>
+                    @if (img.addedAt) {
+                      <div class="asset-submeta">Ajout le {{ formatAddedAt(img.addedAt) }}</div>
+                    }
+                  </div>
+                </div>
+                <button-label-component type="ghost" (click)="removeImage(img.id)">Supprimer</button-label-component>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="mail-panel">
+        <div class="panel-title">Documents</div>
+
+        <div class="mail-row">
+          <form-text-component
+            [type]="'text'"
+            [icon]="null"
+            [placeholder]="'Label document (optionnel)'"
+            [value]="documentLabel()"
+            (valueChange)="documentLabel.set($event)"
+            [width]="'100%'"
+          ></form-text-component>
+        </div>
+
+        <div class="upload-row">
+          <button-label-component type="ghost" (click)="openDocumentPicker()">Choisir un document</button-label-component>
+          <span class="upload-hint">{{ documentSelectedFileName() || 'Aucun fichier choisi' }}</span>
+          <input
+            #documentInput
+            class="file-hidden"
+            type="file"
+            (change)="onDocumentSelected($event)"
+          />
+        </div>
+
+        <div class="asset-list asset-list--panel">
+          @if (documents().length === 0) {
+            <div class="empty-list">Aucun document pour le moment.</div>
+          } @else {
+            @for (doc of documents(); track doc.id) {
+              <div class="asset-item">
+                <div class="asset-main">
+                  <div>
+                    <div class="asset-label">{{ doc.label }}</div>
+                    <div class="asset-meta">{{ doc.fileName }}</div>
+                    @if (doc.addedAt) {
+                      <div class="asset-submeta">Ajout le {{ formatAddedAt(doc.addedAt) }}</div>
+                    }
+                  </div>
+                </div>
+                <button-label-component type="ghost" (click)="removeDocument(doc.id)">Supprimer</button-label-component>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mail-panel">
+      <div class="panel-title">Insertion de texte</div>
+
+      <div class="text-presets">
+        @if (textBlocks().length === 0) {
+          <div class="empty-list">Aucun bloc de texte pour le moment.</div>
+        } @else {
+          @for (block of textBlocks(); track block.id) {
+            <div class="preset-item">
+              <div class="preset-header" (click)="startEditTextBlock(block)">
+                <div class="preset-header-main">
+                  <div class="asset-label">{{ block.label }}</div>
+                  <div class="preset-header-meta">{{ block.content }}</div>
+                </div>
+                <div class="preset-header-actions">
+                  <button-label-component
+                    type="ghost"
+                    (click)="removeTextBlock(block.id); $event.stopPropagation()"
+                  >
+                    Supprimer
+                  </button-label-component>
+                </div>
+              </div>
+
+              @if (editingTextBlockId() === block.id) {
+                <div class="preset-editor" (click)="$event.stopPropagation()">
+                  <div class="mail-row">
+                    <form-text-component
+                      [type]="'text'"
+                      [icon]="null"
+                      [placeholder]="'Intitulé du bloc'"
+                      [value]="textBlockDraftLabel()"
+                      (valueChange)="textBlockDraftLabel.set($event)"
+                      [width]="'100%'"
+                    ></form-text-component>
+                  </div>
+
+                  <div class="mail-row">
+                    <form-textarea
+                      [rows]="3"
+                      [value]="textBlockDraftContent()"
+                      (valueChange)="textBlockDraftContent.set($event)"
+                      variant="light"
+                      placeholder="Ex: Adresse de l'association, informations légales…"
+                    ></form-textarea>
+                  </div>
+
+                  <div class="mail-actions">
+                    <button-label-component
+                      type="primary"
+                      (click)="saveTextBlock()"
+                    >
+                      Enregistrer
+                    </button-label-component>
+                    <button-label-component
+                      type="ghost"
+                      (click)="cancelTextBlockEdit()"
+                    >
+                      Annuler
+                    </button-label-component>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <div class="preset-editor preset-editor--new">
+        <div class="mail-row">
+          <form-text-component
+            [type]="'text'"
+            [icon]="null"
+            [placeholder]="'Intitulé du bloc'"
+            [value]="newTextBlockLabel()"
+            (valueChange)="newTextBlockLabel.set($event)"
+            [width]="'100%'"
+          ></form-text-component>
+        </div>
+
+        <div class="mail-row">
+          <form-textarea
+            [rows]="3"
+            [value]="newTextBlockContent()"
+            (valueChange)="newTextBlockContent.set($event)"
+            variant="light"
+            placeholder="Ex: Adresse de l'association, informations légales…"
+          ></form-textarea>
+        </div>
+
+        <div class="mail-actions">
+          <button-label-component type="primary" (click)="saveNewTextBlock()">Ajouter</button-label-component>
+          <button-label-component type="ghost" (click)="clearNewTextBlockForm()">Annuler</button-label-component>
+        </div>
+      </div>
+    </div>
+  </section>
+</card>
+

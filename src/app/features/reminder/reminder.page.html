@@ -84,6 +84,11 @@
             <div class="ia-preset" onclick="selectPreset(this, 'remerciement')">🙏 Remerciement</div>
             <div class="ia-preset" onclick="selectPreset(this, 'urgence')">🚨 Urgence</div>
             <div class="ia-preset" onclick="selectPreset(this, 'saisonnier')">🎄 Saisonnier</div>
+            <div
+              class="ia-preset"
+              onclick="selectPreset(this, 'adhesion_renewal')"
+              data-prompt="Ex: adhésion sportive, annoncez la nouvelle saison, rappelez l'impact pour les membres et demandez leur renouvellement."
+            >♻️ Renouvellement d'adhésion (membres)</div>
           </div>
 
           <div class="ia-context">
@@ -104,7 +109,22 @@
 
         <!-- ÉTAPE 2 : ÉDITEUR -->
         <div class="mail-card" *ngIf="activeStep === 2">
-          <mail-editor [(subject)]="mailSubject" [(body)]="mailBody"></mail-editor>
+          <mail-editor
+            [(subject)]="mailSubject"
+            [(body)]="mailBody"
+            [snippetOptions]="mailEditorSnippets()"
+            [selectedSnippetId]="selectedTextBlockId()"
+            (selectedSnippetIdChange)="selectedTextBlockId.set($event)"
+            [imageOptions]="imageOptions()"
+            [selectedImageId]="selectedImageId()"
+            (selectedImageIdChange)="selectedImageId.set($event)"
+            [selectedImageDataUrl]="selectedImageDataUrl()"
+            [documentOptions]="documentOptions()"
+            [selectedDocumentId]="selectedDocumentId()"
+            (selectedDocumentIdChange)="selectedDocumentId.set($event)"
+            [selectedDocumentDataUrl]="selectedDocumentDataUrl()"
+            [selectedDocumentFileName]="selectedDocumentFileName()"
+          ></mail-editor>
         </div>
 
         <!-- ÉTAPE 3 : APERÇU + RÉCAP -->

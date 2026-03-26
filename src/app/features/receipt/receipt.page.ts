@@ -57,7 +57,39 @@ export class ReceiptPageComponent {
   protected receiptBody = signal(
     'Nous vous remercions chaleureusement pour votre don. Ce reçu fiscal certifie votre contribution et vous permet de bénéficier des avantages fiscaux en vigueur.'
   );
-  protected receiptFooter = signal("L'équipe Kalon");
+  protected receiptFooter = signal("L'équipe de {{nom_association}}");
+  protected readonly associationLogoUrl = signal('');
+  protected readonly selectedReceiptSignatureId = signal('team');
+
+  protected readonly signaturePresets = [
+    {
+      id: 'team',
+      label: "L'équipe de l'association",
+      value: "L'équipe de {{nom_association}}"
+    },
+    {
+      id: 'president',
+      label: 'Le président / la présidente',
+      value: 'Le président / la présidente de {{nom_association}}'
+    },
+    {
+      id: 'treasurer',
+      label: 'Le trésorier / la trésorière',
+      value: 'Le trésorier / la trésorière de {{nom_association}}'
+    }
+  ] as const;
+
+  protected readonly signatureOptions = computed<FormSelectOption[]>(() =>
+    this.signaturePresets.map((s) => ({ value: s.id, label: s.label }))
+  );
+
+  protected onReceiptSignatureChange(id: string): void {
+    this.selectedReceiptSignatureId.set(id);
+    const preset = this.signaturePresets.find((s) => s.id === id);
+    if (preset) {
+      this.receiptFooter.set(preset.value);
+    }
+  }
 
   protected readonly templateOptions = [
     {

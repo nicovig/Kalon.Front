@@ -11,7 +11,7 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
 import { Router } from '@angular/router';
 import { contactDisplayName, IContact } from '../../../core/models/contact.model';
 import { DonationStoreService } from '../donation.store';
-import { DonationPaymentMethod } from '../../../core/models/donation.model';
+import { DonationPaymentMethod, DonationType } from '../../../core/models/donation.model';
 import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
 import { ToastService } from '../../../layout/toast/toast.service';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
@@ -95,7 +95,8 @@ export class AddDonationPopupComponent {
     }
     const date = dateFromInputValue(String(raw.date));
     const paymentMethod = raw.paymentMethod as DonationPaymentMethod;
-    this.donationStore.addDonationForContact(this.contact(), amount, date, paymentMethod);
+    const donationType: DonationType = 'financial';
+    this.donationStore.addDonationForContact(this.contact(), amount, date, paymentMethod, donationType);
     this.toast.show(`Don de ${amount} € enregistré pour ${this.displayName()}.`, 'success');
     this.closed.emit();
   }
