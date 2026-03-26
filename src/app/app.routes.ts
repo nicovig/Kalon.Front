@@ -43,6 +43,11 @@ export const routes: Routes = [
           import('./features/import/import.routes').then((m) => m.IMPORT_ROUTES)
       },
       {
+        path: 'archives',
+        loadChildren: () =>
+          import('./features/archives/archives.routes').then((m) => m.ARCHIVES_ROUTES)
+      },
+      {
         path: 'relances',
         loadChildren: () =>
           import('./features/reminder/reminder.routes').then((m) => m.REMINDER_ROUTES)

@@ -4,13 +4,14 @@ import { ButtonLabelComponent } from '../../../layout/button/button-label/button
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import { FormTextareaComponent } from '../../../layout/forms/textarea/form-textarea.component';
 import { CardComponent } from '../../../layout/card/card.component';
+import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
 import { AccountMailAssetsStore, MailTextBlock } from '../account-mail-assets.store';
 import { ToastService } from '../../../layout/toast/toast.service';
 
 @Component({
   selector: 'account-mail-manager',
   standalone: true,
-  imports: [CommonModule, CardComponent, ButtonLabelComponent, FormTextComponent, FormTextareaComponent],
+  imports: [CommonModule, CardComponent, PopupShellComponent, ButtonLabelComponent, FormTextComponent, FormTextareaComponent],
   templateUrl: './account-mail-manager.component.html',
   styleUrls: ['./account-mail-manager.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -22,12 +23,21 @@ export class AccountMailManagerComponent {
   protected readonly textBlocks = this.store.textBlocks;
   protected readonly images = this.store.images;
   protected readonly documents = this.store.documents;
+  protected readonly fiscalReceiptTemplates = this.store.fiscalReceiptTemplates;
 
   protected readonly editingTextBlockId = signal<string | null>(null);
+  protected readonly textBlockPopupOpen = signal(false);
   protected readonly textBlockDraftLabel = signal('');
   protected readonly textBlockDraftContent = signal('');
   protected readonly newTextBlockLabel = signal('');
   protected readonly newTextBlockContent = signal('');
+  protected readonly editingReceiptTemplateId = signal<string | null>(null);
+  protected readonly receiptTemplateLabel = signal('');
+  protected readonly receiptTemplateBody = signal('');
+  protected readonly receiptTemplateFooter = signal('');
+  protected readonly newReceiptTemplateLabel = signal('');
+  protected readonly newReceiptTemplateBody = signal('');
+  protected readonly newReceiptTemplateFooter = signal("L'équipe de {{nom_association}}");
 
   protected readonly imageLabel = signal('');
   protected readonly documentLabel = signal('');
@@ -48,13 +58,20 @@ export class AccountMailManagerComponent {
     this.documentInput?.nativeElement?.click();
   }
 
-  protected startEditTextBlock(block: MailTextBlock): void {
+  protected toggleTextBlockPanel(block: MailTextBlock): void {
+    const current = this.editingTextBlockId();
+    if (current === block.id && this.textBlockPopupOpen()) {
+      this.cancelTextBlockEdit();
+      return;
+    }
     this.editingTextBlockId.set(block.id);
     this.textBlockDraftLabel.set(block.label);
     this.textBlockDraftContent.set(block.content);
+    this.textBlockPopupOpen.set(true);
   }
 
   protected cancelTextBlockEdit(): void {
+    this.textBlockPopupOpen.set(false);
     this.editingTextBlockId.set(null);
     this.textBlockDraftLabel.set('');
     this.textBlockDraftContent.set('');
@@ -117,6 +134,52 @@ export class AccountMailManagerComponent {
     this.store.removeTextBlock(id);
     this.toast.show('Bloc de texte supprimé.', 'success', 2500);
     if (this.editingTextBlockId() === id) this.cancelTextBlockEdit();
+  }
+
+  protected toggleReceiptTemplatePanel(id: string): void {
+    if (this.editingReceiptTemplateId() === id) {
+      this.cancelEditReceiptTemplate();
+      return;
+    }
+    const tpl = this.fiscalReceiptTemplates().find((t) => t.id === id);
+    if (!tpl) return;
+    this.editingReceiptTemplateId.set(id);
+    this.receiptTemplateLabel.set(tpl.label);
+    this.receiptTemplateBody.set(tpl.body);
+    this.receiptTemplateFooter.set(tpl.footer);
+  }
+
+  protected cancelEditReceiptTemplate(): void {
+    this.editingReceiptTemplateId.set(null);
+    this.receiptTemplateLabel.set('');
+    this.receiptTemplateBody.set('');
+    this.receiptTemplateFooter.set('');
+  }
+
+  protected saveReceiptTemplate(): void {
+    const id = this.editingReceiptTemplateId();
+    if (!id) return;
+    this.store.updateFiscalReceiptTemplate(id, this.receiptTemplateLabel(), this.receiptTemplateBody(), this.receiptTemplateFooter());
+    this.toast.show('Modèle de reçu mis à jour.', 'success', 2500);
+    this.cancelEditReceiptTemplate();
+  }
+
+  protected addReceiptTemplate(): void {
+    this.store.addFiscalReceiptTemplate(
+      this.newReceiptTemplateLabel(),
+      this.newReceiptTemplateBody(),
+      this.newReceiptTemplateFooter()
+    );
+    this.toast.show('Modèle de reçu ajouté.', 'success', 2500);
+    this.newReceiptTemplateLabel.set('');
+    this.newReceiptTemplateBody.set('');
+    this.newReceiptTemplateFooter.set("L'équipe de {{nom_association}}");
+  }
+
+  protected removeReceiptTemplate(id: string): void {
+    this.store.removeFiscalReceiptTemplate(id);
+    if (this.editingReceiptTemplateId() === id) this.cancelEditReceiptTemplate();
+    this.toast.show('Modèle de reçu supprimé.', 'success', 2500);
   }
 
   protected formatAddedAt(ts: number): string {

@@ -131,6 +131,11 @@
   gap: 12px;
 }
 
+.template-grid--kind {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
 .template-card {
   border: 2px solid var(--ink-10);
   background: white;
@@ -161,6 +166,16 @@
   margin-top: 4px;
   font-size: 12px;
   color: var(--ink-70);
+}
+
+.template-empty {
+  margin-top: 8px;
+  border: 1px dashed var(--ink-30);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--ink-70);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .editor-block {
@@ -215,6 +230,33 @@
   line-height: 1.7;
 }
 
+.required-box {
+  margin-top: 10px;
+  border: 1px solid var(--ink-10);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(119, 78, 202, 0.05);
+}
+
+.required-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.required-box ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.dispatch-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media (max-width: 1200px) {
   .template-grid {
     grid-template-columns: 1fr;
@@ -225,44 +267,6 @@
   .layout {
     grid-template-columns: 1fr;
   }
-}
-
-.editor-helpers {
-  margin-bottom: 10px;
-}
-
-.helper-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.helper-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--ink-70);
-  font-family: var(--font-body);
-  white-space: nowrap;
-}
-
-.helper-input {
-  flex: 1;
-  background: none;
-  border: 2px solid var(--ink-10);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  outline: none;
-}
-
-.helper-input:focus {
-  border-color: var(--violet-md);
 }
 
 .receipt-logo-preview {

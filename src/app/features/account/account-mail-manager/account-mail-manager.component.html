@@ -1,4 +1,4 @@
-<card [title]="'Gestion des mails'" [subtitle]="'Gérez vos images, documents et blocs de texte réutilisables.'">
+<card [title]="'Paramètres des emails'" [subtitle]="'Gérez vos images, documents et blocs de texte réutilisables.'">
   <section class="mail-mgmt">
     <div class="mail-mgmt-grid">
       <div class="mail-panel">
@@ -101,7 +101,7 @@
         } @else {
           @for (block of textBlocks(); track block.id) {
             <div class="preset-item">
-              <div class="preset-header" (click)="startEditTextBlock(block)">
+              <div class="preset-header" (click)="toggleTextBlockPanel(block)">
                 <div class="preset-header-main">
                   <div class="asset-label">{{ block.label }}</div>
                   <div class="preset-header-meta">{{ block.content }}</div>
@@ -115,52 +115,13 @@
                   </button-label-component>
                 </div>
               </div>
-
-              @if (editingTextBlockId() === block.id) {
-                <div class="preset-editor" (click)="$event.stopPropagation()">
-                  <div class="mail-row">
-                    <form-text-component
-                      [type]="'text'"
-                      [icon]="null"
-                      [placeholder]="'Intitulé du bloc'"
-                      [value]="textBlockDraftLabel()"
-                      (valueChange)="textBlockDraftLabel.set($event)"
-                      [width]="'100%'"
-                    ></form-text-component>
-                  </div>
-
-                  <div class="mail-row">
-                    <form-textarea
-                      [rows]="3"
-                      [value]="textBlockDraftContent()"
-                      (valueChange)="textBlockDraftContent.set($event)"
-                      variant="light"
-                      placeholder="Ex: Adresse de l'association, informations légales…"
-                    ></form-textarea>
-                  </div>
-
-                  <div class="mail-actions">
-                    <button-label-component
-                      type="primary"
-                      (click)="saveTextBlock()"
-                    >
-                      Enregistrer
-                    </button-label-component>
-                    <button-label-component
-                      type="ghost"
-                      (click)="cancelTextBlockEdit()"
-                    >
-                      Annuler
-                    </button-label-component>
-                  </div>
-                </div>
-              }
             </div>
           }
         }
       </div>
 
-      <div class="preset-editor preset-editor--new">
+      <div class="panel-title">Créer un nouveau bloc de texte</div>
+      <div class="preset-editor">
         <div class="mail-row">
           <form-text-component
             [type]="'text'"
@@ -188,6 +149,164 @@
         </div>
       </div>
     </div>
+
+
   </section>
 </card>
+<br>
+<card [title]="'Paramètres des reçus fiscaux'" [subtitle]="'Gérez vos modèles de reçus fiscaux.'">
+  <section class="mail-mgmt">
+    <div class="mail-mgmt-grid">
+
+      <div class="mail-panel">
+        <div class="panel-title">Modèles</div>
+    
+        <div class="text-presets">
+          @for (tpl of fiscalReceiptTemplates(); track tpl.id) {
+            <div class="preset-item">
+              <div class="preset-header" (click)="toggleReceiptTemplatePanel(tpl.id)">
+                <div class="preset-header-main">
+                  <div class="asset-label">{{ tpl.label }}</div>
+                  <div class="preset-header-meta">{{ tpl.body }}</div>
+                </div>
+                <div class="preset-header-actions">
+                  @if (!tpl.system) {
+                    <button-label-component
+                      type="ghost"
+                      (click)="removeReceiptTemplate(tpl.id); $event.stopPropagation()"
+                    >
+                      Supprimer
+                    </button-label-component>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+    
+        <div class="panel-title">Créer un nouveau modèle</div>
+        <div class="preset-editor">
+          <div class="mail-row">
+            <form-text-component
+              [type]="'text'"
+              [icon]="null"
+              [placeholder]="'Créer mon modèle (nom)'"
+              [value]="newReceiptTemplateLabel()"
+              (valueChange)="newReceiptTemplateLabel.set($event)"
+              [width]="'100%'"
+            ></form-text-component>
+          </div>
+    
+          <div class="mail-row">
+            <form-textarea
+              [rows]="4"
+              [value]="newReceiptTemplateBody()"
+              (valueChange)="newReceiptTemplateBody.set($event)"
+              variant="light"
+              placeholder="Texte principal du modèle"
+            ></form-textarea>
+          </div>
+    
+          <div class="mail-row">
+            <form-textarea
+              [rows]="2"
+              [value]="newReceiptTemplateFooter()"
+              (valueChange)="newReceiptTemplateFooter.set($event)"
+              variant="light"
+              placeholder="Pied de page / signature"
+            ></form-textarea>
+          </div>
+    
+          <div class="mail-actions">
+            <button-label-component type="primary" (click)="addReceiptTemplate()">Ajouter</button-label-component>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </section>
+</card>
+
+@if (textBlockPopupOpen()) {
+  <app-popup-shell [maxWidth]="'720px'" [zIndex]="2065" (dismiss)="cancelTextBlockEdit()">
+    <div popup-header>
+      <div class="panel-title">Modifier un bloc de texte</div>
+    </div>
+
+    <div class="preset-editor">
+      <div class="mail-row">
+        <form-text-component
+          [type]="'text'"
+          [icon]="null"
+          [placeholder]="'Intitulé du bloc'"
+          [value]="textBlockDraftLabel()"
+          (valueChange)="textBlockDraftLabel.set($event)"
+          [width]="'100%'"
+        ></form-text-component>
+      </div>
+
+      <div class="mail-row">
+        <form-textarea
+          [rows]="4"
+          [value]="textBlockDraftContent()"
+          (valueChange)="textBlockDraftContent.set($event)"
+          variant="light"
+          placeholder="Ex: Adresse de l'association, informations légales…"
+        ></form-textarea>
+      </div>
+
+      <div class="mail-actions">
+        <button-label-component type="primary" (click)="saveTextBlock()">Enregistrer</button-label-component>
+        <button-label-component type="ghost" (click)="cancelTextBlockEdit()">Annuler</button-label-component>
+      </div>
+    </div>
+  </app-popup-shell>
+}
+
+@if (editingReceiptTemplateId()) {
+  <app-popup-shell [maxWidth]="'760px'" [zIndex]="2066" (dismiss)="cancelEditReceiptTemplate()">
+    <div popup-header>
+      <div class="panel-title">Modifier un modèle de reçu fiscal</div>
+    </div>
+
+    <div class="preset-editor">
+      <div class="mail-row">
+        <form-text-component
+          [type]="'text'"
+          [icon]="null"
+          [placeholder]="'Nom du modèle'"
+          [value]="receiptTemplateLabel()"
+          (valueChange)="receiptTemplateLabel.set($event)"
+          [width]="'100%'"
+        ></form-text-component>
+      </div>
+
+      <div class="mail-row">
+        <form-textarea
+          [rows]="4"
+          [value]="receiptTemplateBody()"
+          (valueChange)="receiptTemplateBody.set($event)"
+          variant="light"
+          placeholder="Texte du reçu fiscal"
+        ></form-textarea>
+      </div>
+
+      <div class="mail-row">
+        <form-textarea
+          [rows]="2"
+          [value]="receiptTemplateFooter()"
+          (valueChange)="receiptTemplateFooter.set($event)"
+          variant="light"
+          placeholder="Pied de page / signature"
+        ></form-textarea>
+      </div>
+
+      <div class="mail-actions">
+        <button-label-component type="primary" (click)="saveReceiptTemplate()">Enregistrer</button-label-component>
+        <button-label-component type="ghost" (click)="cancelEditReceiptTemplate()">Annuler</button-label-component>
+      </div>
+    </div>
+  </app-popup-shell>
+}
 

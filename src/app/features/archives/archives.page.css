@@ -1,0 +1,42 @@
+.archives-wrap {
+  padding: 14px 18px 20px;
+}
+
+.archives-empty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text-secondary);
+  padding: 18px;
+  text-align: center;
+}
+
+.archives-table {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.archives-head,
+.archives-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr 1.2fr;
+  gap: 12px;
+  padding: 12px 14px;
+  align-items: center;
+}
+
+.archives-head {
+  background: var(--bg-subtle);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+
+.archives-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.archives-row:last-child {
+  border-bottom: 0;
+}

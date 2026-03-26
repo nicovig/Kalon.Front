@@ -178,6 +178,13 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   );
 
   protected readonly selectedcontactsForStep3Count = computed(() => this.selectedcontactsForPreview().length);
+  protected readonly selectedcontactsWithoutEmail = computed(() =>
+    this.selectedcontactsForPreview().filter((c) => !String(c.email ?? '').trim())
+  );
+  protected readonly paperLettersCount = computed(() => this.selectedcontactsWithoutEmail().length);
+  protected readonly emailDispatchCount = computed(() =>
+    Math.max(0, this.selectedcontactsForStep3Count() - this.paperLettersCount())
+  );
   protected readonly afterSendCount = computed(() =>
     Math.max(0, 300 - this.selectedcontactsForStep3Count())
   );
@@ -546,6 +553,94 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
       spinner.style.display = 'none';
       btn.disabled = false;
     }
+  }
+
+  protected sendEmailsNow(): void {
+    const count = this.emailDispatchCount();
+    if (!count) return;
+    window.alert(`Simulation d'envoi: ${count} email(s) vont etre envoyes.`);
+  }
+
+  protected printPaperLetters(): void {
+    const recipients = this.selectedcontactsWithoutEmail();
+    if (!recipients.length) return;
+    const logo = this.selectedImageDataUrl();
+    const signature = this.selectedFooterTextBlock();
+    const subject = this.mailSubject;
+    const body = this.mailBody;
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const letters = recipients
+      .map((c) => {
+        const recipientName = this.escapeHtml(contactDisplayName(c));
+        const recipientAddress = this.escapeHtml(this.postalAddressOf(c));
+        const renderedBody = this.applyContactTokens(body, c);
+        const renderedSignature = this.escapeHtml(this.applyContactTokens(signature, c));
+        const renderedSubject = this.escapeHtml(this.applyContactTokens(subject, c));
+        const logoHtml = logo ? `<img src="${this.escapeHtml(logo)}" alt="Logo" class="logo" />` : '';
+        return `
+          <section class="letter">
+            <div class="head">
+              <div class="sender">${logoHtml}<div class="sender-name">${renderedSignature}</div></div>
+              <div class="recipient"><div>${recipientName}</div><div>${recipientAddress}</div></div>
+            </div>
+            <div class="subject">Objet : ${renderedSubject}</div>
+            <div class="body">${renderedBody}</div>
+            <div class="sign">${renderedSignature}</div>
+          </section>
+        `;
+      })
+      .join('');
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Lettres papier - Relances</title>
+          <style>
+            body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fff;color:#222}
+            .letter{padding:32px 40px;min-height:100vh;box-sizing:border-box;page-break-after:always}
+            .head{display:flex;justify-content:space-between;align-items:flex-start}
+            .sender{max-width:45%}
+            .recipient{max-width:45%;text-align:right;white-space:pre-line}
+            .logo{max-width:140px;height:auto;display:block;margin-bottom:8px}
+            .subject{text-align:center;margin:26px 0 20px;font-weight:700}
+            .body{line-height:1.6}
+            .sign{margin-top:34px}
+          </style>
+        </head>
+        <body>${letters}</body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  private postalAddressOf(c: IContact): string {
+    const street = c.address?.street ?? '';
+    const postalCode = c.address?.postalCode ?? '';
+    const city = c.address?.city ?? '';
+    const country = c.address?.country ?? '';
+    return [street, `${postalCode} ${city}`.trim(), country].filter(Boolean).join('\n');
+  }
+
+  private applyContactTokens(template: string, c: IContact): string {
+    const firstname = c.firstname?.trim() || 'Madame, Monsieur';
+    const lastname = c.lastname?.trim() || '';
+    return String(template ?? '')
+      .replace(/\{\{prenom\}\}/g, firstname)
+      .replace(/\{\{nom\}\}/g, lastname)
+      .replace(/\{\{nom_association\}\}/g, 'votre association');
   }
 
   private resolveTone(label: string): ReminderTemplateTone {

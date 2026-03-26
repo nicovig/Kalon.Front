@@ -1,0 +1,26 @@
+<topbar title="Archives" subtitle="Historique des envois de reçus fiscaux"></topbar>
+
+<section class="archives-wrap">
+  @if (!receiptArchives().length) {
+    <div class="archives-empty">Aucun reçu archivé pour le moment.</div>
+  } @else {
+    <div class="archives-table">
+      <div class="archives-head">
+        <span>Date d'envoi</span>
+        <span>Profil</span>
+        <span>Type</span>
+        <span>Canal</span>
+        <span>Modèle</span>
+      </div>
+      @for (item of receiptArchives(); track item.id) {
+        <div class="archives-row">
+          <span>{{ formatDate(item.sentAt) }}</span>
+          <span>{{ item.contactName }}</span>
+          <span>{{ kindLabel(item.documentKind) }}</span>
+          <span>{{ channelLabel(item.channel) }}</span>
+          <span>{{ item.templateTitle }}</span>
+        </div>
+      }
+    </div>
+  }
+</section>

@@ -120,7 +120,6 @@
   gap: 8px;
   max-height: 280px;
   overflow: auto;
-  padding-right: 2px;
 }
 
 .asset-item {
@@ -221,11 +220,12 @@
 .preset-header {
   padding: 10px 12px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   cursor: pointer;
   transition: background-color 0.15s ease;
+  min-height: 56px;
 }
 
 .preset-header:hover {
@@ -242,8 +242,8 @@
   opacity: 0.95;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
 }
 
@@ -259,16 +259,12 @@
   width: 100%;
 }
 
-.preset-editor--new {
-  margin-top: 6px;
-}
-
 .preset-editor .mail-row {
   width: 100%;
 }
 
 .preset-editor .mail-row + .mail-row {
-  margin-top: 12px;
+  padding-top: 6px;
 }
 
 .preset-editor form-text-component {

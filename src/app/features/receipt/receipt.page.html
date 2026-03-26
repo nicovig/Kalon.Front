@@ -53,12 +53,6 @@
           <span class="step-index">3</span>
           <span class="step-label">Aperçu et envoi</span>
         </button-label-component>
-        @if (activeStep === 3) {
-          <button-label-component type="send" [disabled]="selectedcontactsForStep3Count() === 0">
-            <span class="step-index">{{ selectedcontactsForStep3Count() }}</span>
-            <span class="send-step-label">Envoyer à {{ selectedcontactsForStep3Count() }} profils 🧾</span>
-          </button-label-component>
-        }
       </div>
 
       <div class="rp-body">
@@ -68,23 +62,53 @@
               <div class="surface-icon">🗂️</div>
               <div>
                 <div class="surface-title">Choisissez un modèle</div>
-                <div class="surface-desc">Ces modèles sont personnalisables et seront injectés dans le PDF généré.</div>
+                <div class="surface-desc">Les modèles de reçu fiscal sont gérés dans Compte &gt; Gestion des mails.</div>
               </div>
             </div>
-            <div class="template-grid">
-              @for (tpl of templateOptions; track tpl.id) {
-                <button
-                  type="button"
-                  class="template-card"
-                  [class.template-card--active]="selectedTemplateId() === tpl.id"
-                  (click)="setTemplate(tpl.id)"
-                >
-                  <div class="template-emoji">{{ tpl.emoji }}</div>
-                  <div class="template-name">{{ tpl.title }}</div>
-                  <div class="template-desc">{{ tpl.description }}</div>
-                </button>
-              }
+            <div class="template-grid template-grid--kind">
+              <button
+                type="button"
+                class="template-card"
+                [class.template-card--active]="selectedDocumentKind() === 'fiscal_receipt'"
+                (click)="setDocumentKind('fiscal_receipt')"
+              >
+                <div class="template-emoji">🧾</div>
+                <div class="template-name">Reçu fiscal</div>
+                <div class="template-desc">Modèle personnalisable avec mentions obligatoires</div>
+              </button>
+              <button
+                type="button"
+                class="template-card"
+                [class.template-card--active]="selectedDocumentKind() === 'payment_certificate'"
+                (click)="setDocumentKind('payment_certificate')"
+              >
+                <div class="template-emoji">📄</div>
+                <div class="template-name">Attestation de paiement</div>
+                <div class="template-desc">Déclaration comptable simple, sans personnalisation avancée</div>
+              </button>
             </div>
+            @if (selectedDocumentKind() === 'fiscal_receipt') {
+              @if (hasFiscalTemplates()) {
+                <div class="template-grid">
+                  @for (tpl of templateOptions(); track tpl.id) {
+                    <button
+                      type="button"
+                      class="template-card"
+                      [class.template-card--active]="selectedTemplateId() === tpl.id"
+                      (click)="setTemplate(tpl.id)"
+                    >
+                      <div class="template-emoji">{{ tpl.emoji }}</div>
+                      <div class="template-name">{{ tpl.title }}</div>
+                      <div class="template-desc">{{ tpl.description }}</div>
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="template-empty">
+                  Aucun modèle de reçu fiscal disponible. Créez-en un dans Compte > Paramètres des reçus fiscaux.
+                </div>
+              }
+            }
           </div>
         }
 
@@ -102,39 +126,9 @@
               <form-textarea
                 [rows]="8"
                 [value]="receiptBody()"
-                (valueChange)="receiptBody.set($event)"
+                (valueChange)="selectedDocumentKind() === 'fiscal_receipt' ? receiptBody.set($event) : null"
                 variant="light"
-                [placeholder]="'Saisissez le texte principal du reçu fiscal...'"
-              ></form-textarea>
-            </div>
-            <div class="editor-block">
-              <div class="editor-label">Signature / pied de page</div>
-              <div class="editor-helpers">
-                <div class="helper-row">
-                  <div class="helper-label">Logo (URL)</div>
-                  <input
-                    class="helper-input"
-                    type="text"
-                    [ngModel]="associationLogoUrl()"
-                    (ngModelChange)="associationLogoUrl.set($event)"
-                    placeholder="https://.../logo.png"
-                  />
-                </div>
-                <div class="helper-row">
-                  <form-select-component
-                    [label]="'Signature'"
-                    [options]="signatureOptions()"
-                    [ngModel]="selectedReceiptSignatureId()"
-                    (ngModelChange)="onReceiptSignatureChange($event)"
-                  />
-                </div>
-              </div>
-              <form-textarea
-                [rows]="2"
-                [value]="receiptFooter()"
-                (valueChange)="receiptFooter.set($event)"
-                variant="light"
-                placeholder="Ex: Le trésorier de l'association"
+                [placeholder]="selectedDocumentKind() === 'fiscal_receipt' ? 'Saisissez le texte principal du reçu fiscal...' : 'Attestation comptable standard'"
               ></form-textarea>
             </div>
           </div>
@@ -159,9 +153,18 @@
               </div>
             </div>
             <div class="preview-body">
+              <p><strong>Type :</strong> {{ selectedDocumentKind() === 'fiscal_receipt' ? 'Reçu fiscal' : 'Attestation de paiement' }}</p>
               <p><strong>Modèle :</strong> {{ currentTemplateTitle() }}</p>
               <p><strong>Profil :</strong> {{ contactPreviewName() }}</p>
               <p><strong>Total dons :</strong> {{ contactPreviewAmount() }}</p>
+              <div class="required-box">
+                <div class="required-title">Mentions obligatoires (100% visibles)</div>
+                <ul>
+                  @for (mention of requiredMentions(); track mention) {
+                    <li>{{ mention }}</li>
+                  }
+                </ul>
+              </div>
               <hr />
               <p>{{ receiptBody() }}</p>
               @if (associationLogoUrl()) {
@@ -175,6 +178,14 @@
               }
               <p>{{ receiptFooter() }}</p>
             </div>
+          </div>
+          <div class="dispatch-actions">
+            <button-label-component type="primary" [disabled]="emailDispatchCount() === 0" (click)="sendEmailsNow()">
+              Envoyer {{ emailDispatchCount() }} email(s)
+            </button-label-component>
+            <button-label-component type="ghost" [disabled]="paperLettersCount() === 0" (click)="printPaperLetters()">
+              Imprimer {{ paperLettersCount() }} lettre(s) papier
+            </button-label-component>
           </div>
         }
       </div>

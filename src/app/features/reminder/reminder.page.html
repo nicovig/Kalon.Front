@@ -57,12 +57,6 @@
           <span class="step-index">3</span>
           <span class="step-label">Aperçu &amp; envoi</span>
         </button-label-component>
-          <button-label-component *ngIf="activeStep === 3" type="send" id="send-btn" [disabled]="selectedcontactsForStep3Count() === 0">
-          <span class="step-index" id="send-count">{{ selectedcontactsForStep3Count() }}</span>
-          <span class="send-step-label"
-            >Envoyer à <span id="send-count-2">{{ selectedcontactsForStep3Count() }}</span> profils 💌</span
-          >
-        </button-label-component>
       </div>
 
       <div class="rp-body">
@@ -159,32 +153,13 @@
           </div>
         </div>
         </div>
-
-        <div class="send-recap" *ngIf="activeStep === 3">
-          <div class="recap-stat">
-          <div class="recap-val">{{ selectedcontactsForStep3Count() }}</div>
-            <div class="recap-lbl">destinataires</div>
-          </div>
-          <div class="recap-sep"></div>
-          <div class="recap-stat">
-          <div class="recap-val">300</div>
-            <div class="recap-lbl">mails restants</div>
-          </div>
-          <div class="recap-sep"></div>
-          <div class="recap-stat">
-          <div
-            class="recap-val"
-            style="color: var(--mint-dk)"
-          >
-            {{ afterSendCount() }}
-          </div>
-            <div class="recap-lbl">après envoi</div>
-          </div>
-          <div class="recap-sep"></div>
-          <div class="recap-stat">
-            <div class="recap-val" style="font-size: 15px; color: var(--ink-70)">Maintenant</div>
-            <div class="recap-lbl">planification</div>
-          </div>
+        <div class="dispatch-actions" *ngIf="activeStep === 3">
+          <button-label-component type="primary" [disabled]="emailDispatchCount() === 0" (click)="sendEmailsNow()">
+            Envoyer {{ emailDispatchCount() }} email(s)
+          </button-label-component>
+          <button-label-component type="ghost" [disabled]="paperLettersCount() === 0" (click)="printPaperLetters()">
+            Imprimer {{ paperLettersCount() }} lettre(s) papier
+          </button-label-component>
         </div>
       </div>
     </div>

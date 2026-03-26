@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -14,6 +14,9 @@ import {
   RecipientSelectorComponent
 } from '../../layout/recipient-selector/recipient-selector.component';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
+import { AccountMailAssetsStore } from '../account/account-mail-assets.store';
+import { DonationStoreService } from '../donation/donation.store';
+import { ReceiptArchiveStore } from './receipt-archive.store';
 
 @Component({
   selector: 'receipt-page',
@@ -31,11 +34,16 @@ import { ContactSettingsStore } from '../contact/settings/contact-settings.store
     RecipientSelectorComponent
   ]
 })
-export class ReceiptPageComponent {
+export class ReceiptPageComponent implements OnInit {
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly accountMailAssetsStore = inject(AccountMailAssetsStore);
+  private readonly donationStore = inject(DonationStoreService);
+  private readonly receiptArchiveStore = inject(ReceiptArchiveStore);
 
-  protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
+  protected readonly contactsCount = computed(() =>
+    this.contactStore.contacts().filter((c) => this.isEligibleForReceipt(c)).length
+  );
   protected readonly itemsPerPage = 15;
 
   protected readonly quickFilter = signal<QuickFilter>('all');
@@ -53,7 +61,8 @@ export class ReceiptPageComponent {
   protected readonly previewcontactId = signal<string | null>(null);
 
   protected activeStep: 1 | 2 | 3 = 1;
-  protected selectedTemplateId = signal<'standard' | 'impact' | 'legacy'>('standard');
+  protected readonly selectedDocumentKind = signal<'fiscal_receipt' | 'payment_certificate'>('fiscal_receipt');
+  protected readonly selectedTemplateId = signal('');
   protected receiptBody = signal(
     'Nous vous remercions chaleureusement pour votre don. Ce reçu fiscal certifie votre contribution et vous permet de bénéficier des avantages fiscaux en vigueur.'
   );
@@ -91,26 +100,44 @@ export class ReceiptPageComponent {
     }
   }
 
-  protected readonly templateOptions = [
-    {
-      id: 'standard' as const,
-      emoji: '🧾',
-      title: 'Modèle standard',
-      description: 'Format sobre pour un envoi classique.'
-    },
-    {
-      id: 'impact' as const,
-      emoji: '🌱',
-      title: 'Modèle impact',
-      description: "Met en avant l'utilité du don et la mission."
-    },
-    {
-      id: 'legacy' as const,
-      emoji: '🏛️',
-      title: 'Modèle institution',
-      description: 'Ton plus formel pour mécènes et partenaires.'
+  protected readonly templateOptions = computed(() =>
+    this.accountMailAssetsStore.fiscalReceiptTemplates().map((tpl) => ({
+      id: tpl.id,
+      emoji:
+        tpl.label.toLowerCase().includes('sobre')
+          ? '🧾'
+          : tpl.label.toLowerCase().includes('déta')
+            ? '📚'
+            : '✨',
+      title: tpl.label,
+      description: 'Inclut les mentions obligatoires du reçu fiscal.'
+    }))
+  );
+
+  protected readonly hasFiscalTemplates = computed(() => this.templateOptions().length > 0);
+
+  protected readonly requiredMentions = computed(() => {
+    if (this.selectedDocumentKind() === 'payment_certificate') {
+      return [
+        "Identité de l'association",
+        'Identité du payeur',
+        'Date de paiement',
+        'Montant payé'
+      ];
     }
-  ];
+    const selected = this.accountMailAssetsStore
+      .fiscalReceiptTemplates()
+      .find((tpl) => tpl.id === this.selectedTemplateId());
+    return selected?.requiredMentions ?? [];
+  });
+
+  ngOnInit(): void {
+    this.ensureSelectedFiscalTemplate();
+  }
+
+  private readonly eligiblecontactsForReceipt = computed(() =>
+    this.contactStore.contacts().filter((c) => this.isEligibleForReceipt(c))
+  );
 
   protected readonly filteredcontacts = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -121,7 +148,7 @@ export class ReceiptPageComponent {
     const donationCountMin = this.appliedDonationCountMin();
     const departmentCodes = this.appliedDepartmentCodes();
     const horsFrance = this.appliedHorsFrance();
-    const all = this.contactStore.contacts();
+    const all = this.eligiblecontactsForReceipt();
 
     return all.filter((d) => {
       const status = this.statusOf(d);
@@ -208,14 +235,41 @@ export class ReceiptPageComponent {
   );
 
   protected readonly selectedcontactsForStep3Count = computed(() => this.selectedcontactsForPreview().length);
+  protected readonly selectedcontactsWithoutEmail = computed(() =>
+    this.selectedcontactsForPreview().filter((c) => !String(c.email ?? '').trim())
+  );
+  protected readonly paperLettersCount = computed(() => this.selectedcontactsWithoutEmail().length);
+  protected readonly emailDispatchCount = computed(() =>
+    Math.max(0, this.selectedcontactsForStep3Count() - this.paperLettersCount())
+  );
 
   protected goToStep(step: 1 | 2 | 3): void {
     this.activeStep = step;
     if (step === 3) this.syncPreviewIfNeeded();
   }
 
-  protected setTemplate(id: 'standard' | 'impact' | 'legacy'): void {
+  protected setTemplate(id: string): void {
     this.selectedTemplateId.set(id);
+    const tpl = this.accountMailAssetsStore.fiscalReceiptTemplates().find((x) => x.id === id);
+    if (!tpl) return;
+    this.receiptBody.set(tpl.body);
+    this.receiptFooter.set(tpl.footer);
+  }
+
+  protected setDocumentKind(kind: 'fiscal_receipt' | 'payment_certificate'): void {
+    this.selectedDocumentKind.set(kind);
+    if (kind === 'payment_certificate') {
+      this.receiptBody.set(
+        'Cette attestation confirme la réception du paiement de {{montant_don}} effectué le {{date_don}} au profit de {{nom_association}}.'
+      );
+      this.receiptFooter.set("Service comptable de {{nom_association}}");
+      return;
+    }
+    this.ensureSelectedFiscalTemplate();
+    const tpl = this.accountMailAssetsStore.fiscalReceiptTemplates().find((x) => x.id === this.selectedTemplateId());
+    if (!tpl) return;
+    this.receiptBody.set(tpl.body);
+    this.receiptFooter.set(tpl.footer);
   }
 
   protected setQuickFilter(v: QuickFilter): void {
@@ -312,7 +366,185 @@ export class ReceiptPageComponent {
   }
 
   protected currentTemplateTitle(): string {
-    return this.templateOptions.find((x) => x.id === this.selectedTemplateId())?.title ?? 'Modèle';
+    if (this.selectedDocumentKind() === 'payment_certificate') return 'Attestation de paiement';
+    return this.templateOptions().find((x) => x.id === this.selectedTemplateId())?.title ?? 'Modèle';
+  }
+
+  protected sendEmailsNow(): void {
+    const recipients = this.selectedcontactsForPreview().filter((c) => String(c.email ?? '').trim().length > 0);
+    if (!recipients.length) return;
+    this.receiptArchiveStore.appendBatch(
+      recipients.map((c) => ({ id: c.id, name: contactDisplayName(c) })),
+      'email',
+      this.selectedDocumentKind(),
+      this.currentTemplateTitle()
+    );
+    window.alert(`Simulation d'envoi: ${recipients.length} email(s) vont etre envoyes.`);
+  }
+
+  protected printPaperLetters(): void {
+    const recipients = this.selectedcontactsWithoutEmail();
+    if (!recipients.length) return;
+    this.receiptArchiveStore.appendBatch(
+      recipients.map((c) => ({ id: c.id, name: contactDisplayName(c) })),
+      'paper',
+      this.selectedDocumentKind(),
+      this.currentTemplateTitle()
+    );
+    const logo = this.associationLogoUrl();
+    const subject =
+      this.selectedDocumentKind() === 'fiscal_receipt'
+        ? `Recu fiscal - ${this.currentTemplateTitle()}`
+        : 'Attestation de paiement';
+    const body = this.receiptBody();
+    const footer = this.receiptFooter();
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const letters = recipients
+      .map((c) => {
+        const recipientName = this.escapeHtml(contactDisplayName(c));
+        const recipientAddress = this.escapeHtml(this.postalAddressOf(c));
+        const renderedBody = this.escapeHtml(this.applyContactTokens(body, c)).replace(/\n/g, '<br/>');
+        const renderedFooter = this.escapeHtml(this.applyContactTokens(footer, c));
+        const renderedSubject = this.escapeHtml(this.applyContactTokens(subject, c));
+        const logoHtml = logo ? `<img src="${this.escapeHtml(logo)}" alt="Logo" class="logo" />` : '';
+        return `
+          <section class="letter">
+            <div class="head">
+              <div class="sender">${logoHtml}<div class="sender-name">${renderedFooter}</div></div>
+              <div class="recipient"><div>${recipientName}</div><div>${recipientAddress}</div></div>
+            </div>
+            <div class="subject">Objet : ${renderedSubject}</div>
+            <div class="body">${renderedBody}</div>
+            <div class="sign">${renderedFooter}</div>
+          </section>
+        `;
+      })
+      .join('');
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Lettres papier - Recus</title>
+          <style>
+            body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fff;color:#222}
+            .letter{padding:32px 40px;min-height:100vh;box-sizing:border-box;page-break-after:always}
+            .head{display:flex;justify-content:space-between;align-items:flex-start}
+            .sender{max-width:45%}
+            .recipient{max-width:45%;text-align:right;white-space:pre-line}
+            .logo{max-width:140px;height:auto;display:block;margin-bottom:8px}
+            .subject{text-align:center;margin:26px 0 20px;font-weight:700}
+            .body{line-height:1.6}
+            .sign{margin-top:34px}
+          </style>
+        </head>
+        <body>${letters}</body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  private postalAddressOf(c: IContact): string {
+    const street = c.address?.street ?? '';
+    const postalCode = c.address?.postalCode ?? '';
+    const city = c.address?.city ?? '';
+    const country = c.address?.country ?? '';
+    return [street, `${postalCode} ${city}`.trim(), country].filter(Boolean).join('\n');
+  }
+
+  private applyContactTokens(template: string, c: IContact): string {
+    const firstname = c.firstname?.trim() || 'Madame, Monsieur';
+    const lastname = c.lastname?.trim() || '';
+    return String(template ?? '')
+      .replace(/\{\{prenom\}\}/g, firstname)
+      .replace(/\{\{nom\}\}/g, lastname)
+      .replace(/\{\{nom_association\}\}/g, 'votre association');
+  }
+
+  private isEligibleForReceipt(contact: IContact): boolean {
+    if (contact.statut === 'out') return false;
+    const donations = this.donationStore
+      .donations()
+      .filter((d) => d.contactId === contact.id)
+      .map((d) => new Date(d.date).getTime())
+      .filter((ts) => !Number.isNaN(ts))
+      .sort((a, b) => b - a);
+    if (!donations.length) return false;
+
+    const frequency = contact.preferredFrequencySendingReceipt ?? 'yearly';
+    const now = new Date();
+
+    if (frequency === 'instantly') {
+      const latestDonationAt = donations[0];
+      const lastSent = this.receiptArchiveStore.lastSentAt(contact.id, 'fiscal_receipt');
+      return !lastSent || latestDonationAt > lastSent;
+    }
+
+    const bounds = this.currentPeriodBounds(now, frequency);
+    const nowMs = now.getTime();
+    const hasDonationInPeriod = donations.some((ts) => ts >= bounds.start && ts <= nowMs);
+    if (!hasDonationInPeriod) return false;
+    return !this.receiptArchiveStore.hasSentInPeriod(contact.id, 'fiscal_receipt', bounds.start, nowMs);
+  }
+
+  private currentPeriodBounds(
+    now: Date,
+    frequency: 'monthly' | 'quarterly' | 'semesterly' | 'yearly'
+  ): { start: number; end: number } {
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    if (frequency === 'monthly') {
+      const start = new Date(year, month, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
+      return { start, end };
+    }
+
+    if (frequency === 'quarterly') {
+      const quarterStartMonth = Math.floor(month / 3) * 3;
+      const start = new Date(year, quarterStartMonth, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(year, quarterStartMonth + 3, 0, 23, 59, 59, 999).getTime();
+      return { start, end };
+    }
+
+    if (frequency === 'semesterly') {
+      const semesterStartMonth = month < 6 ? 0 : 6;
+      const start = new Date(year, semesterStartMonth, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(year, semesterStartMonth + 6, 0, 23, 59, 59, 999).getTime();
+      return { start, end };
+    }
+
+    const start = new Date(year, 0, 1, 0, 0, 0, 0).getTime();
+    const end = new Date(year, 12, 0, 23, 59, 59, 999).getTime();
+    return { start, end };
+  }
+
+  private ensureSelectedFiscalTemplate(): void {
+    const templates = this.accountMailAssetsStore.fiscalReceiptTemplates();
+    if (!templates.length) {
+      this.selectedTemplateId.set('');
+      return;
+    }
+    const selectedId = this.selectedTemplateId();
+    const existing = templates.find((x) => x.id === selectedId);
+    const chosen = existing ?? templates[0];
+    this.selectedTemplateId.set(chosen.id);
+    if (this.selectedDocumentKind() === 'fiscal_receipt') {
+      this.receiptBody.set(chosen.body);
+      this.receiptFooter.set(chosen.footer);
+    }
   }
 
   private syncPreviewIfNeeded(): void {

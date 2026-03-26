@@ -24,12 +24,23 @@ export type MailDocumentAsset = {
   addedAt: number;
 };
 
+export type FiscalReceiptTemplate = {
+  id: string;
+  label: string;
+  body: string;
+  footer: string;
+  requiredMentions: string[];
+  system: boolean;
+  addedAt: number;
+};
+
 const STORAGE_KEY = 'kalon.account.mail.assets.v1';
 
 type StoredMailAssets = {
   textBlocks: MailTextBlock[];
   images: MailImageAsset[];
   documents: MailDocumentAsset[];
+  fiscalReceiptTemplates: FiscalReceiptTemplate[];
 };
 
 const DEFAULT_TEXT_BLOCKS: MailTextBlock[] = [
@@ -43,15 +54,59 @@ const DEFAULT_TEXT_BLOCKS: MailTextBlock[] = [
   }
 ];
 
+const DEFAULT_RECEIPT_REQUIRED_MENTIONS = [
+  "Identité de l'association bénéficiaire",
+  'Coordonnées du donateur',
+  'Date et nature du don',
+  'Montant du don (ou valorisation)',
+  'Référence fiscale / article applicable'
+];
+
+const DEFAULT_FISCAL_RECEIPT_TEMPLATES: FiscalReceiptTemplate[] = [
+  {
+    id: 'receipt-sobre',
+    label: 'Sobre',
+    body:
+      "Nous certifions que {{prenom}} {{nom}} a effectué un don de {{montant_don}} le {{date_don}} au profit de {{nom_association}}.",
+    footer: "L'équipe de {{nom_association}}",
+    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+    system: true,
+    addedAt: 0
+  },
+  {
+    id: 'receipt-detaille',
+    label: 'Détaillé',
+    body:
+      'Ce reçu fiscal atteste la réception du don de {{montant_don}} réalisé le {{date_don}} par {{prenom}} {{nom}}. ' +
+      "{{nom_association}} confirme l'éligibilité fiscale de ce versement selon la réglementation en vigueur.",
+    footer: 'Le bureau de {{nom_association}}',
+    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+    system: true,
+    addedAt: 0
+  },
+  {
+    id: 'receipt-personnalise',
+    label: 'Personnalisé',
+    body:
+      'Reçu fiscal personnalisé pour {{prenom}} {{nom}}. Don de {{montant_don}} enregistré le {{date_don}} pour {{nom_association}}.',
+    footer: "Le trésorier / la trésorière de {{nom_association}}",
+    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+    system: true,
+    addedAt: 0
+  }
+];
+
 @Injectable({ providedIn: 'root' })
 export class AccountMailAssetsStore {
   private readonly textBlocksWrite = signal<MailTextBlock[]>(this.readStored().textBlocks);
   private readonly imagesWrite = signal<MailImageAsset[]>(this.readStored().images);
   private readonly documentsWrite = signal<MailDocumentAsset[]>(this.readStored().documents);
+  private readonly fiscalReceiptTemplatesWrite = signal<FiscalReceiptTemplate[]>(this.readStored().fiscalReceiptTemplates);
 
   readonly textBlocks = this.textBlocksWrite.asReadonly();
   readonly images = this.imagesWrite.asReadonly();
   readonly documents = this.documentsWrite.asReadonly();
+  readonly fiscalReceiptTemplates = this.fiscalReceiptTemplatesWrite.asReadonly();
 
   upsertTextBlock(id: string | null, label: string, content: string): void {
     const l = label.trim();
@@ -97,12 +152,54 @@ export class AccountMailAssetsStore {
     this.persist();
   }
 
+  addFiscalReceiptTemplate(label: string, body: string, footer: string): void {
+    const l = label.trim();
+    const b = body.trim();
+    const f = footer.trim();
+    if (!l || !b || !f) return;
+    this.fiscalReceiptTemplatesWrite.set([
+      {
+        id: this.newId('receipt'),
+        label: l,
+        body: b,
+        footer: f,
+        requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+        system: false,
+        addedAt: Date.now()
+      },
+      ...this.fiscalReceiptTemplatesWrite()
+    ]);
+    this.persist();
+  }
+
+  updateFiscalReceiptTemplate(id: string, label: string, body: string, footer: string): void {
+    const l = label.trim();
+    const b = body.trim();
+    const f = footer.trim();
+    if (!id || !l || !b || !f) return;
+    this.fiscalReceiptTemplatesWrite.set(
+      this.fiscalReceiptTemplatesWrite().map((tpl) =>
+        tpl.id === id ? { ...tpl, label: l, body: b, footer: f } : tpl
+      )
+    );
+    this.persist();
+  }
+
+  removeFiscalReceiptTemplate(id: string): void {
+    if (!id) return;
+    this.fiscalReceiptTemplatesWrite.set(
+      this.fiscalReceiptTemplatesWrite().filter((tpl) => tpl.id !== id || tpl.system)
+    );
+    this.persist();
+  }
+
   private persist(): void {
     try {
       const data: StoredMailAssets = {
         textBlocks: this.textBlocksWrite(),
         images: this.imagesWrite(),
-        documents: this.documentsWrite()
+        documents: this.documentsWrite(),
+        fiscalReceiptTemplates: this.fiscalReceiptTemplatesWrite()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
@@ -112,7 +209,14 @@ export class AccountMailAssetsStore {
   private readStored(): StoredMailAssets {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { textBlocks: DEFAULT_TEXT_BLOCKS, images: [], documents: [] };
+      if (!raw) {
+        return {
+          textBlocks: DEFAULT_TEXT_BLOCKS,
+          images: [],
+          documents: [],
+          fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+        };
+      }
       const parsed = JSON.parse(raw) as Partial<StoredMailAssets>;
       return {
         textBlocks:
@@ -140,10 +244,30 @@ export class AccountMailAssetsStore {
               dataUrl: String(d?.dataUrl ?? ''),
               addedAt: typeof d?.addedAt === 'number' ? d.addedAt : 0
             }))
-          : []
+          : [],
+        fiscalReceiptTemplates:
+          Array.isArray(parsed.fiscalReceiptTemplates) && parsed.fiscalReceiptTemplates.length
+            ? (parsed.fiscalReceiptTemplates as any[]).map((tpl) => ({
+                id: String(tpl?.id ?? this.newId('receipt')),
+                label: String(tpl?.label ?? '').trim(),
+                body: String(tpl?.body ?? '').trim(),
+                footer: String(tpl?.footer ?? '').trim(),
+                requiredMentions:
+                  Array.isArray(tpl?.requiredMentions) && tpl.requiredMentions.length
+                    ? tpl.requiredMentions.map((m: unknown) => String(m))
+                    : DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+                system: Boolean(tpl?.system),
+                addedAt: typeof tpl?.addedAt === 'number' ? tpl.addedAt : 0
+              }))
+            : DEFAULT_FISCAL_RECEIPT_TEMPLATES
       };
     } catch {
-      return { textBlocks: DEFAULT_TEXT_BLOCKS, images: [], documents: [] };
+      return {
+        textBlocks: DEFAULT_TEXT_BLOCKS,
+        images: [],
+        documents: [],
+        fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+      };
     }
   }
 
