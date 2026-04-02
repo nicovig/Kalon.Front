@@ -23,15 +23,21 @@
 
       <form-text-component
         id="password"
+        name="password"
         type="password"
         autocomplete="current-password"
         placeholder="Mot de passe"
         [allowPasswordToggle]="true"
+        [(ngModel)]="password"
         width="100%"
       />
 
-      <button type="submit" class="login-button">
-        Me connecter
+      @if (errorMessage) {
+        <p class="login-error" role="alert">{{ errorMessage }}</p>
+      }
+
+      <button type="submit" class="login-button" [disabled]="submitting">
+        {{ submitting ? 'Connexion…' : 'Me connecter' }}
       </button>
     </form>
 

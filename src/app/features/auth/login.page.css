@@ -123,6 +123,20 @@
   box-shadow: 0 6px 20px rgba(255, 77, 125, 0.45);
 }
 
+.login-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(255, 77, 125, 0.2);
+}
+
+.login-error {
+  margin: 0;
+  font-size: 13px;
+  color: #b42318;
+  line-height: 1.35;
+}
+
 .login-footer {
   margin-top: 14px;
   font-size: 11.5px;
