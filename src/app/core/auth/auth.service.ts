@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, map, throwError } from 'rxjs';
-import { API_BASE_URL } from '../config/api.config';
+import { BehaviorSubject, Observable, catchError, delay, map, of, throwError } from 'rxjs';
+import { API_BASE_URL, AUTH_MOCK_ENABLED } from '../config/api.config';
 import { LoginResponseBody } from './auth-api.model';
 
 const AUTH_KEY = 'kalon.auth';
@@ -50,6 +50,9 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<AuthUser> {
+    if (AUTH_MOCK_ENABLED) {
+      return this.mockLogin(email, password);
+    }
     const url = `${API_BASE_URL.replace(/\/$/, '')}/api/auth/login`;
     return this.http.post<LoginResponseBody>(url, { email: email.trim(), password }).pipe(
       map((body) => {
@@ -95,6 +98,27 @@ export class AuthService {
   private persistSession(token: string, user: AuthUser): void {
     const payload: StoredSession = { token, user };
     localStorage.setItem(AUTH_KEY, JSON.stringify(payload));
+  }
+
+  private mockLogin(email: string, password: string): Observable<AuthUser> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = String(password ?? '').trim();
+    if (!normalizedEmail || !normalizedPassword) {
+      return throwError(() => ({ status: 401, error: { message: 'Invalid credentials.' } }));
+    }
+    const user: AuthUser = {
+      id: 1,
+      firstname: 'Marie',
+      lastname: 'Dupont',
+      email: normalizedEmail,
+      associationName: 'Asso Parents d eleves',
+      plan: 'basic'
+    };
+    const token = `mock-${Date.now()}`;
+    this.persistSession(token, user);
+    this.tokenValue = token;
+    this.currentUserSubject.next(user);
+    return of(user).pipe(delay(300));
   }
 
   private readFromStorage(): { user: AuthUser | null; token: string | null } {
