@@ -11,14 +11,16 @@ export interface IContact {
   jobTitle?: string;
   birthDate?: Date;
   gender?: 'male' | 'female' | 'other';
+  organizationId: string; // id of the organization (Kalon client) this contact belongs to
   address?: IContactAddress;
   enterprise?: IContactEnterprise;
   creationDate: Date;
-  statut: ContactStatus;
+  status: ContactStatus;
   totalDonation: number;
   lastDonation?: Date;
   donationCount: number;
   preferredFrequencySendingReceipt?: 'instantly' | 'monthly' | 'quarterly' | 'semesterly' | 'yearly';
+  notes?: string;
 }
 
 export interface IContactAddress {
@@ -28,16 +30,24 @@ export interface IContactAddress {
   country: string;
   phone?: string;
   email?: string;
-  contactName?: string;
-  contactPhone?: string;
 }
 
-export type EnterpriseFiscalStatus = 'general_interest_66';
+// export type OrganizationLegalXXXX =
+//   | 'general_interest_66'   // intérêt général — réduction IS 60%
+//   | 'public_utility_66'     // utilité publique — réduction IS 60%
+//   | 'aid_organization_75';  // aide aux personnes — réduction IS 60% (taux particulier differ)
+
+ export type EnterpriseSupportKind =
+  | 'patronage'
+  | 'sponsoring'
+  | 'donation'
+  | 'other';
 
 export interface IContactEnterprise {
   name: string;
   siret: string;
-  fiscalStatus: EnterpriseFiscalStatus;
+  legalForm: string;
+  supportKind: EnterpriseSupportKind;
   address: IContactAddress;
   contactFirstname?: string;
   contactLastname?: string;

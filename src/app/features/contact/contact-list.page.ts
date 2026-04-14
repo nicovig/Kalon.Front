@@ -38,7 +38,7 @@ export class ContactListPageComponent {
     const now = new Date();
     return this.contactStore.contacts().map((d) => ({
       ...d,
-      statut: this.contactSettings.statusOf(d, now)
+      status: this.contactSettings.statusOf(d, now)
     }));
   });
 
@@ -69,7 +69,7 @@ export class ContactListPageComponent {
     { key: 'email', header: 'Email', searchable: true },
     { key: 'phone', header: 'Téléphone', searchable: true },
     { key: 'address.street', header: 'Adresse', searchable: true },
-    { key: 'statut', header: 'Statut', type: 'badge' },
+    { key: 'status', header: 'Statut', type: 'badge' },
     { key: 'totalDonation', header: 'Total dons', type: 'number', align: 'right' }
   ];
 }

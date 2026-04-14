@@ -32,7 +32,7 @@ export class ContactSettingsStore {
   }
 
   statusOf(contact: IContact, now: Date = new Date()): ContactStatus {
-    if (contact.statut === 'out') {
+    if (contact.status === 'out') {
       return 'out';
     }
     const rules = this.settingsWrite();

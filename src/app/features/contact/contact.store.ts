@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { ContactKind, IContact, IContactAddress, IContactEnterprise } from '../../core/models/contact.model';
 import { ContactSettingsStore } from './settings/contact-settings.store';
+import { UserStore } from '../../core/auth/user.store';
 
 export interface NewContactInputIndividual {
   kind: 'donor' | 'member' | 'helper';
@@ -31,6 +32,7 @@ export type NewContactInput = NewContactInputIndividual | NewContactInputCompany
 export class ContactStoreService {
   private readonly contactsSignal = signal<IContact[]>([]);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly userStore = inject(UserStore);
 
   contacts(): IContact[] {
     return this.contactsSignal();
@@ -66,14 +68,15 @@ export class ContactStoreService {
     const baseData = this.toContactFromInput(input, {
       id: this.newId(),
       creationDate: now,
-      statut: 'new',
+      status: 'new',
       totalDonation: 0,
       lastDonation: undefined,
-      donationCount: 0
+      donationCount: 0,
+      organizationId: this.userStore.organizationId
     });
     const contact = this.toContactFromInput(input, {
       ...baseData,
-      statut: this.contactSettings.statusOf(baseData, now)
+      status: this.contactSettings.statusOf(baseData, now)
     });
     this.contactsSignal.set([contact, ...this.contactsSignal()]);
     return contact;
@@ -87,14 +90,15 @@ export class ContactStoreService {
     const updated = this.toContactFromInput(input, {
       id: existing.id,
       creationDate: existing.creationDate,
-      statut: input.out ? 'out' : 'new',
+      status: input.out ? 'out' : 'new',
       totalDonation: existing.totalDonation,
       lastDonation: existing.lastDonation,
-      donationCount: existing.donationCount
+      donationCount: existing.donationCount,
+      organizationId: existing.organizationId
     });
     const updatedWithStatus = {
       ...updated,
-      statut: this.contactSettings.statusOf(updated)
+      status: this.contactSettings.statusOf(updated)
     };
     this.contactsSignal.update((list) => list.map((d) => (d.id === id ? updatedWithStatus : d)));
     return updatedWithStatus;
@@ -116,7 +120,7 @@ export class ContactStoreService {
         };
         return {
           ...updated,
-          statut: this.contactSettings.statusOf(updated)
+          status: this.contactSettings.statusOf(updated)
         };
       })
     );
@@ -127,7 +131,7 @@ export class ContactStoreService {
     this.contactsSignal.update((list) =>
       list.map((d) => ({
         ...d,
-        statut: this.contactSettings.statusOf(d, now)
+        status: this.contactSettings.statusOf(d, now)
       }))
     );
   }
@@ -137,10 +141,11 @@ export class ContactStoreService {
     meta: {
       id: string;
       creationDate: Date;
-      statut: IContact['statut'];
+      status: IContact['status'];
       totalDonation: number;
       lastDonation?: Date;
       donationCount: number;
+      organizationId: string;
     }
   ): IContact {
     if (input.kind !== 'company') {
@@ -149,6 +154,7 @@ export class ContactStoreService {
         kind: input.kind satisfies ContactKind,
         jobTitle: input.jobTitle?.trim() || undefined,
         birthDate: input.birthDate,
+        organizationId: meta.organizationId,
         gender: input.gender,
         preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
         firstname: input.firstname.trim(),
@@ -157,7 +163,7 @@ export class ContactStoreService {
         phone: input.phone?.trim() || undefined,
         address: this.normalizeAddress(input.address),
         enterprise: undefined,
-        statut: input.out ? 'out' : meta.statut
+        status: input.out ? 'out' : meta.status
       };
     }
 
@@ -166,7 +172,8 @@ export class ContactStoreService {
       name: e.name.trim(),
       siret: e.siret.trim(),
       address: this.normalizeAddress(e.address),
-      fiscalStatus: e.fiscalStatus,
+      legalForm: e.legalForm,
+      supportKind: e.supportKind,
       contactFirstname: e.contactFirstname?.trim() || undefined,
       contactLastname: e.contactLastname?.trim() || undefined,
       contactEmail: e.contactEmail?.trim() || undefined,
@@ -185,7 +192,7 @@ export class ContactStoreService {
       address: undefined,
       enterprise,
       preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
-      statut: input.out ? 'out' : meta.statut
+      status: input.out ? 'out' : meta.status
     };
   }
 
@@ -196,9 +203,7 @@ export class ContactStoreService {
       city: a.city.trim(),
       country: a.country.trim(),
       phone: a.phone?.trim() || undefined,
-      email: a.email?.trim() || undefined,
-      contactName: a.contactName?.trim() || undefined,
-      contactPhone: a.contactPhone?.trim() || undefined
+      email: a.email?.trim() || undefined
     };
   }
 

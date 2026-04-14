@@ -474,7 +474,7 @@ export class ReceiptPageComponent implements OnInit {
   }
 
   private isEligibleForReceipt(contact: IContact): boolean {
-    if (contact.statut === 'out') return false;
+    if (contact.status === 'out') return false;
     const donations = this.donationStore
       .donations()
       .filter((d) => d.contactId === contact.id)

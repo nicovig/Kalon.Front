@@ -2,6 +2,8 @@ export type ImportFieldKey =
   | 'skip'
   | 'enterpriseName'
   | 'siret'
+  | 'legalForm'
+  | 'supportKind'
   | 'contactFirstname'
   | 'contactLastname'
   | 'lastname'
@@ -23,6 +25,8 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'skip', label: '— Ignorer —' },
   { key: 'enterpriseName', label: 'Entreprise - Raison sociale' },
   { key: 'siret', label: 'Entreprise - SIRET' },
+  { key: 'legalForm', label: 'Entreprise - Forme juridique (SARL, SASU, ...)' },
+  { key: 'supportKind', label: 'Entreprise - Type de soutien (mecenat, sponsoring, ...)' },
   { key: 'contactLastname', label: 'Entreprise - Nom contact' },
   { key: 'contactFirstname', label: 'Entreprise - Prénom contact' },
   { key: 'lastname', label: 'Particulier - Nom' },

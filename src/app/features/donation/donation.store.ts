@@ -24,12 +24,16 @@ export class DonationStoreService {
     const display = contactDisplayName(contact);
     const donation: IDonation = {
       id: this.newId(),
+      organizationId: contact.organizationId,
       contactId: contact.id,
       amount,
       date,
       contactDisplayName: display,
       paymentMethod,
-      donationType
+      donationType,
+      isAnonymous: false,
+      receiptId: undefined,
+      notes: undefined
     };
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
     this.contactStore.recordDonation(contact.id, amount, date);
