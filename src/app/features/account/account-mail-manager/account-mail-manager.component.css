@@ -282,3 +282,46 @@
   justify-content: flex-start;
 }
 
+.text-block-role-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.text-block-role-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.text-block-role-btn {
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 2px solid var(--ink-10);
+  background: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink-70);
+}
+
+.text-block-role-btn--on {
+  border-color: var(--violet-md);
+  color: var(--violet);
+  background: rgba(119, 78, 202, 0.06);
+}
+
+.text-block-role-pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+  background: var(--ink-10);
+  color: var(--ink-70);
+}
+

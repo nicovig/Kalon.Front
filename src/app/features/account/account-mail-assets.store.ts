@@ -1,10 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 
+export type MailTextBlockRole = 'signature' | 'text';
+
 export type MailTextBlock = {
   id: string;
   label: string;
   content: string;
   addedAt: number;
+  role: MailTextBlockRole;
 };
 
 export type MailImageAsset = {
@@ -44,13 +47,26 @@ type StoredMailAssets = {
 };
 
 const DEFAULT_TEXT_BLOCKS: MailTextBlock[] = [
-  { id: 'team', label: "L'équipe de l'association", content: "L'équipe de {{nom_association}}", addedAt: 0 },
-  { id: 'president', label: 'Présidence', content: 'Le président / la présidente de {{nom_association}}', addedAt: 0 },
+  {
+    id: 'team',
+    label: "L'équipe de l'association",
+    content: "L'équipe de {{nom_association}}",
+    addedAt: 0,
+    role: 'signature'
+  },
+  {
+    id: 'president',
+    label: 'Présidence',
+    content: 'Le président / la présidente de {{nom_association}}',
+    addedAt: 0,
+    role: 'signature'
+  },
   {
     id: 'address',
     label: 'Adresse de l’association',
     content: '{{nom_association}} · 12 rue des Associations · 75000 Paris',
-    addedAt: 0
+    addedAt: 0,
+    role: 'text'
   }
 ];
 
@@ -108,15 +124,20 @@ export class AccountMailAssetsStore {
   readonly documents = this.documentsWrite.asReadonly();
   readonly fiscalReceiptTemplates = this.fiscalReceiptTemplatesWrite.asReadonly();
 
-  upsertTextBlock(id: string | null, label: string, content: string): void {
+  upsertTextBlock(id: string | null, label: string, content: string, role: MailTextBlockRole = 'text'): void {
     const l = label.trim();
     const c = content.trim();
     if (!l || !c) return;
     const list = this.textBlocksWrite();
     if (id) {
-      this.textBlocksWrite.set(list.map((b) => (b.id === id ? { ...b, label: l, content: c } : b)));
+      this.textBlocksWrite.set(
+        list.map((b) => (b.id === id ? { ...b, label: l, content: c, role } : b))
+      );
     } else {
-      this.textBlocksWrite.set([{ id: this.newId('txt'), label: l, content: c, addedAt: Date.now() }, ...list]);
+      this.textBlocksWrite.set([
+        { id: this.newId('txt'), label: l, content: c, addedAt: Date.now(), role },
+        ...list
+      ]);
     }
     this.persist();
   }
@@ -221,12 +242,25 @@ export class AccountMailAssetsStore {
       return {
         textBlocks:
           Array.isArray(parsed.textBlocks) && parsed.textBlocks.length
-            ? parsed.textBlocks.map((b: any) => ({
-                id: String(b?.id ?? this.newId('txt')),
-                label: String(b?.label ?? '').trim(),
-                content: String(b?.content ?? '').trim(),
-                addedAt: typeof b?.addedAt === 'number' ? b.addedAt : 0
-              }))
+            ? parsed.textBlocks.map((b: any) => {
+                const id = String(b?.id ?? this.newId('txt'));
+                const roleRaw = b?.role;
+                const role: MailTextBlockRole =
+                  roleRaw === 'signature'
+                    ? 'signature'
+                    : roleRaw === 'text'
+                      ? 'text'
+                      : id === 'team' || id === 'president'
+                        ? 'signature'
+                        : 'text';
+                return {
+                  id,
+                  label: String(b?.label ?? '').trim(),
+                  content: String(b?.content ?? '').trim(),
+                  addedAt: typeof b?.addedAt === 'number' ? b.addedAt : 0,
+                  role
+                };
+              })
             : DEFAULT_TEXT_BLOCKS,
         images: Array.isArray(parsed.images) ? (parsed.images as any[]).map((i) => ({
           id: String(i?.id ?? this.newId('img')),

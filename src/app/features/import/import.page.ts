@@ -91,19 +91,6 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly onboardingStep = signal<ImportOnboardingStep>('type');
 
-  protected readonly fieldOptionsForSelect = computed((): FormSelectOption[] => {
-    switch (this.importMode()) {
-      case 'contacts':
-        return IMPORT_FIELD_OPTIONS.map((o) => ({ value: o.key, label: o.label }));
-      case 'donations':
-        return DONATION_IMPORT_FIELD_OPTIONS.map((o) => ({ value: o.key, label: o.label }));
-      case 'combined':
-        return COMBINED_IMPORT_OPTIONS.map((o) => ({ value: o.key, label: o.label }));
-      default:
-        return [];
-    }
-  });
-
   protected readonly topbarSubtitle = computed(() => {
     switch (this.importMode()) {
       case 'contacts':
@@ -202,6 +189,73 @@ export class ImportPageComponent implements OnInit {
     return dup;
   });
 
+  protected readonly mappedFieldRows = computed(() => {
+    const b = this.bindings();
+    const order = this.orderedFieldKeysForMode();
+    const active = new Set(b.filter((x) => x !== 'skip'));
+    const rows: { fieldKey: string; columnIndex: number }[] = [];
+    for (const fieldKey of order) {
+      if (!active.has(fieldKey)) {
+        continue;
+      }
+      const columnIndex = b.findIndex((x) => x === fieldKey);
+      if (columnIndex >= 0) {
+        rows.push({ fieldKey, columnIndex });
+      }
+    }
+    if (this.importMode() === 'donations') {
+      const required: DonationImportFieldKey[] = ['donationDate', 'donationAmount', 'contactEmail'];
+      for (const rk of required) {
+        if (rows.some((r) => r.fieldKey === rk)) {
+          continue;
+        }
+        const columnIndex = b.findIndex((x) => x === rk);
+        rows.push({ fieldKey: rk, columnIndex });
+      }
+      rows.sort((a, b) => {
+        const pri = (k: string) => required.indexOf(k as DonationImportFieldKey);
+        const pa = pri(a.fieldKey);
+        const pb = pri(b.fieldKey);
+        if (pa >= 0 && pb >= 0) {
+          return pa - pb;
+        }
+        if (pa >= 0) {
+          return -1;
+        }
+        if (pb >= 0) {
+          return 1;
+        }
+        return 0;
+      });
+    }
+    return rows;
+  });
+
+  protected readonly ignoredColumnsList = computed(() => {
+    const h = this.headers();
+    const b = this.bindings();
+    const out: { index: number; header: string }[] = [];
+    for (let i = 0; i < h.length; i++) {
+      if (b[i] === 'skip') {
+        out.push({
+          index: i,
+          header: h[i]?.trim() ? h[i] : `(Colonne ${i + 1})`
+        });
+      }
+    }
+    return out;
+  });
+
+  protected readonly fileColumnSelectOptions = computed((): FormSelectOption[] => {
+    const h = this.headers();
+    const opts: FormSelectOption[] = [{ value: '', label: '— Aucune colonne —' }];
+    for (let i = 0; i < h.length; i++) {
+      const label = h[i]?.trim() ? h[i] : `(Colonne ${i + 1})`;
+      opts.push({ value: String(i), label });
+    }
+    return opts;
+  });
+
   protected readonly duplicateFieldSummaries = computed(() => {
     const b = this.bindings();
     const byKey = new Map<string, number[]>();
@@ -236,7 +290,7 @@ export class ImportPageComponent implements OnInit {
     );
   });
 
-  private labelForMappedField(key: string): string {
+  protected labelForMappedField(key: string): string {
     return (
       IMPORT_FIELD_OPTIONS.find((o) => o.key === key)?.label ??
       DONATION_IMPORT_FIELD_OPTIONS.find((o) => o.key === key)?.label ??
@@ -268,7 +322,7 @@ export class ImportPageComponent implements OnInit {
     }
     const hasAnyMappedField = this.bindings().some((b) => b !== 'skip');
     if (!hasAnyMappedField) {
-      return 'Sélectionnez au moins un champ "Dans Kalon" pour continuer';
+      return 'Associez au moins une colonne du fichier à un champ Kalon pour continuer';
     }
     if (!this.donationsMappingComplete()) {
       return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
@@ -321,22 +375,72 @@ export class ImportPageComponent implements OnInit {
     void this.loadFile(file);
   }
 
-  protected onBindingChange(index: number, value: string): void {
-    const next = [...this.bindings()];
-    next[index] = value;
+  protected onKalonFieldColumnChange(fieldKey: string, value: string): void {
+    const headers = this.headers();
+    let next = [...this.bindings()];
+    for (let i = 0; i < next.length; i++) {
+      if (next[i] === fieldKey) {
+        next[i] = 'skip';
+      }
+    }
+    if (value !== '') {
+      const idx = Number(value);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < headers.length) {
+        next[idx] = fieldKey;
+      }
+    }
+    next = this.normalizeBindingsOneColumnPerField(next);
     this.bindings.set(next);
   }
 
   protected reapplyGuess(): void {
     const headers = this.headers();
     const mode = this.importMode();
+    let raw: string[];
     if (mode === 'contacts') {
-      this.bindings.set(guessMappingForHeaders(headers));
+      raw = guessMappingForHeaders(headers);
     } else if (mode === 'donations') {
-      this.bindings.set(guessDonationMappingForHeaders(headers) as unknown as string[]);
+      raw = guessDonationMappingForHeaders(headers) as unknown as string[];
     } else {
-      this.bindings.set(guessCombinedMappingForHeaders(headers) as unknown as string[]);
+      raw = guessCombinedMappingForHeaders(headers) as unknown as string[];
     }
+    this.bindings.set(this.normalizeBindingsOneColumnPerField(raw));
+  }
+
+  private orderedFieldKeysForMode(): string[] {
+    switch (this.importMode()) {
+      case 'contacts':
+        return IMPORT_FIELD_OPTIONS.filter((o) => o.key !== 'skip').map((o) => o.key);
+      case 'donations':
+        return DONATION_IMPORT_FIELD_OPTIONS.filter((o) => o.key !== 'skip').map((o) => o.key);
+      case 'combined':
+        return COMBINED_IMPORT_OPTIONS.filter((o) => o.key !== 'skip').map((o) => o.key);
+      default:
+        return [];
+    }
+  }
+
+  private normalizeBindingsOneColumnPerField(bindings: string[]): string[] {
+    const next = [...bindings];
+    const keys = new Set(next.filter((b) => b !== 'skip'));
+    for (const key of keys) {
+      const indices: number[] = [];
+      next.forEach((b, i) => {
+        if (b === key) {
+          indices.push(i);
+        }
+      });
+      if (indices.length <= 1) {
+        continue;
+      }
+      const keep = Math.max(...indices);
+      for (const i of indices) {
+        if (i !== keep) {
+          next[i] = 'skip';
+        }
+      }
+    }
+    return next;
   }
 
   protected onIgnoredPopupDismiss(): void {
@@ -1071,13 +1175,15 @@ export class ImportPageComponent implements OnInit {
       this.rowCount.set(parsed.rows.length);
       this.headers.set(parsed.headers);
       const mode = this.importMode();
+      let raw: string[];
       if (mode === 'contacts') {
-        this.bindings.set(guessMappingForHeaders(parsed.headers));
+        raw = guessMappingForHeaders(parsed.headers);
       } else if (mode === 'donations') {
-        this.bindings.set(guessDonationMappingForHeaders(parsed.headers) as unknown as string[]);
+        raw = guessDonationMappingForHeaders(parsed.headers) as unknown as string[];
       } else {
-        this.bindings.set(guessCombinedMappingForHeaders(parsed.headers) as unknown as string[]);
+        raw = guessCombinedMappingForHeaders(parsed.headers) as unknown as string[];
       }
+      this.bindings.set(this.normalizeBindingsOneColumnPerField(raw));
       this.allRows.set(parsed.rows);
       this.sampleRows.set(parsed.rows.slice(0, 8));
     } catch {

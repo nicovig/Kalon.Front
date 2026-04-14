@@ -56,7 +56,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     phone: [''],
     jobTitle: [''],
     birthDate: [''],
-    gender: ['other'],
+    gender: [''],
     preferredFrequencySendingReceipt: ['instantly'],
     out: [false],
     address: this.fb.group({
@@ -138,7 +138,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       phone: d.phone ?? '',
       jobTitle: d.jobTitle ?? '',
       birthDate: d.birthDate ? this.dateToInputValue(d.birthDate) : '',
-      gender: d.gender ?? 'other',
+      gender: d.gender ?? '',
       preferredFrequencySendingReceipt: d.preferredFrequencySendingReceipt ?? 'instantly',
       out: d.status === 'out'
     });
@@ -194,7 +194,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       phone?: string;
       jobTitle: string;
       birthDate: string;
-      gender: 'male' | 'female' | 'other';
+      gender: 'male' | 'female' | 'other' | '';
       preferredFrequencySendingReceipt: IContact['preferredFrequencySendingReceipt'];
       out: boolean;
       address: {
@@ -434,4 +434,5 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     }
     return new Date(y, m - 1, d);
   }
+
 }

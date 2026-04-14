@@ -21,16 +21,29 @@ export class ContactSettingsComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly open = signal(false);
+  protected readonly loading = signal(false);
 
   protected readonly newForDays = signal(30);
   protected readonly toRemindAfterMonths = signal(12);
   protected readonly inactiveAfterMonths = signal(24);
 
   protected openModal(): void {
-    const s = this.settingsStore.settings();
-    this.newForDays.set(s.newForDays);
-    this.toRemindAfterMonths.set(s.toRemindAfterMonths);
-    this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+    this.loading.set(true);
+    this.settingsStore.loadFromApi().subscribe({
+      next: (s) => {
+        this.newForDays.set(s.newForDays);
+        this.toRemindAfterMonths.set(s.toRemindAfterMonths);
+        this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+        this.loading.set(false);
+      },
+      error: () => {
+        const s = this.settingsStore.settings();
+        this.newForDays.set(s.newForDays);
+        this.toRemindAfterMonths.set(s.toRemindAfterMonths);
+        this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+        this.loading.set(false);
+      }
+    });
     this.open.set(true);
   }
 
@@ -41,23 +54,40 @@ export class ContactSettingsComponent {
   protected save(): void {
     const toRemind = Math.max(1, Math.floor(this.toRemindAfterMonths()));
     const inactive = Math.max(toRemind + 1, Math.floor(this.inactiveAfterMonths()));
-    this.settingsStore.update({
+    this.loading.set(true);
+    this.settingsStore.updateAsync({
       newForDays: Math.max(1, Math.floor(this.newForDays())),
       toRemindAfterMonths: toRemind,
       inactiveAfterMonths: inactive
+    }).subscribe({
+      next: () => {
+        this.contactStore.recomputeStatuses();
+        this.toast.show('Paramètres de statut mis à jour.', 'success', 3500);
+        this.loading.set(false);
+        this.open.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.show('Impossible de sauvegarder les paramètres.', 'alert', 3500);
+      }
     });
-    this.contactStore.recomputeStatuses();
-    this.toast.show('Paramètres de statut mis à jour.', 'success', 3500);
-    this.open.set(false);
   }
 
 
   protected resetDefaults(): void {
-    this.settingsStore.reset();
-    const s = this.settingsStore.settings();
-    this.newForDays.set(s.newForDays);
-    this.toRemindAfterMonths.set(s.toRemindAfterMonths);
-    this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+    this.loading.set(true);
+    this.settingsStore.resetAsync().subscribe({
+      next: (s) => {
+        this.newForDays.set(s.newForDays);
+        this.toRemindAfterMonths.set(s.toRemindAfterMonths);
+        this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.show('Impossible de réinitialiser les paramètres.', 'alert', 3500);
+      }
+    });
   }
 
   protected onNewForDaysChange(value: string | number): void {

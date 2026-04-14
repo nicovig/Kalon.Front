@@ -19,13 +19,16 @@ export class UserStore {
     return this.tokenValue;
   }
 
+  get userId(): string {
+    return this.currentUser?.id ?? 'anonymous';
+  }
+
   get currentPlan(): AssociationPlan {
     return this.currentUser?.plan ?? 'free';
   }
 
   get organizationId(): string {
-    const userId = this.currentUser?.id;
-    return userId !== undefined && userId !== null ? String(userId) : 'anonymous';
+    return this.currentUser?.organizationId ?? 'anonymous';
   }
 
   isAuthenticated(): boolean {

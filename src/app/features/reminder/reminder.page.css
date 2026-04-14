@@ -770,6 +770,19 @@
 }
 
 /* MAIL EDITOR */
+.rp-editor-layout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.rp-editor-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .mail-card {
   background: white;
   border-radius: var(--r-lg);

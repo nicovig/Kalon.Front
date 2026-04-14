@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonLabelComponent } from '../button/button-label/button-label.component';
@@ -31,12 +31,13 @@ export interface TableColumn {
   styleUrls: ['./table.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TableComponent {
+export class TableComponent implements OnChanges {
   @Input() rows: any[] = [];
   @Input() columns: TableColumn[] = [];
-  @Input() pageSizeOptions: number[] = [25, 50, 100];
-  @Input() initialPageSize = 25;
+  @Input() pageSizeOptions: number[] = [5, 10, 25, 50, 100];
+  @Input() initialPageSize: number = 5;
   @Input() showSearch = true;
+  @Input() searchWidth: string = '260px';
   @Input() clickableRows = false;
   @Input() showRowActions = false;
   @Input() rowActionEditLabel = '✏️';
@@ -48,7 +49,14 @@ export class TableComponent {
 
   searchTerm = '';
   currentPage = 1;
-  pageSize = this.initialPageSize;
+  pageSize = 5;
+  private pageSizeInitialized = false;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialPageSize'] || changes['pageSizeOptions']) {
+      this.applyInitialPageSize();
+    }
+  }
 
   private get searchableColumns(): TableColumn[] {
     return this.columns.filter((c) => c.searchable);
@@ -132,6 +140,7 @@ export class TableComponent {
     }
     this.pageSize = next;
     this.currentPage = 1;
+    this.pageSizeInitialized = true;
   }
 
   goToPage(page: number): void {
@@ -172,5 +181,18 @@ export class TableComponent {
 
   get columnCount(): number {
     return this.columns.length + (this.showRowActions ? 1 : 0);
+  }
+
+  private applyInitialPageSize(): void {
+    if (this.pageSizeInitialized) {
+      return;
+    }
+    const hasOptions = Array.isArray(this.pageSizeOptions) && this.pageSizeOptions.length > 0;
+    const requested = Number(this.initialPageSize);
+    if (hasOptions && this.pageSizeOptions.includes(requested)) {
+      this.pageSize = requested;
+      return;
+    }
+    this.pageSize = hasOptions ? this.pageSizeOptions[0] : 5;
   }
 }

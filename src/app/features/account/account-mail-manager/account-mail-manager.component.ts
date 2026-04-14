@@ -5,7 +5,7 @@ import { FormTextComponent } from '../../../layout/forms/text/form-text.componen
 import { FormTextareaComponent } from '../../../layout/forms/textarea/form-textarea.component';
 import { CardComponent } from '../../../layout/card/card.component';
 import { PopupShellComponent } from '../../../layout/popup/popup-shell.component';
-import { AccountMailAssetsStore, MailTextBlock } from '../account-mail-assets.store';
+import { AccountMailAssetsStore, MailTextBlock, MailTextBlockRole } from '../account-mail-assets.store';
 import { ToastService } from '../../../layout/toast/toast.service';
 
 @Component({
@@ -29,8 +29,10 @@ export class AccountMailManagerComponent {
   protected readonly textBlockPopupOpen = signal(false);
   protected readonly textBlockDraftLabel = signal('');
   protected readonly textBlockDraftContent = signal('');
+  protected readonly textBlockDraftRole = signal<MailTextBlockRole>('text');
   protected readonly newTextBlockLabel = signal('');
   protected readonly newTextBlockContent = signal('');
+  protected readonly newTextBlockRole = signal<MailTextBlockRole>('text');
   protected readonly editingReceiptTemplateId = signal<string | null>(null);
   protected readonly receiptTemplateLabel = signal('');
   protected readonly receiptTemplateBody = signal('');
@@ -67,6 +69,7 @@ export class AccountMailManagerComponent {
     this.editingTextBlockId.set(block.id);
     this.textBlockDraftLabel.set(block.label);
     this.textBlockDraftContent.set(block.content);
+    this.textBlockDraftRole.set(block.role);
     this.textBlockPopupOpen.set(true);
   }
 
@@ -75,12 +78,13 @@ export class AccountMailManagerComponent {
     this.editingTextBlockId.set(null);
     this.textBlockDraftLabel.set('');
     this.textBlockDraftContent.set('');
+    this.textBlockDraftRole.set('text');
   }
 
   protected saveTextBlock(): void {
     const id = this.editingTextBlockId();
     if (!id) return;
-    this.store.upsertTextBlock(id, this.textBlockDraftLabel(), this.textBlockDraftContent());
+    this.store.upsertTextBlock(id, this.textBlockDraftLabel(), this.textBlockDraftContent(), this.textBlockDraftRole());
     this.toast.show('Bloc de texte enregistré.', 'success', 2500);
     this.cancelTextBlockEdit();
   }
@@ -94,6 +98,7 @@ export class AccountMailManagerComponent {
   protected clearNewTextBlockForm(): void {
     this.newTextBlockLabel.set('');
     this.newTextBlockContent.set('');
+    this.newTextBlockRole.set('text');
   }
 
   protected async onImageSelected(event: Event): Promise<void> {

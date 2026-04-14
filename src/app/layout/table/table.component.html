@@ -3,7 +3,7 @@
     <form-text-component
       placeholder="Rechercher"
       icon="🔍"
-      width="260px"
+      [width]="searchWidth"
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange($event)"
     ></form-text-component>

@@ -1,11 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { TableComponent, TableColumn } from '../../layout/table/table.component';
 import { DashboardCardComponent } from './dashboard-card/dashboard-card.component';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
+import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
+import { ToastService } from '../../layout/toast/toast.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { UserStore } from '../../core/auth/user.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactCreateLauncherComponent } from '../contact/contact-create-launcher.component';
@@ -14,6 +19,10 @@ import { ImportBannerComponent } from '../import/components/import-banner/import
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { DonationPaymentMethod } from '../../core/models/donation.model';
+import { API_ENDPOINTS } from '../../core/api/api.endpoints';
+import { MailLogApiModel } from '../../core/api/backend-api.model';
+import { ReceiptArchiveStore } from '../receipt/receipt-archive.store';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'dashboard-page',
@@ -22,32 +31,50 @@ import { DonationPaymentMethod } from '../../core/models/donation.model';
   styleUrls: ['./dashboard.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ButtonLabelComponent,
     TableComponent,
     DashboardCardComponent,
     ToastComponent,
     TopbarComponent,
     CardComponent,
+    InlineLoaderComponent,
     ContactCreateLauncherComponent,
     EmptyContactsWelcomeComponent,
-    ImportBannerComponent
+    ImportBannerComponent,
+    RouterLink
   ]
 })
 export class DashboardPageComponent {
-
   private readonly authService = inject(AuthService);
+  private readonly userStore = inject(UserStore);
+  private readonly http = inject(HttpClient);
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly receiptArchiveStore = inject(ReceiptArchiveStore);
+  private readonly toast = inject(ToastService);
+  protected readonly loadingData = signal(false);
 
   protected readonly currentUser = this.authService.currentUser;
 
-  protected readonly latestDonationsComputed = computed(() =>
-    this.donationStore.donations().map((d) => ({
-      ...d,
-      paymentMethodLabel: this.paymentMethodLabel(d.paymentMethod)
-    }))
-  );
+  private readonly contactById = computed(() => {
+    const map = new Map<string, IContact>();
+    for (const c of this.contactStore.contacts()) {
+      map.set(c.id, c);
+    }
+    return map;
+  });
+
+  protected readonly latestDonationsComputed = computed(() => {
+    const map = this.contactById();
+    return this.donationStore
+      .donations()
+      .map((d) => ({
+        ...d,
+        paymentMethodLabel: this.paymentMethodLabel(d.paymentMethod),
+        contributionTypeLabel: this.contributionTypeLabel(map.get(d.contactId))
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  });
 
   protected readonly kpiActiveContacts = computed(
     () =>
@@ -58,10 +85,10 @@ export class DashboardPageComponent {
 
   protected readonly kpiYearDonationsTotal = computed(() => {
     const y = new Date().getFullYear();
-    return this.donationStore
+    return +this.donationStore
       .donations()
       .filter((d) => d.date.getFullYear() === y)
-      .reduce((sum, d) => sum + d.amount, 0);
+      .reduce((sum, d) => sum + d.amount, 0).toFixed(2);
   });
 
   protected readonly kpiToRemind = computed(
@@ -71,7 +98,13 @@ export class DashboardPageComponent {
         .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length
   );
 
-  protected readonly kpiReceipts = 0;
+  protected readonly kpiGeneratedDocumentsCount = computed(() => this.receiptArchiveStore.records().length);
+
+  protected readonly mailLogsPrintedPending = signal(0);
+
+  protected readonly paperToConfirmTotal = computed(
+    () => this.mailLogsPrintedPending() + this.receiptArchiveStore.pendingPaperConfirmationsCount()
+  );
 
   protected readonly contactCount = computed(() => this.contactStore.contacts().length);
 
@@ -90,12 +123,17 @@ export class DashboardPageComponent {
   protected readonly priorityRelanceContacts = computed(() =>
     this.contactStore
       .contacts()
-      .filter((c) => this.contactSettings.statusOf(c) === 'to_remind')
-      .sort(
-        (a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0)
-      )
+      .filter((c) => this.contactSettings.statusOf(c) === 'to_remind' && !!c.lastDonation)
+      .sort((a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0))
       .slice(0, 5)
   );
+
+  protected readonly priorityRelanceQueryParams = computed(() => {
+    const ids = this.priorityRelanceContacts()
+      .map((c) => c.id)
+      .join(',');
+    return ids ? { contactIds: ids } : {};
+  });
 
   protected contactLabel(c: IContact): string {
     return contactDisplayName(c);
@@ -115,9 +153,89 @@ export class DashboardPageComponent {
   protected readonly latestDonationsColumns: TableColumn[] = [
     { key: 'date', header: 'Date', type: 'date', searchable: true },
     { key: 'contactDisplayName', header: 'Profil', searchable: true },
+    { key: 'contributionTypeLabel', header: 'Type', type: 'text', searchable: true },
     { key: 'paymentMethodLabel', header: 'Moyen de paiement', type: 'text', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right', searchable: true }
   ];
+
+  constructor() {
+    this.loadDashboardData();
+  }
+
+  protected reloadDashboardData(): void {
+    this.loadDashboardData();
+  }
+
+  private loadDashboardData(): void {
+    if (!this.authService.isAuthenticated()) return;
+    this.loadingData.set(true);
+    forkJoin([
+      this.contactStore.loadContactsFromApi(),
+      this.donationStore.loadDonationsFromApi(),
+      this.loadMailLogsPrintedPending()
+    ]).subscribe({
+      next: () => this.loadingData.set(false),
+      error: () => {
+        this.loadingData.set(false);
+        this.toast.show('Impossible de charger les donnees du dashboard.', 'alert');
+      }
+    });
+  }
+
+  private loadMailLogsPrintedPending() {
+    if (!this.authService.isAuthenticated()) {
+      return of(undefined);
+    }
+    const userId = this.userStore.userId;
+    if (!userId) {
+      this.mailLogsPrintedPending.set(0);
+      return of(undefined);
+    }
+    const url = API_ENDPOINTS.mailLog.list({ userId });
+    return this.http.get<unknown>(url).pipe(
+      map((payload) =>
+        this.extractMailLogs(payload).filter(
+          (r) => String(r.status ?? '').toLowerCase() === 'printed'
+        ).length
+      ),
+      tap((n) => this.mailLogsPrintedPending.set(n)),
+      map(() => undefined),
+      catchError(() => {
+        this.mailLogsPrintedPending.set(0);
+        return of(undefined);
+      })
+    );
+  }
+
+  private extractMailLogs(payload: unknown): MailLogApiModel[] {
+    if (Array.isArray(payload)) {
+      return payload as MailLogApiModel[];
+    }
+    if (payload && typeof payload === 'object') {
+      const o = payload as Record<string, unknown>;
+      const list = o['items'] ?? o['mailLogs'] ?? o['data'];
+      if (Array.isArray(list)) {
+        return list as MailLogApiModel[];
+      }
+    }
+    return [];
+  }
+
+  private contributionTypeLabel(contact: IContact | undefined): string {
+    if (!contact) {
+      return '—';
+    }
+    switch (contact.kind) {
+      case 'company':
+        return 'Mécène';
+      case 'member':
+        return 'Cotisation';
+      case 'donor':
+      case 'helper':
+      default:
+        return 'Donateur';
+    }
+  }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {
     if (!paymentMethod) return '—';
@@ -136,5 +254,4 @@ export class DashboardPageComponent {
       }
     }
   }
-
 }

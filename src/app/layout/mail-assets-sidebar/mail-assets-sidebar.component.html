@@ -1,0 +1,63 @@
+<aside class="mas">
+  <a routerLink="/parametres" fragment="mail-assets" class="mas-create">
+    <span class="mas-create-plus">+</span>
+    <span>Créer un bloc</span>
+  </a>
+
+  <section class="mas-section">
+    <h3 class="mas-h">✍️ Signatures</h3>
+    @if (signatureBlocks().length === 0) {
+      <p class="mas-empty">Aucune signature enregistrée dans Paramètres.</p>
+    } @else {
+      <div class="mas-list">
+        @for (b of signatureBlocks(); track b.id) {
+          <button type="button" class="mas-chip" (click)="emitText(b.content)">{{ b.label }}</button>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="mas-section">
+    <h3 class="mas-h">📝 Textes</h3>
+    @if (standardTextBlocks().length === 0) {
+      <p class="mas-empty">Aucun bloc texte.</p>
+    } @else {
+      <div class="mas-list">
+        @for (b of standardTextBlocks(); track b.id) {
+          <button type="button" class="mas-chip" (click)="emitText(b.content)">{{ b.label }}</button>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="mas-section">
+    <h3 class="mas-h">🖼️ Images</h3>
+    @if (images().length === 0) {
+      <p class="mas-empty">Aucune image.</p>
+    } @else {
+      <div class="mas-list mas-list--thumb">
+        @for (img of images(); track img.id) {
+          <button type="button" class="mas-thumb" (click)="emitImage(img.dataUrl)" [title]="img.label">
+            <img [src]="img.dataUrl" [alt]="img.label" />
+            <span class="mas-thumb-label">{{ img.label }}</span>
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="mas-section">
+    <h3 class="mas-h">📎 Documents</h3>
+    @if (documents().length === 0) {
+      <p class="mas-empty">Aucun document.</p>
+    } @else {
+      <div class="mas-list">
+        @for (doc of documents(); track doc.id) {
+          <button type="button" class="mas-chip mas-chip--doc" (click)="emitDocument(doc.fileName, doc.dataUrl)">
+            {{ doc.label }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+</aside>

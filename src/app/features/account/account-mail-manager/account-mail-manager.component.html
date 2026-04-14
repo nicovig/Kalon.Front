@@ -1,4 +1,8 @@
-<card [title]="'Paramètres des emails'" [subtitle]="'Gérez vos images, documents et blocs de texte réutilisables.'">
+<div id="mail-assets">
+<card
+  [title]="'Mes blocs réutilisables'"
+  [subtitle]="'Signatures, textes, images et documents — utilisables dans les mails et les documents (reçus, relances…).'"
+>
   <section class="mail-mgmt">
     <div class="mail-mgmt-grid">
       <div class="mail-panel">
@@ -103,7 +107,10 @@
             <div class="preset-item">
               <div class="preset-header" (click)="toggleTextBlockPanel(block)">
                 <div class="preset-header-main">
-                  <div class="asset-label">{{ block.label }}</div>
+                  <div class="asset-label">
+                    {{ block.label }}
+                    <span class="text-block-role-pill">{{ block.role === 'signature' ? 'Signature' : 'Texte' }}</span>
+                  </div>
                   <div class="preset-header-meta">{{ block.content }}</div>
                 </div>
                 <div class="preset-header-actions">
@@ -122,6 +129,25 @@
 
       <div class="panel-title">Créer un nouveau bloc de texte</div>
       <div class="preset-editor">
+        <div class="text-block-role-row">
+          <span class="text-block-role-label">Type de bloc</span>
+          <button
+            type="button"
+            class="text-block-role-btn"
+            [class.text-block-role-btn--on]="newTextBlockRole() === 'signature'"
+            (click)="newTextBlockRole.set('signature')"
+          >
+            Signature
+          </button>
+          <button
+            type="button"
+            class="text-block-role-btn"
+            [class.text-block-role-btn--on]="newTextBlockRole() === 'text'"
+            (click)="newTextBlockRole.set('text')"
+          >
+            Texte
+          </button>
+        </div>
         <div class="mail-row">
           <form-text-component
             [type]="'text'"
@@ -153,6 +179,7 @@
 
   </section>
 </card>
+</div>
 <br>
 <card [title]="'Paramètres des reçus fiscaux'" [subtitle]="'Gérez vos modèles de reçus fiscaux.'">
   <section class="mail-mgmt">
@@ -235,6 +262,25 @@
     </div>
 
     <div class="preset-editor">
+      <div class="text-block-role-row">
+        <span class="text-block-role-label">Type de bloc</span>
+        <button
+          type="button"
+          class="text-block-role-btn"
+          [class.text-block-role-btn--on]="textBlockDraftRole() === 'signature'"
+          (click)="textBlockDraftRole.set('signature')"
+        >
+          Signature
+        </button>
+        <button
+          type="button"
+          class="text-block-role-btn"
+          [class.text-block-role-btn--on]="textBlockDraftRole() === 'text'"
+          (click)="textBlockDraftRole.set('text')"
+        >
+          Texte
+        </button>
+      </div>
       <div class="mail-row">
         <form-text-component
           [type]="'text'"

@@ -88,37 +88,54 @@
           title="Relier vos colonnes à Kalon"
           [subtitle]="
             importMode() === 'donations'
-              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du profil ou nom/prénom).'
+              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon — à droite : colonne du fichier (détection automatique).'
               : importMode() === 'combined'
-                ? 'Champs obligatoires : email + (Nom ou Prénom). Pour les lignes qui contiennent un don : Date du don + Montant.'
-                : 'Champs obligatoires : Email + (Nom ou Prénom). Une ligne par colonne de votre fichier : à gauche le nom dans le fichier, à droite le champ dans Kalon.'
+                ? 'Champs obligatoires : email + (Nom ou Prénom). Si don sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
+                : 'Champs obligatoires : Email + (Nom ou Prénom). À gauche : champ Kalon — à droite : colonne du fichier détectée automatiquement.'
           "
           paddingClass="advanced"
         >
           <div class="imp-map-grid">
-            @for (h of headers(); track $index) {
-              <div class="imp-map-row" [class.imp-map-row--dup]="duplicateRowIndices().has($index)">
-                <div class="imp-map-col imp-map-col--src">
-                  <span class="imp-src-label">Dans votre fichier</span>
-                  <span class="imp-src-val" [title]="h">{{ h || '(sans titre)' }}</span>
+            @for (row of mappedFieldRows(); track row.fieldKey) {
+              <div
+                class="imp-map-row"
+                [class.imp-map-row--dup]="duplicateRowIndices().has(row.columnIndex)"
+              >
+                <div class="imp-map-col imp-map-col--kalon">
+                  <span class="imp-kalon-label">Dans Kalon</span>
+                  <span class="imp-kalon-val" [title]="labelForMappedField(row.fieldKey)">{{
+                    labelForMappedField(row.fieldKey)
+                  }}</span>
                 </div>
                 <div class="imp-map-col imp-map-col--connector">
                   <span class="imp-connector-label-spacer" aria-hidden="true">&nbsp;</span>
-                  <span class="imp-arrow">vers</span>
+                  <span class="imp-arrow">←</span>
                 </div>
-                <div class="imp-map-col imp-map-col--target">
+                <div class="imp-map-col imp-map-col--file">
                   <form-select-component
-                    label="Dans Kalon"
-                    [options]="fieldOptionsForSelect()"
-                    [invalid]="duplicateRowIndices().has($index)"
-                    [variant]="duplicateRowIndices().has($index) ? 'warn' : 'default'"
-                    [ngModel]="bindings()[$index]"
-                    (ngModelChange)="onBindingChange($index, $event)"
+                    label="Colonne du fichier"
+                    [options]="fileColumnSelectOptions()"
+                    [invalid]="duplicateRowIndices().has(row.columnIndex)"
+                    [variant]="duplicateRowIndices().has(row.columnIndex) ? 'warn' : 'default'"
+                    [ngModel]="row.columnIndex < 0 ? '' : '' + row.columnIndex"
+                    (ngModelChange)="onKalonFieldColumnChange(row.fieldKey, $event)"
                   />
                 </div>
               </div>
             }
           </div>
+          @if (ignoredColumnsList().length) {
+            <details class="imp-ignored-acc">
+              <summary class="imp-ignored-acc-summary">
+                Colonnes ignorées ({{ ignoredColumnsList().length }})
+              </summary>
+              <ul class="imp-ignored-list">
+                @for (c of ignoredColumnsList(); track c.index) {
+                  <li>{{ c.header }}</li>
+                }
+              </ul>
+            </details>
+          }
         </card>
 
         <div class="imp-footer">

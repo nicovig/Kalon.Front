@@ -13,7 +13,7 @@ import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { ContactKind, ContactStatus, contactDisplayName, IContact } from '../../core/models/contact.model';
-import { DonationPaymentMethod } from '../../core/models/donation.model';
+import { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
 
 type PeriodPreset = 'all' | 'thisMonth' | 'last3Months' | 'last6Months' | 'last12Months' | 'civilYear' | 'custom';
 
@@ -22,8 +22,14 @@ type DonationTableRow = {
   contactId: string;
   contactDisplayName: string;
   contactEmail: string;
+  contactPhoneNumber: string;
   contactKind: ContactKind;
   contactStatus: ContactStatus;
+  contactLastName: string;
+  contactFirstName: string;
+  donationType: DonationType;
+  siret: string;
+  postalAddress: string;
   date: Date;
   paymentMethodLabel: string;
   amount: number;
@@ -120,13 +126,20 @@ export class StatisticsPageComponent {
         const contactEmail = contact?.email ?? '—';
         const contactKind: ContactKind = contact?.kind ?? 'donor';
         const contactStatus = contact ? this.contactSettings.statusOf(contact) : 'inactive';
+        const { last, first } = this.contactExportNames(contact, contactName);
         return {
           id: donation.id,
           contactId: donation.contactId,
           contactDisplayName: contactName,
           contactEmail,
+          contactPhoneNumber: contact?.phone ?? '—',
           contactKind,
           contactStatus,
+          contactLastName: last,
+          contactFirstName: first,
+          donationType: donation.donationType,
+          siret: this.contactSiret(contact),
+          postalAddress: this.formatPostalAddress(contact),
           date: donation.date,
           paymentMethodLabel: this.paymentMethodLabel(donation.paymentMethod),
           amount: donation.amount
@@ -164,7 +177,17 @@ export class StatisticsPageComponent {
         return false;
       }
       if (term) {
-        const haystack = `${row.contactDisplayName} ${row.contactEmail}`.toLowerCase();
+        const haystack = [
+          row.contactDisplayName,
+          row.contactEmail,
+          row.contactLastName,
+          row.contactFirstName,
+          row.postalAddress,
+          row.siret,
+          this.donationTypeLabelFr(row.donationType)
+        ]
+          .join(' ')
+          .toLowerCase();
         if (!haystack.includes(term)) {
           return false;
         }
@@ -226,15 +249,29 @@ export class StatisticsPageComponent {
     if (!rows.length) {
       return;
     }
-    const headers = ['Date', 'Profil', 'Email', 'Type', 'Statut', 'Moyen de paiement', 'Montant (€)'];
+    const headers = [
+      'Date',
+      'Nom',
+      'Prénom',
+      'Type',
+      'SIRET',
+      'Email',
+      'Téléphone',
+      'Adresse postale',
+      'Moyen de paiement',
+      'Montant (€)'
+    ];
     const lines = [headers.join(';')];
     for (const row of rows) {
       const line = [
         this.formatDateFr(row.date),
-        row.contactDisplayName,
+        row.contactLastName,
+        row.contactFirstName,
+        this.donationTypeLabelFr(row.donationType),
+        row.siret,
         row.contactEmail,
-        row.contactKind === 'company' ? 'Entreprise' : 'Particulier',
-        this.statusLabelFr(row.contactStatus),
+        row.contactPhoneNumber,
+        row.postalAddress,
         row.paymentMethodLabel,
         this.formatAmountFr(row.amount)
       ].map((cell) => this.escapeCsvCell(cell));
@@ -268,23 +305,6 @@ export class StatisticsPageComponent {
 
   private formatAmountFr(value: number): string {
     return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-  }
-
-  private statusLabelFr(status: ContactStatus): string {
-    switch (status) {
-      case 'active':
-        return 'Actif';
-      case 'to_remind':
-        return 'À relancer';
-      case 'new':
-        return 'Nouveau';
-      case 'inactive':
-        return 'Inactif';
-      case 'out':
-        return 'Sorti';
-      default:
-        return status;
-    }
   }
 
   private escapeCsvCell(value: string): string {
@@ -363,6 +383,73 @@ export class StatisticsPageComponent {
     const out = new Date(d);
     out.setHours(23, 59, 59, 999);
     return out;
+  }
+
+  private contactExportNames(
+    contact: IContact | undefined,
+    fallbackDisplay: string
+  ): { last: string; first: string } {
+    if (!contact) {
+      return { last: fallbackDisplay.trim() || '—', first: '—' };
+    }
+    if (contact.kind === 'company' && contact.enterprise) {
+      const e = contact.enterprise;
+      const referent = [e.contactFirstname, e.contactLastname]
+        .map((x) => x?.trim())
+        .filter((x): x is string => !!x)
+        .join(' ');
+      return {
+        last: e.name?.trim() || '—',
+        first: referent || '—'
+      };
+    }
+    return {
+      last: contact.lastname?.trim() || '—',
+      first: contact.firstname?.trim() || '—'
+    };
+  }
+
+  private contactSiret(contact: IContact | undefined): string {
+    if (contact?.kind === 'company' && contact.enterprise?.siret?.trim()) {
+      return contact.enterprise.siret.trim();
+    }
+    return '—';
+  }
+
+  private formatPostalAddress(contact: IContact | undefined): string {
+    if (!contact) {
+      return '—';
+    }
+    if (contact.kind === 'company' && contact.enterprise?.address) {
+      const a = contact.enterprise.address;
+      const parts = [a.street, a.postalCode, a.city, a.country]
+        .map((x) => x?.trim())
+        .filter((x): x is string => !!x);
+      return parts.length ? parts.join(', ') : '—';
+    }
+    if (contact.address) {
+      const a = contact.address;
+      const parts = [a.street, a.postalCode, a.city, a.country]
+        .map((x) => x?.trim())
+        .filter((x): x is string => !!x);
+      return parts.length ? parts.join(', ') : '—';
+    }
+    return '—';
+  }
+
+  private donationTypeLabelFr(type: DonationType): string {
+    switch (type) {
+      case 'financial':
+        return 'Financier';
+      case 'in_kind':
+        return 'En nature';
+      case 'sponsoring':
+        return 'Sponsoring';
+      default: {
+        const _exhaustive: never = type;
+        return _exhaustive;
+      }
+    }
   }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {

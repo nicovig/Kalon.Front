@@ -102,23 +102,31 @@
         </div>
 
         <!-- ÉTAPE 2 : ÉDITEUR -->
-        <div class="mail-card" *ngIf="activeStep === 2">
-          <mail-editor
-            [(subject)]="mailSubject"
-            [(body)]="mailBody"
-            [snippetOptions]="mailEditorSnippets()"
-            [selectedSnippetId]="selectedTextBlockId()"
-            (selectedSnippetIdChange)="selectedTextBlockId.set($event)"
-            [imageOptions]="imageOptions()"
-            [selectedImageId]="selectedImageId()"
-            (selectedImageIdChange)="selectedImageId.set($event)"
-            [selectedImageDataUrl]="selectedImageDataUrl()"
-            [documentOptions]="documentOptions()"
-            [selectedDocumentId]="selectedDocumentId()"
-            (selectedDocumentIdChange)="selectedDocumentId.set($event)"
-            [selectedDocumentDataUrl]="selectedDocumentDataUrl()"
-            [selectedDocumentFileName]="selectedDocumentFileName()"
-          ></mail-editor>
+        <div class="rp-editor-layout" *ngIf="activeStep === 2">
+          <div class="mail-card rp-editor-main">
+            <mail-editor
+              [(subject)]="mailSubject"
+              [(body)]="mailBody"
+              [showInsertRows]="false"
+              [snippetOptions]="mailEditorSnippets()"
+              [selectedSnippetId]="selectedTextBlockId()"
+              (selectedSnippetIdChange)="selectedTextBlockId.set($event)"
+              [imageOptions]="imageOptions()"
+              [selectedImageId]="selectedImageId()"
+              (selectedImageIdChange)="selectedImageId.set($event)"
+              [selectedImageDataUrl]="selectedImageDataUrl()"
+              [documentOptions]="documentOptions()"
+              [selectedDocumentId]="selectedDocumentId()"
+              (selectedDocumentIdChange)="selectedDocumentId.set($event)"
+              [selectedDocumentDataUrl]="selectedDocumentDataUrl()"
+              [selectedDocumentFileName]="selectedDocumentFileName()"
+            ></mail-editor>
+          </div>
+          <mail-assets-sidebar
+            (textBlockInsert)="onMailAssetInsertText($event)"
+            (imageAssetInsert)="onMailAssetInsertImage($event)"
+            (documentAssetInsert)="onMailAssetInsertDocument($event)"
+          />
         </div>
 
         <!-- ÉTAPE 3 : APERÇU + RÉCAP -->
@@ -155,10 +163,10 @@
         </div>
         <div class="dispatch-actions" *ngIf="activeStep === 3">
           <button-label-component type="primary" [disabled]="emailDispatchCount() === 0" (click)="sendEmailsNow()">
-            Envoyer {{ emailDispatchCount() }} email(s)
+            Envoyer par email ({{ emailDispatchCount() }})
           </button-label-component>
           <button-label-component type="ghost" [disabled]="paperLettersCount() === 0" (click)="printPaperLetters()">
-            Imprimer {{ paperLettersCount() }} lettre(s) papier
+            Imprimer les courriers ({{ paperLettersCount() }})
           </button-label-component>
         </div>
       </div>

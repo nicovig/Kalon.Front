@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, delay, map, of, throwError } from 'rxjs';
-import { API_BASE_URL, AUTH_MOCK_ENABLED } from '../config/api.config';
+import { AUTH_MOCK_ENABLED } from '../config/api.config';
 import { LoginResponseBody } from './auth-api.model';
 import { AssociationPlan, AuthUser } from './auth-user.model';
 import { UserStore } from './user.store';
+import { API_ENDPOINTS } from '../api/api.endpoints';
 
 @Injectable({
   providedIn: 'root'
@@ -35,10 +36,10 @@ export class AuthService {
     if (AUTH_MOCK_ENABLED) {
       return this.mockLogin(email, password);
     }
-    const url = `${API_BASE_URL.replace(/\/$/, '')}/api/auth/login`;
+    const url = API_ENDPOINTS.auth.login();
     return this.http.post<LoginResponseBody>(url, { email: email.trim(), password }).pipe(
       map((body) => {
-        const user = this.mapApiUserToAuthUser(body.user);
+        const user = this.mapApiUserToAuthUser(body.user, body.meran ?? null);
         this.userStore.setSession(body.token, user);
         return user;
       }),
@@ -53,15 +54,17 @@ export class AuthService {
   }
 
   private mapApiUserToAuthUser(
-    u: LoginResponseBody['user']
+    u: LoginResponseBody['user'],
+    meran: LoginResponseBody['meran']
   ): AuthUser {
     return {
       id: u.id,
+      organizationId: u.organization?.id,
       firstname: u.firstname ?? '',
       lastname: u.lastname ?? '',
       email: u.email ?? '',
-      associationName: u.associationName ?? '',
-      plan: this.normalizePlan(u.plan)
+      associationName: u.organization?.name ?? '',
+      plan: this.normalizePlan(meran?.plan ?? '')
     };
   }
 
@@ -80,7 +83,8 @@ export class AuthService {
       return throwError(() => ({ status: 401, error: { message: 'Invalid credentials.' } }));
     }
     const user: AuthUser = {
-      id: 1,
+      id: '11111111-1111-1111-1111-111111111111',
+      organizationId: '22222222-2222-2222-2222-222222222222',
       firstname: 'Marie',
       lastname: 'Dupont',
       email: normalizedEmail,

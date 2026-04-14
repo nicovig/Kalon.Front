@@ -68,7 +68,6 @@ export class ContactListPageComponent {
     { key: 'kind', header: 'Type', type: 'contactKind', searchable: true },
     { key: 'email', header: 'Email', searchable: true },
     { key: 'phone', header: 'Téléphone', searchable: true },
-    { key: 'address.street', header: 'Adresse', searchable: true },
     { key: 'status', header: 'Statut', type: 'badge' },
     { key: 'totalDonation', header: 'Total dons', type: 'number', align: 'right' }
   ];

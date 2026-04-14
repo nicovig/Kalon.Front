@@ -113,23 +113,90 @@
         }
 
         @if (activeStep === 2) {
-          <div class="surface-card">
+          <div class="receipt-step2 surface-card">
             <div class="surface-head">
               <div class="surface-icon">✍️</div>
               <div>
                 <div class="surface-title">Rédiger le texte du reçu</div>
-                <div class="surface-desc">Le texte sera injecté dans le PDF généré plus tard par le backend.</div>
+                <div class="surface-desc">
+                  Les zones ci-dessous sont modifiables. Les mentions légales type Cerfa restent figées et sont rappelées
+                  en lecture seule.
+                </div>
               </div>
             </div>
-            <div class="editor-block">
-              <div class="editor-label">Corps du reçu</div>
-              <form-textarea
-                [rows]="8"
-                [value]="receiptBody()"
-                (valueChange)="selectedDocumentKind() === 'fiscal_receipt' ? receiptBody.set($event) : null"
-                variant="light"
-                [placeholder]="selectedDocumentKind() === 'fiscal_receipt' ? 'Saisissez le texte principal du reçu fiscal...' : 'Attestation comptable standard'"
-              ></form-textarea>
+            <div class="receipt-step2-layout">
+              <div class="receipt-step2-main">
+                <div class="receipt-insert-target">
+                  <span class="receipt-insert-target-label">Insérer les blocs dans :</span>
+                  <button
+                    type="button"
+                    class="receipt-insert-target-btn"
+                    [class.receipt-insert-target-btn--on]="receiptAssetInsertTarget() === 'body'"
+                    (click)="receiptAssetInsertTarget.set('body')"
+                  >
+                    Corps du message
+                  </button>
+                  <button
+                    type="button"
+                    class="receipt-insert-target-btn"
+                    [class.receipt-insert-target-btn--on]="receiptAssetInsertTarget() === 'footer'"
+                    (click)="receiptAssetInsertTarget.set('footer')"
+                  >
+                    Signature
+                  </button>
+                </div>
+                <div class="editor-block editable-block">
+                  <div class="editor-label">Message d’accompagnement (modifiable)</div>
+                  <form-textarea
+                    #receiptBodyTa
+                    [rows]="8"
+                    [value]="receiptBody()"
+                    (valueChange)="receiptBody.set($event)"
+                    variant="light"
+                    [placeholder]="
+                      selectedDocumentKind() === 'fiscal_receipt'
+                        ? 'Saisissez le texte principal du reçu fiscal…'
+                        : 'Texte de l’attestation de paiement…'
+                    "
+                  ></form-textarea>
+                </div>
+                <div class="editor-block editable-block">
+                  <div class="editor-label">Signature / pied de page (modifiable)</div>
+                  <form-select-component
+                    [label]="null"
+                    [options]="signatureOptions()"
+                    [ngModel]="selectedReceiptSignatureId()"
+                    (ngModelChange)="onReceiptSignatureChange($event)"
+                  />
+                  <form-textarea
+                    #receiptFooterTa
+                    [rows]="3"
+                    [value]="receiptFooter()"
+                    (valueChange)="receiptFooter.set($event)"
+                    variant="light"
+                    placeholder="Formule de clôture, tampon, coordonnées…"
+                  ></form-textarea>
+                </div>
+                @if (selectedDocumentKind() === 'fiscal_receipt') {
+                  <div class="frozen-mentions">
+                    <div class="frozen-mentions-title">Mentions légales obligatoires (Cadre Cerfa) — lecture seule</div>
+                    <p class="frozen-mentions-lead">
+                      Ces mentions sont imposées par la réglementation et ne sont pas modifiables ici. Elles seront
+                      rendues intégralement sur le document officiel.
+                    </p>
+                    <ul class="frozen-mentions-list">
+                      @for (mention of requiredMentions(); track mention) {
+                        <li>{{ mention }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+              <mail-assets-sidebar
+                (textBlockInsert)="onReceiptInsertText($event)"
+                (imageAssetInsert)="onReceiptInsertImage($event)"
+                (documentAssetInsert)="onReceiptInsertDocument($event)"
+              />
             </div>
           </div>
         }
@@ -157,14 +224,15 @@
               <p><strong>Modèle :</strong> {{ currentTemplateTitle() }}</p>
               <p><strong>Profil :</strong> {{ contactPreviewName() }}</p>
               <p><strong>Total dons :</strong> {{ contactPreviewAmount() }}</p>
-              <div class="required-box">
-                <div class="required-title">Mentions obligatoires (100% visibles)</div>
+              <div class="required-box required-box--readonly">
+                <div class="required-title">Mentions légales obligatoires (Cerfa) — non modifiables</div>
                 <ul>
                   @for (mention of requiredMentions(); track mention) {
                     <li>{{ mention }}</li>
                   }
                 </ul>
               </div>
+              <div class="preview-editable-label">Texte libre et message d’accompagnement (aperçu)</div>
               <hr />
               <p>{{ receiptBody() }}</p>
               @if (associationLogoUrl()) {
@@ -181,10 +249,10 @@
           </div>
           <div class="dispatch-actions">
             <button-label-component type="primary" [disabled]="emailDispatchCount() === 0" (click)="sendEmailsNow()">
-              Envoyer {{ emailDispatchCount() }} email(s)
+              Envoyer par email ({{ emailDispatchCount() }})
             </button-label-component>
             <button-label-component type="ghost" [disabled]="paperLettersCount() === 0" (click)="printPaperLetters()">
-              Imprimer {{ paperLettersCount() }} lettre(s) papier
+              Imprimer les courriers ({{ paperLettersCount() }})
             </button-label-component>
           </div>
         }

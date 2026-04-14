@@ -1,7 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Input,
+  OnChanges,
   OnInit,
+  SimpleChanges,
   inject,
   signal
 } from '@angular/core';
@@ -27,10 +30,12 @@ import { contactDisplayName, IContact } from '../../../core/models/contact.model
   styleUrls: ['./empty-contacts-welcome.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmptyContactsWelcomeComponent implements OnInit {
+export class EmptyContactsWelcomeComponent implements OnInit, OnChanges {
   private readonly contactStore = inject(ContactStoreService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  @Input() loading = false;
 
   protected readonly showWelcome = signal(false);
   protected readonly createOpen = signal(false);
@@ -38,8 +43,12 @@ export class EmptyContactsWelcomeComponent implements OnInit {
   protected readonly createdContact = signal<IContact | null>(null);
 
   ngOnInit(): void {
-    if (this.contactStore.contacts().length === 0) {
-      this.showWelcome.set(true);
+    this.syncWelcomeVisibility();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['loading']) {
+      this.syncWelcomeVisibility();
     }
   }
 
@@ -59,9 +68,7 @@ export class EmptyContactsWelcomeComponent implements OnInit {
 
   protected onCreateClosed(): void {
     this.createOpen.set(false);
-    if (this.contactStore.contacts().length === 0) {
-      this.showWelcome.set(true);
-    }
+    this.syncWelcomeVisibility();
   }
 
   protected onContactCreated(contact: IContact): void {
@@ -74,5 +81,13 @@ export class EmptyContactsWelcomeComponent implements OnInit {
   protected onDonationFollowUpClosed(): void {
     this.donationFollowUpOpen.set(false);
     this.createdContact.set(null);
+  }
+
+  private syncWelcomeVisibility(): void {
+    if (this.loading) {
+      this.showWelcome.set(false);
+      return;
+    }
+    this.showWelcome.set(this.contactStore.contacts().length === 0);
   }
 }

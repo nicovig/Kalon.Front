@@ -9,9 +9,10 @@ import {
   computed,
   signal
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
@@ -29,6 +30,8 @@ import {
 } from '../../layout/recipient-selector/recipient-selector.component';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { AccountMailAssetsStore } from '../account/account-mail-assets.store';
+import { ReceiptArchiveStore } from '../receipt/receipt-archive.store';
+import { MailAssetsSidebarComponent } from '../../layout/mail-assets-sidebar/mail-assets-sidebar.component';
 
 @Component({
   selector: 'reminder-page',
@@ -45,7 +48,8 @@ import { AccountMailAssetsStore } from '../account/account-mail-assets.store';
     FormSelectComponent,
     MailEditorComponent,
     FormTextareaComponent,
-    RecipientSelectorComponent
+    RecipientSelectorComponent,
+    MailAssetsSidebarComponent
   ]
 })
 export class ReminderPageComponent implements OnInit, AfterViewInit {
@@ -53,6 +57,8 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly accountMailAssetsStore = inject(AccountMailAssetsStore);
+  private readonly receiptArchiveStore = inject(ReceiptArchiveStore);
+  private readonly route = inject(ActivatedRoute);
   constructor(private readonly cdr: ChangeDetectorRef) {}
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
 
@@ -326,6 +332,21 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     if (firstTextBlockId) this.selectedTextBlockId.set(firstTextBlockId);
     if (firstImageId) this.selectedImageId.set(firstImageId);
     if (firstDocumentId) this.selectedDocumentId.set(firstDocumentId);
+    this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
+      const raw = params.get('contactIds');
+      if (!raw?.trim()) {
+        return;
+      }
+      const ids = raw
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean);
+      if (ids.length) {
+        this.selectedcontactIds.set(new Set(ids));
+        this.syncPreviewIfNeeded();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -561,9 +582,27 @@ export class ReminderPageComponent implements OnInit, AfterViewInit {
     window.alert(`Simulation d'envoi: ${count} email(s) vont etre envoyes.`);
   }
 
+  protected onMailAssetInsertText(text: string): void {
+    this.mailEditor?.insertPlainTextAtCursor(text);
+  }
+
+  protected onMailAssetInsertImage(dataUrl: string): void {
+    this.mailEditor?.insertImage(dataUrl);
+  }
+
+  protected onMailAssetInsertDocument(payload: { fileName: string; dataUrl: string }): void {
+    this.mailEditor?.insertDocumentLink(payload.fileName, payload.dataUrl);
+  }
+
   protected printPaperLetters(): void {
     const recipients = this.selectedcontactsWithoutEmail();
     if (!recipients.length) return;
+    this.receiptArchiveStore.appendBatch(
+      recipients.map((c) => ({ id: c.id, name: contactDisplayName(c) })),
+      'paper',
+      'reminder',
+      this.mailSubject.trim() || 'Relance'
+    );
     const logo = this.selectedImageDataUrl();
     const signature = this.selectedFooterTextBlock();
     const subject = this.mailSubject;

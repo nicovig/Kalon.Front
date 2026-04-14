@@ -162,6 +162,83 @@
   flex-direction: column;
 }
 
+.imp-map-col--kalon {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.imp-map-col--file {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.imp-kalon-label {
+  display: block;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--violet-mid);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.imp-kalon-val {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  box-sizing: border-box;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 8px 10px;
+  background: rgba(109, 59, 191, 0.08);
+  border: 2px solid rgba(109, 59, 191, 0.22);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imp-ignored-acc {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--ink-30);
+  border-radius: var(--r-md);
+  background: var(--ink-10);
+}
+
+.imp-ignored-acc-summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: var(--font-title);
+  color: var(--ink-70);
+  list-style: none;
+}
+
+.imp-ignored-acc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.imp-ignored-acc[open] .imp-ignored-acc-summary {
+  margin-bottom: 8px;
+}
+
+.imp-ignored-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
 .imp-map-col--connector {
   display: flex;
   flex-direction: column;

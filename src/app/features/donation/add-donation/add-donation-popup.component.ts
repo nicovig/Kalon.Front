@@ -7,6 +7,7 @@ import {
   input
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { contactDisplayName, IContact } from '../../../core/models/contact.model';
@@ -18,6 +19,7 @@ import { ButtonLabelComponent } from '../../../layout/button/button-label/button
 import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
+import { InlineLoaderComponent } from '../../../layout/inline-loader/inline-loader.component';
 
 function dateToInputValue(d: Date): string {
   const y = d.getFullYear();
@@ -40,6 +42,7 @@ function dateFromInputValue(s: string): Date {
     PopupShellComponent,
     ButtonLabelComponent,
     ButtonRadioComponent,
+    InlineLoaderComponent,
     FormTextComponent,
     FormDateComponent
   ],
@@ -63,6 +66,7 @@ export class AddDonationPopupComponent {
 
   protected manualOpen = false;
   protected submitted = false;
+  protected saving = false;
 
   protected readonly form = this.fb.group({
     amount: ['', Validators.required],
@@ -84,6 +88,7 @@ export class AddDonationPopupComponent {
   }
 
   protected onSubmitManual(): void {
+    if (this.saving) return;
     this.submitted = true;
     if (this.form.invalid) {
       return;
@@ -96,9 +101,19 @@ export class AddDonationPopupComponent {
     const date = dateFromInputValue(String(raw.date));
     const paymentMethod = raw.paymentMethod as DonationPaymentMethod;
     const donationType: DonationType = 'financial';
-    this.donationStore.addDonationForContact(this.contact(), amount, date, paymentMethod, donationType);
-    this.toast.show(`Don de ${amount} € enregistré pour ${this.displayName()}.`, 'success');
-    this.closed.emit();
+    this.saving = true;
+    this.donationStore
+      .addDonationForContactAsync(this.contact(), amount, date, paymentMethod, donationType)
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: () => {
+          this.toast.show(`Don de ${amount} € enregistré pour ${this.displayName()}.`, 'success');
+          this.closed.emit();
+        },
+        error: () => {
+          this.toast.show("Impossible d'enregistrer le don pour le moment.", 'alert');
+        }
+      });
   }
 
   protected goImportExcel(): void {

@@ -1,7 +1,8 @@
 export type AssociationPlan = 'free' | 'basic' | 'premium';
 
 export interface AuthUser {
-  id?: number;
+  id?: string;
+  organizationId?: string;
   firstname: string;
   lastname: string;
   email: string;

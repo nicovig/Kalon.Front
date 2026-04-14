@@ -250,6 +250,95 @@
   padding-left: 18px;
 }
 
+.required-box--readonly {
+  background: var(--ink-10, #f3f3f5);
+  border-style: dashed;
+  cursor: default;
+}
+
+.preview-editable-label {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 12px;
+  color: var(--ink-70);
+}
+
+.receipt-step2-layout {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.receipt-step2-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.receipt-insert-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.receipt-insert-target-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.receipt-insert-target-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--ink-10);
+  background: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink-70);
+}
+
+.receipt-insert-target-btn--on {
+  border-color: var(--violet-md);
+  color: var(--violet);
+  background: rgba(119, 78, 202, 0.06);
+}
+
+.editable-block {
+  margin-bottom: 12px;
+}
+
+.frozen-mentions {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--ink-10);
+  background: var(--cream, #fafafa);
+}
+
+.frozen-mentions-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.frozen-mentions-lead {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.frozen-mentions-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
 .dispatch-actions {
   margin-top: 14px;
   display: flex;

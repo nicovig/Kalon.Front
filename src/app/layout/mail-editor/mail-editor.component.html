@@ -25,7 +25,7 @@
     <emoji-holder (emojiSelected)="insertVariable($event)"></emoji-holder>
   </div>
 
-  <div class="editor-insert-lines">
+  <div class="editor-insert-lines" *ngIf="showInsertRows">
     <div class="editor-insert-row">
       <span class="editor-insert-label">Insertion de texte</span>
       @if (snippetOptions.length > 0) {

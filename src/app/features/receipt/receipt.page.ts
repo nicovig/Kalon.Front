@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -17,6 +25,7 @@ import { ContactSettingsStore } from '../contact/settings/contact-settings.store
 import { AccountMailAssetsStore } from '../account/account-mail-assets.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ReceiptArchiveStore } from './receipt-archive.store';
+import { MailAssetsSidebarComponent } from '../../layout/mail-assets-sidebar/mail-assets-sidebar.component';
 
 @Component({
   selector: 'receipt-page',
@@ -31,10 +40,14 @@ import { ReceiptArchiveStore } from './receipt-archive.store';
     ButtonLabelComponent,
     FormTextareaComponent,
     FormSelectComponent,
-    RecipientSelectorComponent
+    RecipientSelectorComponent,
+    MailAssetsSidebarComponent
   ]
 })
 export class ReceiptPageComponent implements OnInit {
+  @ViewChild('receiptBodyTa') private receiptBodyTa?: FormTextareaComponent;
+  @ViewChild('receiptFooterTa') private receiptFooterTa?: FormTextareaComponent;
+
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly accountMailAssetsStore = inject(AccountMailAssetsStore);
@@ -69,6 +82,7 @@ export class ReceiptPageComponent implements OnInit {
   protected receiptFooter = signal("L'équipe de {{nom_association}}");
   protected readonly associationLogoUrl = signal('');
   protected readonly selectedReceiptSignatureId = signal('team');
+  protected readonly receiptAssetInsertTarget = signal<'body' | 'footer'>('body');
 
   protected readonly signaturePresets = [
     {
@@ -98,6 +112,21 @@ export class ReceiptPageComponent implements OnInit {
     if (preset) {
       this.receiptFooter.set(preset.value);
     }
+  }
+
+  protected onReceiptInsertText(text: string): void {
+    const ta = this.receiptAssetInsertTarget() === 'body' ? this.receiptBodyTa : this.receiptFooterTa;
+    ta?.insertAtCursor(text);
+  }
+
+  protected onReceiptInsertImage(_dataUrl: string): void {
+    const ta = this.receiptAssetInsertTarget() === 'body' ? this.receiptBodyTa : this.receiptFooterTa;
+    ta?.insertAtCursor(' [Image] ');
+  }
+
+  protected onReceiptInsertDocument(payload: { fileName: string }): void {
+    const ta = this.receiptAssetInsertTarget() === 'body' ? this.receiptBodyTa : this.receiptFooterTa;
+    ta?.insertAtCursor(` 📎 ${payload.fileName} `);
   }
 
   protected readonly templateOptions = computed(() =>

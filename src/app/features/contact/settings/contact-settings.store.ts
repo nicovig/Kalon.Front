@@ -1,5 +1,10 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, of, tap } from 'rxjs';
 import { ContactStatus, IContact } from '../../../core/models/contact.model';
+import { UserStore } from '../../../core/auth/user.store';
+import { API_ENDPOINTS } from '../../../core/api/api.endpoints';
+import { ContactStatusSettingsApiModel } from '../../../core/api/backend-api.model';
 
 export type ContactStatusSettings = {
   newForDays: number;
@@ -17,18 +22,65 @@ const DEFAULT_SETTINGS: ContactStatusSettings = {
 
 @Injectable({ providedIn: 'root' })
 export class ContactSettingsStore {
+  private readonly http = inject(HttpClient);
+  private readonly userStore = inject(UserStore);
   private readonly settingsWrite = signal<ContactStatusSettings>(this.readStored());
+  private readonly settingsApiSnapshotWrite = signal<Record<string, unknown> | null>(null);
 
   readonly settings = this.settingsWrite.asReadonly();
 
-  update(next: ContactStatusSettings): void {
+  loadFromApi(): Observable<ContactStatusSettings> {
+    if (!this.userStore.isAuthenticated()) {
+      return of(this.settingsWrite());
+    }
+    const url = API_ENDPOINTS.contactStatusSettings.get({ userId: this.userStore.userId });
+    return this.http.get<ContactStatusSettingsApiModel>(url).pipe(
+      map((payload) => this.fromApi(payload)),
+      tap((settings) => {
+        this.settingsWrite.set(settings);
+        this.writeStored(settings);
+      })
+    );
+  }
+
+  updateAsync(next: ContactStatusSettings): Observable<ContactStatusSettings> {
     const normalized = this.normalize(next);
     this.settingsWrite.set(normalized);
     this.writeStored(normalized);
+    if (!this.userStore.isAuthenticated()) {
+      return of(normalized);
+    }
+    const url = API_ENDPOINTS.contactStatusSettings.update({ userId: this.userStore.userId });
+    return this.http.put<ContactStatusSettingsApiModel>(url, this.toApi(normalized)).pipe(
+      map((payload) => this.fromApi(payload)),
+      tap((settings) => {
+        this.settingsWrite.set(settings);
+        this.writeStored(settings);
+      })
+    );
+  }
+
+  resetAsync(): Observable<ContactStatusSettings> {
+    if (!this.userStore.isAuthenticated()) {
+      this.update(DEFAULT_SETTINGS);
+      return of(this.settingsWrite());
+    }
+    const url = API_ENDPOINTS.contactStatusSettings.reset({ userId: this.userStore.userId });
+    return this.http.post<ContactStatusSettingsApiModel>(url, {}).pipe(
+      map((payload) => this.fromApi(payload)),
+      tap((settings) => {
+        this.settingsWrite.set(settings);
+        this.writeStored(settings);
+      })
+    );
+  }
+
+  update(next: ContactStatusSettings): void {
+    this.updateAsync(next).subscribe({ error: () => undefined });
   }
 
   reset(): void {
-    this.update(DEFAULT_SETTINGS);
+    this.resetAsync().subscribe({ error: () => undefined });
   }
 
   statusOf(contact: IContact, now: Date = new Date()): ContactStatus {
@@ -84,6 +136,25 @@ export class ContactSettingsStore {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     } catch {
     }
+  }
+
+  private toApi(s: ContactStatusSettings): Record<string, unknown> {
+    const snapshot = this.settingsApiSnapshotWrite();
+    return {
+      ...(snapshot ?? {}),
+      newDurationDays: s.newForDays,
+      toRemindAfterMonths: s.toRemindAfterMonths,
+      inactiveAfterMonths: s.inactiveAfterMonths
+    };
+  }
+
+  private fromApi(payload: ContactStatusSettingsApiModel): ContactStatusSettings {
+    this.settingsApiSnapshotWrite.set(payload as unknown as Record<string, unknown>);
+    return this.normalize({
+      newForDays: Number(payload.newDurationDays ?? DEFAULT_SETTINGS.newForDays),
+      toRemindAfterMonths: Number(payload.toRemindAfterMonths ?? DEFAULT_SETTINGS.toRemindAfterMonths),
+      inactiveAfterMonths: Number(payload.inactiveAfterMonths ?? DEFAULT_SETTINGS.inactiveAfterMonths)
+    });
   }
 
   private diffDays(from: Date, to: Date): number {

@@ -10,4 +10,7 @@
     </p>
   </div>
   <contact-form (create)="onCreate($event)"></contact-form>
+  @if (creating) {
+    <inline-loader label="Enregistrement du profil..." />
+  }
 </app-popup-shell>

@@ -27,6 +27,8 @@ export class MailEditorComponent {
   @Input() body = '<p>Bonjour {{prenom}},</p>';
   @Output() bodyChange = new EventEmitter<string>();
 
+  @Input() showInsertRows = true;
+
   @Input() placeholder = 'Écrivez votre message…';
 
   @Input() snippetOptions: MailEditorSnippet[] = [];
@@ -112,7 +114,11 @@ export class MailEditorComponent {
   insertSelectedSnippet(): void {
     const snippet = this.snippetOptions.find((s) => s.id === this.selectedSnippetId);
     if (!snippet) return;
-    this.insertSnippetText(snippet.text);
+    this.insertPlainTextAtCursor(snippet.text);
+  }
+
+  insertPlainTextAtCursor(text: string): void {
+    this.insertSnippetText(text);
   }
 
   insertImage(imageUrl: string): void {
