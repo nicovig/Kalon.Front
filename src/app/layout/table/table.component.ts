@@ -39,6 +39,8 @@ export class TableComponent implements OnChanges {
   @Input() showSearch = true;
   @Input() searchWidth: string = '260px';
   @Input() clickableRows = false;
+  @Input() selectedRowId: string | null = null;
+  @Input() selectedRowKey = 'id';
   @Input() showRowActions = false;
   @Input() rowActionEditLabel = '✏️';
   @Input() rowActionDonationsLabel = '💰';
@@ -177,6 +179,14 @@ export class TableComponent implements OnChanges {
   onViewDonationsClick(row: unknown, event: Event): void {
     event.stopPropagation();
     this.rowViewDonations.emit(row);
+  }
+
+  isSelectedRow(row: unknown): boolean {
+    if (!this.selectedRowId || !row || typeof row !== 'object') {
+      return false;
+    }
+    const value = (row as Record<string, unknown>)[this.selectedRowKey];
+    return String(value ?? '') === this.selectedRowId;
   }
 
   get columnCount(): number {

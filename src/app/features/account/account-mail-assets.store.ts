@@ -46,71 +46,9 @@ type StoredMailAssets = {
   fiscalReceiptTemplates: FiscalReceiptTemplate[];
 };
 
-const DEFAULT_TEXT_BLOCKS: MailTextBlock[] = [
-  {
-    id: 'team',
-    label: "L'équipe de l'association",
-    content: "L'équipe de {{nom_association}}",
-    addedAt: 0,
-    role: 'signature'
-  },
-  {
-    id: 'president',
-    label: 'Présidence',
-    content: 'Le président / la présidente de {{nom_association}}',
-    addedAt: 0,
-    role: 'signature'
-  },
-  {
-    id: 'address',
-    label: 'Adresse de l’association',
-    content: '{{nom_association}} · 12 rue des Associations · 75000 Paris',
-    addedAt: 0,
-    role: 'text'
-  }
-];
 
-const DEFAULT_RECEIPT_REQUIRED_MENTIONS = [
-  "Identité de l'association bénéficiaire",
-  'Coordonnées du donateur',
-  'Date et nature du don',
-  'Montant du don (ou valorisation)',
-  'Référence fiscale / article applicable'
-];
 
-const DEFAULT_FISCAL_RECEIPT_TEMPLATES: FiscalReceiptTemplate[] = [
-  {
-    id: 'receipt-sobre',
-    label: 'Sobre',
-    body:
-      "Nous certifions que {{prenom}} {{nom}} a effectué un don de {{montant_don}} le {{date_don}} au profit de {{nom_association}}.",
-    footer: "L'équipe de {{nom_association}}",
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  },
-  {
-    id: 'receipt-detaille',
-    label: 'Détaillé',
-    body:
-      'Ce reçu fiscal atteste la réception du don de {{montant_don}} réalisé le {{date_don}} par {{prenom}} {{nom}}. ' +
-      "{{nom_association}} confirme l'éligibilité fiscale de ce versement selon la réglementation en vigueur.",
-    footer: 'Le bureau de {{nom_association}}',
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  },
-  {
-    id: 'receipt-personnalise',
-    label: 'Personnalisé',
-    body:
-      'Reçu fiscal personnalisé pour {{prenom}} {{nom}}. Don de {{montant_don}} enregistré le {{date_don}} pour {{nom_association}}.',
-    footer: "Le trésorier / la trésorière de {{nom_association}}",
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  }
-];
+const DEFAULT_RECEIPT_REQUIRED_MENTIONS: string[] = [];
 
 @Injectable({ providedIn: 'root' })
 export class AccountMailAssetsStore {
@@ -232,10 +170,10 @@ export class AccountMailAssetsStore {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         return {
-          textBlocks: DEFAULT_TEXT_BLOCKS,
+          textBlocks: [],
           images: [],
           documents: [],
-          fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+          fiscalReceiptTemplates: []
         };
       }
       const parsed = JSON.parse(raw) as Partial<StoredMailAssets>;
@@ -261,7 +199,7 @@ export class AccountMailAssetsStore {
                   role
                 };
               })
-            : DEFAULT_TEXT_BLOCKS,
+            : [],
         images: Array.isArray(parsed.images) ? (parsed.images as any[]).map((i) => ({
           id: String(i?.id ?? this.newId('img')),
           label: String(i?.label ?? '').trim(),
@@ -289,18 +227,18 @@ export class AccountMailAssetsStore {
                 requiredMentions:
                   Array.isArray(tpl?.requiredMentions) && tpl.requiredMentions.length
                     ? tpl.requiredMentions.map((m: unknown) => String(m))
-                    : DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+                    : [],
                 system: Boolean(tpl?.system),
                 addedAt: typeof tpl?.addedAt === 'number' ? tpl.addedAt : 0
               }))
-            : DEFAULT_FISCAL_RECEIPT_TEMPLATES
+            : []
       };
     } catch {
       return {
-        textBlocks: DEFAULT_TEXT_BLOCKS,
+        textBlocks: [],
         images: [],
         documents: [],
-        fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+        fiscalReceiptTemplates: []
       };
     }
   }
@@ -309,4 +247,3 @@ export class AccountMailAssetsStore {
     return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }
-

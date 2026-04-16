@@ -39,7 +39,7 @@ export class IaAgentCore {
     remerciement: {
       subject: 'Merci pour votre soutien, {{prenom}} 🙏',
       body: `<p>Bonjour {{prenom}},</p>
-<p>Un grand merci pour votre dernier don de {{dernier_don_montant}} €.</p>
+<p>Un grand merci pour votre dernière contribution de {{dernier_don_montant}} €.</p>
 <p>Votre geste nous permet de continuer nos actions au service des familles accompagnées.</p>
 <p>Nous sommes heureux de vous compter parmi nos soutiens.</p>
 <p>Avec reconnaissance,</p>

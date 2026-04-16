@@ -94,7 +94,7 @@
 .archives-head,
 .archives-row {
   display: grid;
-  grid-template-columns: 1.15fr 1fr 0.95fr 0.85fr 1.05fr 1.35fr;
+  grid-template-columns: 1.1fr 1fr 1fr 0.9fr 1.5fr;
   gap: 12px;
   padding: 12px 14px;
   align-items: center;

@@ -1,9 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
-import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
-import { ReceiptArchiveRecord, ReceiptArchiveStore } from '../receipt/receipt-archive.store';
+import { OrganizationDocumentsStore } from './organization-documents.store';
 
 @Component({
   selector: 'archives-page',
@@ -11,63 +9,59 @@ import { ReceiptArchiveRecord, ReceiptArchiveStore } from '../receipt/receipt-ar
   templateUrl: './archives.page.html',
   styleUrls: ['./archives.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TopbarComponent, ButtonLabelComponent]
+  imports: [CommonModule, TopbarComponent]
 })
 export class ArchivesPageComponent {
-  private readonly receiptArchiveStore = inject(ReceiptArchiveStore);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly documentsStore = inject(OrganizationDocumentsStore);
 
-  protected readonly receiptArchives = computed(() =>
-    this.receiptArchiveStore
-      .records()
+  protected readonly generatedDocuments = computed(() =>
+    this.documentsStore
+      .generatedDocuments()
       .slice()
-      .sort((a, b) => b.sentAt - a.sentAt)
+      .sort((a, b) => this.tsOf(b.createdAt) - this.tsOf(a.createdAt))
+  );
+  protected readonly mailLogs = computed(() =>
+    this.documentsStore
+      .mailLogs()
+      .slice()
+      .sort((a, b) => this.tsOf(b.createdAt) - this.tsOf(a.createdAt))
   );
 
-  protected formatDate(ts: number): string {
-    return new Date(ts).toLocaleString('fr-FR');
+  protected readonly hasAny = computed(
+    () => this.generatedDocuments().length > 0 || this.mailLogs().length > 0
+  );
+
+  constructor() {
+    this.documentsStore.load();
   }
 
-  protected formatShortDate(ts: number): string {
-    return new Date(ts).toLocaleDateString('fr-FR');
+  protected formatDate(value?: string): string {
+    if (!value) return '—';
+    return new Date(value).toLocaleString('fr-FR');
   }
 
-  protected kindLabel(kind: ReceiptArchiveRecord['documentKind']): string {
-    if (kind === 'fiscal_receipt') return 'Reçu fiscal';
-    if (kind === 'payment_certificate') return 'Attestation de paiement';
-    return 'Relance';
+  protected logChannelLabel(isEmail?: boolean): string {
+    return isEmail ? 'Email' : 'Courrier papier';
   }
 
-  protected channelLabel(channel: 'email' | 'paper'): string {
-    return channel === 'email' ? 'Email' : 'Courrier papier';
+  protected logStatusLabel(status?: string | null): string {
+    const s = String(status ?? '').toLowerCase();
+    if (s === 'printed') return 'À confirmer';
+    if (!s) return '—';
+    return status ?? '—';
   }
 
-  protected isPaperPending(item: ReceiptArchiveRecord): boolean {
-    return item.channel === 'paper' && (item.paperPostedAt == null || item.paperPostedAt === undefined);
+  protected documentTypeLabel(type?: string | null): string {
+    const normalized = String(type ?? '').toLowerCase();
+    if (normalized.includes('receipt') || normalized.includes('recu')) return 'Reçu fiscal';
+    if (normalized.includes('attestation')) return 'Attestation';
+    if (!normalized) return 'Document';
+    return type ?? 'Document';
   }
 
-  protected confirmPaperDateDraft: Record<string, string> = {};
-
-  protected draftDateFor(item: ReceiptArchiveRecord): string {
-    if (this.confirmPaperDateDraft[item.id] !== undefined) {
-      return this.confirmPaperDateDraft[item.id];
-    }
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  protected onDraftDateChange(itemId: string, value: string): void {
-    this.confirmPaperDateDraft = { ...this.confirmPaperDateDraft, [itemId]: value };
-    this.cdr.markForCheck();
-  }
-
-  protected confirmPaperPosted(item: ReceiptArchiveRecord): void {
-    const raw = this.confirmPaperDateDraft[item.id] ?? new Date().toISOString().slice(0, 10);
-    if (!raw) return;
-    const ms = new Date(raw + 'T12:00:00').getTime();
-    this.receiptArchiveStore.confirmPaperPosted(item.id, ms);
-    const next = { ...this.confirmPaperDateDraft };
-    delete next[item.id];
-    this.confirmPaperDateDraft = next;
-    this.cdr.markForCheck();
+  private tsOf(value?: string): number {
+    if (!value) return 0;
+    const ts = new Date(value).getTime();
+    return Number.isFinite(ts) ? ts : 0;
   }
 }

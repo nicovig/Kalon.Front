@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 })
 export class DashboardCardComponent {
     @Input() type: 'violet' | 'pink' | 'mint' | 'yellow' = 'violet';
-    @Input() value: number = 0;
+    @Input() value: string = '0';
     @Input() label: string = '';
     @Input() helper: string = '';
     @Input() chip: 'up' | 'down' | 'warn' = 'up';

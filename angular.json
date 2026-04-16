@@ -34,13 +34,8 @@
               }
             ],
             "styles": [
-              "quill/dist/quill.snow.css",
-              "quill/dist/quill.core.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
               "src/styles.css"
-            ],
-            "allowedCommonJsDependencies": [
-              "quill-delta"
             ]
           },
           "configurations": {

@@ -29,14 +29,11 @@
   </a>
 
   <div class="nav-label">Communication</div>
-  <a class="nav-item" [routerLink]="['/relances']" routerLinkActive="active">
-    <span class="nav-icon">💌</span><span class="nav-text">Relances</span> <span class="nav-badge" *ngIf="kpiToRemind() > 0">{{ kpiToRemind() }}</span>
-  </a>
-  <a class="nav-item" [routerLink]="['/documents']" routerLinkActive="active">
-    <span class="nav-icon">🧾</span><span class="nav-text">Documents</span>
+  <a class="nav-item" [routerLink]="['/envois']" routerLinkActive="active">
+    <span class="nav-icon">💌</span><span class="nav-text">Envois</span> <span class="nav-badge" *ngIf="kpiToRemind() > 0">{{ kpiToRemind() }}</span>
   </a>
   <a class="nav-item" [routerLink]="['/recherche']" routerLinkActive="active">
-    <span class="nav-icon">🔍</span><span class="nav-text">Recherche intelligente</span>
+    <span class="nav-icon">🔍</span><span class="nav-text">Recherche</span>
   </a>
 
   <div class="nav-label">Outils</div>
@@ -63,8 +60,8 @@
     >
       <div class="asso-av">{{ userInitials }}</div>
       <div>
-        <div class="asso-name">Asso Parents d'élèves</div>
-        <div class="asso-plan"><span class="plan-dot"></span> Plan Basic</div>
+        <div class="asso-name">{{ currentUser?.associationName }}</div>
+        <div class="asso-plan"><span class="plan-dot"></span>{{ currentUser?.plan | titlecase }}</div>
       </div>
     </div>
 

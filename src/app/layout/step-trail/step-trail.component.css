@@ -1,0 +1,28 @@
+.ist-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  margin: 0 0 10px;
+}
+
+.ist-trail-i {
+  font-weight: 700;
+  opacity: 0.45;
+}
+
+.ist-trail-i--on {
+  opacity: 1;
+  color: var(--violet);
+}
+
+.ist-trail-arr {
+  opacity: 0.35;
+  user-select: none;
+}
+

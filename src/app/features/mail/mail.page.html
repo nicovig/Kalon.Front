@@ -1,0 +1,395 @@
+<toast-component position="center-third"></toast-component>
+<topbar [title]="'Envois'" [subtitle]="'Gérez vos envois de mails et courriers papier'"></topbar>
+
+<div class="mail-flow">
+  <step-trail [currentKey]="activeStepKey()" [steps]="steps"></step-trail>
+
+  @if (activeStepKey() === 'choix_type') {
+    <section class="mail-type-step" aria-labelledby="mail-type-title">
+      <h2 id="mail-type-title" class="mail-type-title">Que souhaitez-vous envoyer ?</h2>
+      <p class="mail-type-lead">
+        Choisissez le type d’envoi, puis nous vous guiderons sur le canal, les destinataires, le modèle et l’aperçu.
+      </p>
+      <choice-cards
+        [options]="typeOptions"
+        [selectedKey]="selectedSendType()"
+        ariaLabel="Type d'envoi"
+        (optionSelected)="chooseType($any($event))"
+      ></choice-cards>
+
+      <div class="mail-actions">
+        <button-label-component
+          type="primary"
+          [disabled]="!selectedSendType()"
+          (click)="goToMethodStep()"
+        >
+          Continuer
+        </button-label-component>
+      </div>
+    </section>
+  }
+
+  @if (activeStepKey() === 'choix_canal') {
+    <section class="mail-type-step" aria-labelledby="mail-method-title">
+      <h2 id="mail-method-title" class="mail-type-title">Par quel moyen ?</h2>
+      <p class="mail-type-lead">Choisissez le canal d’envoi.</p>
+
+      <choice-cards
+        [options]="methodOptions"
+        [selectedKey]="selectedSendMethod()"
+        ariaLabel="Par quel moyen"
+        (optionSelected)="chooseMethod($any($event))"
+      ></choice-cards>
+
+      <div class="mail-actions">
+        <button-label-component
+          type="ghost"
+          (click)="goToPreviousStep()"
+        >
+          Précédent
+        </button-label-component>
+        <button-label-component
+          type="primary"
+          [disabled]="!selectedSendMethod()"
+          (click)="goToRecipientsStep()"
+        >
+          Continuer
+        </button-label-component>
+      </div>
+    </section>
+  }
+
+  @if (activeStepKey() === 'destinataires') {
+    <section class="mail-type-step" aria-labelledby="mail-recipients-title">
+      <h2 id="mail-recipients-title" class="mail-type-title">Sélection des destinataires</h2>
+      <p class="mail-type-lead">
+        Recherchez vos contacts par nom, statut, département ou disponibilité du canal choisi.
+      </p>
+
+      <div class="mail-placeholder-card">
+        <div class="mail-placeholder-inline">
+          <span class="mail-placeholder-label">Type</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedSendTypeLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Canal</span>
+          <span class="mail-placeholder-value mail-placeholder-value--pink">{{ selectedSendMethodLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Contacts</span>
+          <span class="mail-placeholder-value mail-placeholder-value--mint">{{ selectedCount() }}</span>
+        </div>
+      </div>
+
+      <div class="mail-recipient-shell">
+        <mail-contact-selector
+          [title]="'Choisir les destinataires'"
+          [items]="recipientItems()"
+          [filteredCount]="filteredContacts().length"
+          [totalCount]="contactsCount()"
+          [selectedCount]="selectedCount()"
+          [selectedIds]="selectedContactIds()"
+          [searchQuery]="searchQuery()"
+          [statusFilter]="statusFilter()"
+          [statusOptions]="statusOptions"
+          [kindFilter]="kindFilter()"
+          [kindOptions]="kindOptions"
+          [departmentFilter]="departmentFilter()"
+          [departmentOptions]="departmentOptions()"
+          [includeWithChannel]="includeWithChannel()"
+          [includeWithoutChannel]="includeWithoutChannel()"
+          [availabilityWithLabel]="selectedSendMethod() === 'courrier' ? 'Avec adresse postale' : 'Avec email'"
+          [availabilityWithoutLabel]="selectedSendMethod() === 'courrier' ? 'Sans adresse postale' : 'Sans email'"
+          [monthsSinceLastDonationMin]="monthsSinceLastDonationMin()"
+          [totalDonationMin]="totalDonationMin()"
+          [totalDonationMax]="totalDonationMax()"
+          [donationCountMin]="donationCountMin()"
+          [alertMessage]="recipientAlertMessage()"
+          [pageIndex]="pageIndex()"
+          [totalPages]="totalPages()"
+          [emptyMessage]="'Aucun profil ne correspond à ces filtres.'"
+          [selectedLabel]="'profil(s)'"
+          [searchPlaceholder]="'Rechercher par nom, prénom ou email'"
+          (searchQueryChange)="onSearchQueryChange($event)"
+          (statusFilterChange)="onStatusFilterChange($event)"
+          (kindFilterChange)="onKindFilterChange($event)"
+          (departmentFilterChange)="onDepartmentFilterChange($event)"
+          (includeWithChannelChange)="onIncludeWithChannelChange($event)"
+          (includeWithoutChannelChange)="onIncludeWithoutChannelChange($event)"
+          (monthsSinceLastDonationMinChange)="onMonthsSinceLastDonationMinChange($event)"
+          (totalDonationMinChange)="onTotalDonationMinChange($event)"
+          (totalDonationMaxChange)="onTotalDonationMaxChange($event)"
+          (donationCountMinChange)="onDonationCountMinChange($event)"
+          (toggleItem)="toggleContact($event)"
+          (selectAllFiltered)="selectAllFiltered()"
+          (deselectAll)="deselectAll()"
+          (prevPage)="prevPage()"
+          (nextPage)="nextPage()"
+        ></mail-contact-selector>
+      </div>
+
+      <floating-step-bar
+        [centerText]="selectedCount() + ' contact(s) sélectionné(s)'"
+        [disableNext]="!selectedCount()"
+        (prev)="goToPreviousStep()"
+        (next)="goToTemplateStep()"
+      ></floating-step-bar>
+    </section>
+  }
+
+  @if (activeStepKey() === 'modele') {
+    <section class="mail-type-step" aria-labelledby="mail-template-title">
+      <h2 id="mail-template-title" class="mail-type-title">Modèle</h2>
+      <p class="mail-type-lead">
+        Modèles stockés ou génération par intelligence artificielle pour vos envois.
+      </p>
+      <div class="mail-placeholder-card">
+        <div class="mail-placeholder-inline">
+          <span class="mail-placeholder-label">Type</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedSendTypeLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Canal</span>
+          <span class="mail-placeholder-value mail-placeholder-value--pink">{{ selectedSendMethodLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Contacts</span>
+          <span class="mail-placeholder-value mail-placeholder-value--mint">{{ selectedCount() }}</span>
+        </div>
+      </div>
+
+      <details class="mail-selected-recipients-card">
+        <summary class="mail-selected-recipients-head">
+          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
+          <span class="mail-selected-recipients-summary-right">
+            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
+            <span class="mail-selected-recipients-chevron">▾</span>
+          </span>
+        </summary>
+        <div class="mail-selected-recipients-list">
+          @for (recipient of selectedRecipients(); track recipient.id) {
+            <div class="mail-selected-recipient-chip">
+              <div class="mail-selected-recipient-text">
+                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
+                @if (recipient.subtitle) {
+                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
+                }
+              </div>
+              <button
+                type="button"
+                class="mail-selected-recipient-remove"
+                (click)="removeSelectedContact(recipient.id)"
+              >
+                Retirer
+              </button>
+            </div>
+          }
+        </div>
+      </details>
+
+      <div class="mail-step4-grid">
+        @if (hasTemplateStep()) {
+          <div class="mail-step4-card">
+            <div class="mail-step4-card-title">Modèles stockés</div>
+
+            <div class="mail-step4-subtitle">Modèles d'email</div>
+            <div class="mail-model-table">
+              <table-component
+                [rows]="emailTemplateRows()"
+                [columns]="emailTemplateColumns"
+                [showSearch]="false"
+                [pageSizeOptions]="[5, 10, 25]"
+                [initialPageSize]="5"
+                [clickableRows]="true"
+                [selectedRowId]="selectedEmailTemplateId()"
+                (rowClick)="onEmailTemplateRowClick($event)"
+              ></table-component>
+            </div>
+
+          </div>
+        }
+
+        <div class="mail-step4-card mail-step4-card--ia">
+          <div class="ia-top">
+            <div class="ia-icon">✨</div>
+            <div>
+              <div class="ia-ttl">Génération par intelligence artificielle</div>
+              <div class="ia-desc">Décrivez le contexte, Kalon rédige un texte prêt à retravailler.</div>
+            </div>
+            <!-- <div class="ia-badge">NOUVEAU</div> -->
+          </div>
+
+          <div class="ia-presets">
+            @for (tone of aiToneCards; track tone.key) {
+              <button
+                type="button"
+                class="ia-preset"
+                [class.sel]="selectedAiTone() === tone.key"
+                (click)="selectAiTone(tone.key)"
+              >
+                {{ tone.icon }} {{ tone.label }}
+              </button>
+            }
+          </div>
+
+          <div class="mail-step4-form-row">
+            <form-textarea
+              [id]="'ia-context'"
+              [rows]="4"
+              [placeholder]="iaContextPlaceholders[selectedAiTone()]"
+              [value]="iaPrompt()"
+              (valueChange)="iaPrompt.set($event)"
+              variant="dark"
+            ></form-textarea>
+          </div>
+
+          <div class="mail-step4-form-actions">
+            <button-label-component
+              type="ia-gen"
+              id="ia-btn"
+              (click)="onAiPrimaryAction()"
+              [disabled]="!selectedSendMethod() || iaGenerationState() === 'loading'"
+            >
+              <span>{{ iaButtonLabel() }}</span>
+            </button-label-component>
+          </div>
+        </div>
+      </div>
+
+      <div class="mail-step4-choice-summary">
+        <span class="mail-step4-choice-label">Étape 5 utilisera :</span>
+        <span class="mail-step4-choice-value">{{ templateChoiceLabel() }}</span>
+      </div>
+
+      <div class="mail-actions">
+        <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+        <button-label-component
+          type="primary"
+          [disabled]="!canContinueFromTemplateStep()"
+          (click)="goToWritingStep()"
+        >
+          Continuer
+        </button-label-component>
+      </div>
+    </section>
+  }
+
+  @if (activeStepKey() === 'ecriture') {
+    <section class="mail-type-step">
+      <h2 class="mail-type-title">Écriture</h2>
+      <p class="mail-type-lead">Rédigez et personnalisez votre contenu avant aperçu.</p>
+      <div class="mail-placeholder-card">
+        <div class="mail-placeholder-inline">
+          <span class="mail-placeholder-label">Type</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedSendTypeLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Canal</span>
+          <span class="mail-placeholder-value mail-placeholder-value--pink">{{ selectedSendMethodLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Contacts</span>
+          <span class="mail-placeholder-value mail-placeholder-value--mint">{{ selectedCount() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Source</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedTemplateSourceLabel() }}</span>
+        </div>
+      </div>
+      <details class="mail-selected-recipients-card">
+        <summary class="mail-selected-recipients-head">
+          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
+          <span class="mail-selected-recipients-summary-right">
+            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
+            <span class="mail-selected-recipients-chevron">▾</span>
+          </span>
+        </summary>
+        <div class="mail-selected-recipients-list">
+          @for (recipient of selectedRecipients(); track recipient.id) {
+            <div class="mail-selected-recipient-chip">
+              <div class="mail-selected-recipient-text">
+                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
+                @if (recipient.subtitle) {
+                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
+                }
+              </div>
+              <button
+                type="button"
+                class="mail-selected-recipient-remove"
+                (click)="removeSelectedContact(recipient.id)"
+              >
+                Retirer
+              </button>
+            </div>
+          }
+        </div>
+      </details>
+      <div class="mail-writing-shell">
+        <mail-editor
+          [subject]="generatedSubject()"
+          (subjectChange)="generatedSubject.set($event)"
+          [body]="generatedBody()"
+          (bodyChange)="generatedBody.set($event)"
+          [textBlocks]="editorTextBlocks()"
+          [selectedTextBlockId]="selectedEditorTextBlockId()"
+          (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
+          [images]="editorImages()"
+          [selectedImageId]="selectedEditorImageId()"
+          (selectedImageIdChange)="selectedEditorImageId.set($event)"
+        ></mail-editor>
+      </div>
+      <floating-step-bar
+        [centerText]="selectedCount() + ' contact(s) sélectionné(s)'"
+        [nextLabel]="'Aperçu'"
+        (prev)="goToPreviousStep()"
+        (next)="goToPreviewStep()"
+      ></floating-step-bar>
+    </section>
+  }
+
+  @if (activeStepKey() === 'apercu') {
+    <section class="mail-type-step">
+      <h2 class="mail-type-title">Aperçu</h2>
+      <p class="mail-type-lead">Bientôt : aperçu pour vos destinataires.</p>
+      <div class="mail-placeholder-card">
+        <div class="mail-placeholder-inline">
+          <span class="mail-placeholder-label">Type</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedSendTypeLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Canal</span>
+          <span class="mail-placeholder-value mail-placeholder-value--pink">{{ selectedSendMethodLabel() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Contacts</span>
+          <span class="mail-placeholder-value mail-placeholder-value--mint">{{ selectedCount() }}</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span class="mail-placeholder-label">Source</span>
+          <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedTemplateSourceLabel() }}</span>
+        </div>
+      </div>
+      <details class="mail-selected-recipients-card">
+        <summary class="mail-selected-recipients-head">
+          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
+          <span class="mail-selected-recipients-summary-right">
+            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
+            <span class="mail-selected-recipients-chevron">▾</span>
+          </span>
+        </summary>
+        <div class="mail-selected-recipients-list">
+          @for (recipient of selectedRecipients(); track recipient.id) {
+            <div class="mail-selected-recipient-chip">
+              <div class="mail-selected-recipient-text">
+                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
+                @if (recipient.subtitle) {
+                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
+                }
+              </div>
+              <button
+                type="button"
+                class="mail-selected-recipient-remove"
+                (click)="removeSelectedContact(recipient.id)"
+              >
+                Retirer
+              </button>
+            </div>
+          }
+        </div>
+      </details>
+      <div class="mail-actions">
+        <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,173 @@
+<div class="left-panel">
+  <div class="lp-header">
+    <div class="lp-title">
+      {{ title }}
+      <span class="selected-count">{{ selectedCount }} sélectionné(s)</span>
+    </div>
+
+    <div class="search-box">
+      <form-text-component
+        [placeholder]="searchPlaceholder"
+        [value]="searchQuery"
+        [icon]="'🔍'"
+        [width]="'100%'"
+        (valueChange)="onSearchInput($event)"
+      />
+    </div>
+
+     <div class="filters-grid">
+      @if (statusOptions.length > 0) {
+        <form-select-component
+          class="filter-select"
+          label="Statut"
+          [ngModel]="statusFilter"
+          [options]="statusOptions"
+          (ngModelChange)="statusFilterChange.emit($event)"
+        />
+      }
+      @if (kindOptions.length > 0) {
+        <form-select-component
+          class="filter-select"
+          label="Type"
+          [ngModel]="kindFilter"
+          [options]="kindOptions"
+          (ngModelChange)="kindFilterChange.emit($event)"
+        />
+      }
+      @if (departmentOptions.length > 0) {
+        <form-select-component
+          class="filter-select"
+          label="Département"
+          [ngModel]="departmentFilter"
+          [options]="departmentOptions"
+          (ngModelChange)="departmentFilterChange.emit($event)"
+        />
+      }
+      <div class="filter-card">
+        <div class="advanced-filter-label">Disponibilité</div>
+        <div class="availability-options">
+          <div class="availability-option" (click)="onIncludeWithChannelToggle()">
+            <button-checkbox [checked]="includeWithChannel"></button-checkbox>
+            <span>{{ availabilityWithLabel }}</span>
+          </div>
+          <div class="availability-option" (click)="onIncludeWithoutChannelToggle()">
+            <button-checkbox [checked]="includeWithoutChannel"></button-checkbox>
+            <span>{{ availabilityWithoutLabel }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="filter-card">
+        <div class="advanced-filter-label">Total des contributions (€)</div>
+        <div class="number-grid">
+          <form-number-component
+            [value]="totalDonationMin"
+            [placeholder]="'Min'"
+            (valueChange)="totalDonationMinChange.emit($event)"
+          />
+          <form-number-component
+            [value]="totalDonationMax"
+            [placeholder]="'Max'"
+            (valueChange)="totalDonationMaxChange.emit($event)"
+          />
+        </div>
+      </div>
+      <div class="filter-card">
+        <div class="advanced-filter-label">Nombre de contributions minimales</div>
+        <form-number-component
+          [value]="donationCountMin"
+          [placeholder]="'Ex: 2'"
+          [min]="0"
+          (valueChange)="donationCountMinChange.emit($event)"
+        />
+      </div>
+    </div>
+
+    <div class="advanced-filters-grid">
+      <div class="advanced-filter-card advanced-filter-card--wide">
+        <div class="advanced-filter-label">Dernière contribution il y a plus de</div>
+        <div class="range-row">
+          <div class="range-input">
+            <form-number-component
+              [value]="monthsSinceLastDonationMin"
+              [min]="0"
+              [max]="60"
+              [placeholder]="'0'"
+              (valueChange)="onMonthsSinceLastDonationMinInput($event)"
+            />
+            <span>mois</span>
+          </div>
+          <div class="range-slider">
+            <form-slider-component
+              [min]="0"
+              [max]="60"
+              [value]="monthsSinceLastDonationMin"
+              (valueChange)="onMonthsSinceLastDonationMinInput($event)"
+            ></form-slider-component>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-select-actions">
+      <span class="sel-action" (click)="onSelectAllFilteredClick()">Tout sélectionner ({{ filteredCount }})</span>
+      <span class="sel-action sel-action--muted" (click)="onDeselectAllClick()">Tout déselectionner</span>
+    </div>
+  </div>
+
+  @if (alertMessage) {
+    <div class="lp-alert">{{ alertMessage }}</div>
+  }
+
+  <div class="contact-list" id="contact-list">
+    @if (filteredCount === 0) {
+      <p class="contact-list-empty">{{ emptyMessage }}</p>
+    }
+
+    @for (item of items; track item.id; let i = $index) {
+      <div
+        class="contact-item"
+        [class.checked]="selectedIds.has(item.id)"
+        (click)="toggleItem.emit(item.id)"
+      >
+        <button-checkbox [checked]="selectedIds.has(item.id)"></button-checkbox>
+        <div [class]="'d-av ' + (item.avatarClass || ('da' + ((i % 7) + 1)) )">{{ item.avatarText || '?' }}</div>
+        <div class="d-info">
+          <div class="d-name">{{ item.title }}</div>
+          <div class="d-meta">{{ item.subtitle || '—' }}</div>
+          @if (item.infoText) {
+            <div class="d-info-line">{{ item.infoText }}</div>
+          }
+          @if (item.detailText) {
+            <div class="d-info-line d-info-line--strong">{{ item.detailText }}</div>
+          }
+          @if (item.warningText) {
+            <div class="d-warning">{{ item.warningText }}</div>
+          }
+        </div>
+
+        @if (item.badgeText) {
+          <span class="d-badge" [class]="('d-badge ' + (item.badgeClass || ''))">{{ item.badgeText }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  @if (totalPages > 1) {
+    <div class="lp-pagination">
+      <button-label-component type="ghost" (click)="onPrevPageClick()" [disabled]="pageIndex === 0"
+        >←</button-label-component
+      >
+      <div class="lp-pagination-label">
+        Page {{ pageIndex + 1 }} / {{ totalPages }}
+      </div>
+      <button-label-component
+        type="ghost"
+        (click)="onNextPageClick()"
+        [disabled]="pageIndex >= totalPages - 1"
+      >
+        →
+      </button-label-component>
+    </div>
+  }
+</div>
+

@@ -9,23 +9,12 @@
           Choisissez le type d’import, puis validez pour passer à l’envoi du fichier.
         </p>
 
-        <div class="iob-type-grid" role="list" aria-label="Type d'import">
-          @for (opt of options; track opt.mode) {
-            <button
-              type="button"
-              class="iob-type-card"
-              [class.iob-type-card--active]="mode() === opt.mode"
-              (click)="onModeChange(opt.mode)"
-            >
-              <span class="iob-type-icon" aria-hidden="true">{{
-                opt.mode === 'contacts' ? '👤' : opt.mode === 'donations' ? '💶' : '🔗'
-              }}</span>
-              <h3 class="iob-type-title">{{ opt.label }}</h3>
-              <p class="iob-type-blurb">{{ opt.blurb }}</p>
-              <p class="iob-type-hint">{{ opt.hint }}</p>
-            </button>
-          }
-        </div>
+        <choice-cards
+          [options]="options"
+          [selectedKey]="mode()"
+          ariaLabel="Type d'import"
+          (optionSelected)="onModeChange($any($event))"
+        ></choice-cards>
 
         <div class="iob-actions">
           <button-label-component type="primary" (click)="goToFileStep()">Continuer</button-label-component>

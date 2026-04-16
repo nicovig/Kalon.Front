@@ -1,10 +1,15 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { QuillModule, QuillEditorComponent } from 'ngx-quill';
 import { EmojiHolderComponent } from './emoji-holder/emoji-holder.component';
 import { ButtonLabelComponent } from '../button/button-label/button-label.component';
-import { FormSelectComponent, FormSelectOption } from '../forms/select/form-select.component';
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
+import { TextStyle } from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
+import { TiptapEditorDirective } from 'ngx-tiptap';
 
 export type MailEditorSnippet = {
   id: string;
@@ -12,166 +17,104 @@ export type MailEditorSnippet = {
   text: string;
 };
 
+export type MailEditorImageAsset = {
+  id: string;
+  label: string;
+  dataUrl: string;
+};
+
 @Component({
   selector: 'mail-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, QuillModule, EmojiHolderComponent, ButtonLabelComponent, FormSelectComponent],
+  imports: [CommonModule, FormsModule, EmojiHolderComponent, ButtonLabelComponent, TiptapEditorDirective],
   templateUrl: './mail-editor.component.html',
   styleUrls: ['./mail-editor.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MailEditorComponent {
-  @Input() subject = 'Vous nous manquez, {{prenom}} 💛';
+export class MailEditorComponent implements OnChanges, OnDestroy {
+  @Input() subject = '';
   @Output() subjectChange = new EventEmitter<string>();
 
-  @Input() body = '<p>Bonjour {{prenom}},</p>';
+  @Input() body = '';
   @Output() bodyChange = new EventEmitter<string>();
 
-  @Input() showInsertRows = true;
+  @Input() textBlocks: MailEditorSnippet[] = [];
+  @Input() selectedTextBlockId: string | null = null;
+  @Output() selectedTextBlockIdChange = new EventEmitter<string | null>();
 
-  @Input() placeholder = 'Écrivez votre message…';
+  @Input() images: MailEditorImageAsset[] = [];
+  @Input() selectedImageId: string | null = null;
+  @Output() selectedImageIdChange = new EventEmitter<string | null>();
 
-  @Input() snippetOptions: MailEditorSnippet[] = [];
-  @Input() selectedSnippetId = '';
-  @Output() selectedSnippetIdChange = new EventEmitter<string>();
-
-  @Input() imageOptions: FormSelectOption[] = [];
-  @Input() selectedImageId = '';
-  @Output() selectedImageIdChange = new EventEmitter<string>();
-  @Input() selectedImageDataUrl = '';
-
-  @Input() documentOptions: FormSelectOption[] = [];
-  @Input() selectedDocumentId = '';
-  @Output() selectedDocumentIdChange = new EventEmitter<string>();
-  @Input() selectedDocumentDataUrl = '';
-  @Input() selectedDocumentFileName = '';
-
-  protected get snippetSelectOptions(): FormSelectOption[] {
-    return this.snippetOptions.map((opt) => ({ value: opt.id, label: opt.label }));
-  }
-
-  @ViewChild(QuillEditorComponent)
-  private editor?: QuillEditorComponent;
-
-  protected readonly quillConfig = {
-    toolbar: {
-      container: [
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        ['code-block'],
-        [{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }, { header: 5 }, { header: 6 }, { size: ['small', false, 'large', 'huge'] }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ script: 'sub' }, { script: 'super' }],
-        [{ direction: 'rtl' }],
-        [{ font: ['firacode', 'roboto', 'monospace'] }],
-        [{ align: ['', 'center', 'right', 'justify'] }],
-        ['clean'],
-        ['link'],
-        [{ color: [] }, { background: [] }]
-      ]
+  protected selectedTextColor = '#1a1625';
+  protected editor: Editor = new Editor({
+    extensions: [StarterKit, Image, Underline, TextStyle, Color],
+    content: '',
+    onUpdate: ({ editor }) => {
+      this.bodyChange.emit(editor.getHTML());
     }
-  };
+  });
 
-  protected readonly customOptions = [
-    {
-      import: 'formats/font',
-      whitelist: ['mirza', 'roboto', 'aref', 'sansserif', 'monospace']
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['body']) {
+      const incoming = this.body ?? '';
+      const current = this.editor.getHTML();
+      if (incoming !== current) {
+        this.editor.commands.setContent(incoming || '<p></p>', { emitUpdate: false });
+      }
     }
-  ];
-
-  onSubjectChange(value: string): void {
-    this.subject = value;
-    this.subjectChange.emit(value);
   }
 
-  onBodyChanged(html: string): void {
-    this.body = html;
-    this.bodyChange.emit(html);
+  ngOnDestroy(): void {
+    this.editor.destroy();
   }
 
-  onSelectionChanged(): void {
-    // hook available if needed
+  protected onSubjectInput(value: string): void {
+    this.subjectChange.emit(value ?? '');
   }
 
-  onContentChanged(): void {
-    // hook available if needed
-  }
-
-  onSnippetSelectionChange(id: string): void {
-    this.selectedSnippetId = id;
-    this.selectedSnippetIdChange.emit(id);
-  }
-
-  onImageSelectionChange(id: string): void {
-    this.selectedImageId = id;
-    this.selectedImageIdChange.emit(id);
-  }
-
-  onDocumentSelectionChange(id: string): void {
-    this.selectedDocumentId = id;
-    this.selectedDocumentIdChange.emit(id);
-  }
-
-  insertSelectedSnippet(): void {
-    const snippet = this.snippetOptions.find((s) => s.id === this.selectedSnippetId);
-    if (!snippet) return;
-    this.insertPlainTextAtCursor(snippet.text);
-  }
-
-  insertPlainTextAtCursor(text: string): void {
-    this.insertSnippetText(text);
-  }
-
-  insertImage(imageUrl: string): void {
-    if (!imageUrl || !this.editor) return;
-    const quill = this.editor.quillEditor;
-    const range = quill.getSelection(true);
-    const index = range ? range.index : quill.getLength();
-    quill.insertEmbed(index, 'image', imageUrl, 'user');
-    quill.insertText(index + 1, '\n');
-    quill.setSelection(index + 2);
-    this.onBodyChanged(quill.root.innerHTML);
-  }
-
-  insertDocumentLink(fileName: string, dataUrl: string): void {
-    if (!fileName || !dataUrl || !this.editor) return;
-    const quill = this.editor.quillEditor;
-    const range = quill.getSelection(true);
-    const index = range ? range.index : quill.getLength();
-    quill.insertText(index, fileName, { link: dataUrl });
-    quill.insertText(index + fileName.length, '\n');
-    quill.setSelection(index + fileName.length + 1);
-    this.onBodyChanged(quill.root.innerHTML);
-  }
-
-  insertSelectedImage(): void {
-    this.insertImage(this.selectedImageDataUrl);
-  }
-
-  insertSelectedDocument(): void {
-    this.insertDocumentLink(this.selectedDocumentFileName, this.selectedDocumentDataUrl);
-  }
-
-  private insertSnippetText(text: string): void {
-    if (!text) return;
-    if (!this.editor) {
-      this.onBodyChanged(`${this.body}<p>${text}</p>`);
+  protected toggleMark(mark: 'bold' | 'italic'): void {
+    if (mark === 'bold') {
+      this.editor.chain().focus().toggleBold().run();
       return;
     }
-    const quill = this.editor.quillEditor;
-    const range = quill.getSelection(true);
-    const index = range ? range.index : quill.getLength();
-    quill.insertText(index, `${text}\n`);
-    quill.setSelection(index + text.length + 1);
-    this.onBodyChanged(quill.root.innerHTML);
+    this.editor.chain().focus().toggleItalic().run();
   }
 
-  insertVariable(variable: string): void {
-    if (!this.editor) return;
-    const quill = this.editor.quillEditor;
-    const range = quill.getSelection(true);
-    const index = range ? range.index : this.body.length;
-    quill.insertText(index, variable);
-    quill.setSelection(index + variable.length);
+  protected toggleUnderline(): void {
+    this.editor.chain().focus().toggleUnderline().run();
+  }
+
+  protected onEmojiSelected(emoji: string): void {
+    this.editor.chain().focus().insertContent(emoji).run();
+  }
+
+  protected onTextColorChange(value: string): void {
+    const next = value || '#1a1625';
+    this.selectedTextColor = next;
+    this.editor.chain().focus().setColor(next).run();
+  }
+
+  protected onSelectedTextBlockChange(id: string): void {
+    this.selectedTextBlockIdChange.emit(id || null);
+  }
+
+  protected insertSelectedTextBlock(): void {
+    if (!this.selectedTextBlockId) return;
+    const block = this.textBlocks.find((item) => item.id === this.selectedTextBlockId);
+    if (!block?.text) return;
+    this.editor.chain().focus().insertContent(block.text).run();
+  }
+
+  protected onSelectedImageChange(id: string): void {
+    this.selectedImageIdChange.emit(id || null);
+  }
+
+  protected insertSelectedImage(): void {
+    if (!this.selectedImageId) return;
+    const image = this.images.find((item) => item.id === this.selectedImageId);
+    if (!image?.dataUrl) return;
+    this.editor.chain().focus().setImage({ src: image.dataUrl, alt: image.label }).run();
   }
 }
 

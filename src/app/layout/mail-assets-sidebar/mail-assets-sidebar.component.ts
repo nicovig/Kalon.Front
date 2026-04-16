@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AccountMailAssetsStore } from '../../features/account/account-mail-assets.store';
+import { OrganizationCustomContentStore } from '../../features/account/organization-custom-content.store';
 @Component({
   selector: 'mail-assets-sidebar',
   standalone: true,
@@ -11,7 +11,11 @@ import { AccountMailAssetsStore } from '../../features/account/account-mail-asse
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MailAssetsSidebarComponent {
-  private readonly store = inject(AccountMailAssetsStore);
+  private readonly store = inject(OrganizationCustomContentStore);
+
+  constructor() {
+    this.store.ensureLoaded();
+  }
 
   readonly textBlockInsert = output<string>();
   readonly imageAssetInsert = output<string>();

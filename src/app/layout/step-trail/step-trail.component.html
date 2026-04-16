@@ -1,0 +1,11 @@
+<p class="ist-trail" aria-hidden="true">
+  @for (s of steps(); track s.key; let i = $index) {
+    <span class="ist-trail-i" [class.ist-trail-i--on]="currentKey() === s.key">
+      {{ i + 1 }} · {{ s.label }}
+    </span>
+    @if (i < steps().length - 1) {
+      <span class="ist-trail-arr">→</span>
+    }
+  }
+</p>
+

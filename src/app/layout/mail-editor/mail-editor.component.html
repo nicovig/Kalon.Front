@@ -1,93 +1,101 @@
 <div class="mail-editor">
-  <label class="subject-row">
-    <span class="subject-label">Objet</span>
+  <div class="mail-editor-head">
+    <label for="mail-editor-subject">Objet</label>
     <input
-      class="subject-input"
+      id="mail-editor-subject"
       type="text"
-      [(ngModel)]="subject"
-      (ngModelChange)="onSubjectChange($event)"
-      placeholder="Objet du mail…"
+      [ngModel]="subject"
+      (ngModelChange)="onSubjectInput($event)"
+      placeholder="Objet du message"
     />
-  </label>
-
-  <div class="mail-editor-body">
-    <quill-editor
-      class="editor"
-      [(ngModel)]="body"
-      (ngModelChange)="onBodyChanged($event)"
-      [placeholder]="placeholder"
-      [customOptions]="customOptions"
-      [modules]="quillConfig"
-      (onSelectionChanged)="onSelectionChanged()"
-      (onContentChanged)="onContentChanged()"
-    ></quill-editor>
-
-    <emoji-holder (emojiSelected)="insertVariable($event)"></emoji-holder>
   </div>
 
-  <div class="editor-insert-lines" *ngIf="showInsertRows">
-    <div class="editor-insert-row">
-      <span class="editor-insert-label">Insertion de texte</span>
-      @if (snippetOptions.length > 0) {
-        <form-select-component
-          [label]="null"
-          [options]="snippetSelectOptions"
-          [ngModel]="selectedSnippetId"
-          (ngModelChange)="onSnippetSelectionChange($event)"
-        />
-      } @else {
-        <span class="editor-insert-empty">Aucun texte pré-enregistré</span>
-      }
-      <button-label-component
-        type="ghost"
-        (click)="insertSelectedSnippet()"
-        [disabled]="snippetOptions.length === 0 || !selectedSnippetId"
-      >
-        Insérer
-      </button-label-component>
+  <div class="mail-editor-layout">
+    <div class="mail-editor-main">
+      <div class="mail-editor-actions-card">
+        <div class="mail-editor-actions-title">Actions de mise en forme</div>
+        <div class="mail-editor-toolbar">
+          <button-label-component type="mail" (click)="toggleMark('bold')"><strong>Bold</strong></button-label-component>
+          <button-label-component type="mail" (click)="toggleUnderline()"><u>Souligner</u></button-label-component>
+          <button-label-component type="mail" (click)="toggleMark('bold')">Texte épais</button-label-component>
+          <button-label-component type="mail" (click)="toggleMark('italic')"><em>Italique</em></button-label-component>
+          <label class="mail-editor-color">
+            <span>Couleur</span>
+            <input
+              type="color"
+              [ngModel]="selectedTextColor"
+              (ngModelChange)="onTextColorChange($event)"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div class="mail-editor-body">
+        <tiptap-editor [editor]="editor" [ngModel]="body"></tiptap-editor>
+      </div>
     </div>
 
-    <div class="editor-insert-row">
-      <span class="editor-insert-label">Images</span>
-      @if (imageOptions.length > 0) {
-        <form-select-component
-          [label]="null"
-          [options]="imageOptions"
-          [ngModel]="selectedImageId"
-          (ngModelChange)="onImageSelectionChange($event)"
-        />
-      } @else {
-        <span class="editor-insert-empty">Aucune image</span>
-      }
-      <button-label-component
-        type="ghost"
-        (click)="insertSelectedImage()"
-        [disabled]="imageOptions.length === 0 || !selectedImageDataUrl"
-      >
-        Insérer
-      </button-label-component>
-    </div>
+    <div class="mail-editor-side">
+      <div class="mail-editor-side-card mail-editor-side-card--emoji">
+        <details class="mail-editor-accordion">
+          <summary class="mail-editor-accordion-summary">
+            <span class="mail-editor-side-title">Emojis</span>
+            <span class="mail-editor-accordion-icon">▾</span>
+          </summary>
+          <div class="mail-editor-accordion-content">
+            <emoji-holder (emojiSelected)="onEmojiSelected($event)"></emoji-holder>
+          </div>
+        </details>
+      </div>
 
-    <div class="editor-insert-row">
-      <span class="editor-insert-label">Documents</span>
-      @if (documentOptions.length > 0) {
-        <form-select-component
-          [label]="null"
-          [options]="documentOptions"
-          [ngModel]="selectedDocumentId"
-          (ngModelChange)="onDocumentSelectionChange($event)"
-        />
-      } @else {
-        <span class="editor-insert-empty">Aucun document</span>
-      }
-      <button-label-component
-        type="ghost"
-        (click)="insertSelectedDocument()"
-        [disabled]="documentOptions.length === 0 || !selectedDocumentDataUrl"
-      >
-        Insérer
-      </button-label-component>
+      <div class="mail-editor-side-card mail-editor-side-card--assets">
+        <div class="mail-editor-side-title">Blocs et images enregistrés</div>
+        <div class="mail-editor-asset-group">
+          <label for="mail-editor-text-block">Bloc de texte</label>
+          <div class="mail-editor-asset-row">
+            <select
+              id="mail-editor-text-block"
+              [ngModel]="selectedTextBlockId ?? ''"
+              (ngModelChange)="onSelectedTextBlockChange($event)"
+            >
+              <option value="">Sélectionner un bloc</option>
+              @for (block of textBlocks; track block.id) {
+                <option [value]="block.id">{{ block.label }}</option>
+              }
+            </select>
+            <button-label-component
+              type="ghost"
+              [disabled]="!selectedTextBlockId"
+              (click)="insertSelectedTextBlock()"
+            >
+              Insérer
+            </button-label-component>
+          </div>
+        </div>
+
+        <div class="mail-editor-asset-group">
+          <label for="mail-editor-image">Image</label>
+          <div class="mail-editor-asset-row">
+            <select
+              id="mail-editor-image"
+              [ngModel]="selectedImageId ?? ''"
+              (ngModelChange)="onSelectedImageChange($event)"
+            >
+              <option value="">Sélectionner une image</option>
+              @for (image of images; track image.id) {
+                <option [value]="image.id">{{ image.label }}</option>
+              }
+            </select>
+            <button-label-component
+              type="ghost"
+              [disabled]="!selectedImageId"
+              (click)="insertSelectedImage()"
+            >
+              Insérer
+            </button-label-component>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-

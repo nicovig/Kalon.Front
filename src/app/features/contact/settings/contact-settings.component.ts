@@ -81,7 +81,10 @@ export class ContactSettingsComponent {
         this.newForDays.set(s.newForDays);
         this.toRemindAfterMonths.set(s.toRemindAfterMonths);
         this.inactiveAfterMonths.set(s.inactiveAfterMonths);
+        this.contactStore.recomputeStatuses();
+        this.toast.show('Les valeurs par defaut ont ete remises.', 'success', 3500);
         this.loading.set(false);
+        this.open.set(false);
       },
       error: () => {
         this.loading.set(false);

@@ -24,8 +24,8 @@
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'pink'"
-    [value]="kpiYearDonationsTotal()"
-    [label]="'Contributions cette année'"
+    [value]="kpiYearDonationsTotal() + ' €'"
+    [label]="'De contributions cette année'"
     [helper]="'Total enregistré depuis le 1er janvier'"
     [icon]="'💶'"
   ></dashboard-card-component>
@@ -97,14 +97,15 @@
       </div>
     </card> -->
 
-    <card title="À relancer en priorité" subtitle="Profils au statut « à relancer »" paddingClass="advanced">
-      <a
+    <card title="En priorité" subtitle="Profils au statut « à relancer »" paddingClass="advanced">
+      <button-label-component
         card-header-extra
-        routerLink="/relances"
+        type="primary"
+        routerLink="/envois"
         [queryParams]="priorityRelanceQueryParams()"
-        class="relance-launch-link"
-        >Lancer une relance →</a
       >
+        Relancer
+      </button-label-component>
       @if (priorityRelanceContacts().length === 0) {
       <p class="relance-empty">Aucun profil à relancer pour le moment.</p>
       } @else {
@@ -115,9 +116,9 @@
               <div class="r-name">{{ contactLabel(c) }}</div>
               <div class="r-since">
                 @if (c.lastDonation) {
-                  Dernier don il y a {{ monthsSinceLastDonation(c) }} mois
+                  Dernière contribution il y a {{ monthsSinceLastDonation(c) }} mois
                 } @else {
-                  Aucun don enregistré
+                  Aucune contribution enregistrée
                 }
               </div>
             </div>

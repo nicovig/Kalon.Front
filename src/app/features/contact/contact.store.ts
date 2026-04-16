@@ -422,10 +422,22 @@ export class ContactStoreService {
           : new Date(),
       status,
       totalDonation: Number(row.totalDonation ?? 0),
+      firstDonationAt:
+        row.firstDonationAt && !Number.isNaN(new Date(String(row.firstDonationAt)).getTime())
+          ? new Date(String(row.firstDonationAt))
+          : undefined,
       lastDonation:
         row.lastDonation && !Number.isNaN(new Date(String(row.lastDonation)).getTime())
           ? new Date(String(row.lastDonation))
           : undefined,
+      lastDonationAmount:
+        row.lastDonationAmount == null || !Number.isFinite(Number(row.lastDonationAmount))
+          ? undefined
+          : Number(row.lastDonationAmount),
+      averageDonationAmount:
+        row.averageDonationAmount == null || !Number.isFinite(Number(row.averageDonationAmount))
+          ? undefined
+          : Number(row.averageDonationAmount),
       donationCount: Number(row.donationCount ?? 0),
       preferredFrequencySendingReceipt:
         preferredFrequency === 'instantly' ||

@@ -17,7 +17,10 @@ export interface IContact {
   creationDate: Date;
   status: ContactStatus;
   totalDonation: number;
+  firstDonationAt?: Date;
   lastDonation?: Date;
+  lastDonationAmount?: number;
+  averageDonationAmount?: number;
   donationCount: number;
   preferredFrequencySendingReceipt?: 'instantly' | 'monthly' | 'quarterly' | 'semesterly' | 'yearly';
   notes?: string;

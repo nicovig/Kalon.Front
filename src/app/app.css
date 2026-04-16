@@ -6,12 +6,14 @@
   }
 
 .main--with-sidebar {
+  --sidebar-offset: 248px;
   margin-left: 248px;
   max-width: calc(100vw - 248px);
 }
 
 @media (max-width: 900px) {
   .main--with-sidebar {
+    --sidebar-offset: 64px;
     margin-left: 64px;
     max-width: calc(100vw - 64px);
   }

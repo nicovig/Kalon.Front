@@ -22,6 +22,7 @@
       <tr
         *ngFor="let row of pagedRows; let rowIndex = index"
         [class.tbl-row-clickable]="clickableRows"
+        [class.tbl-row-selected]="isSelectedRow(row)"
         (click)="onDataRowClick(row)"
       >
         <td *ngFor="let col of columns" [class.align-right]="col.align === 'right'">

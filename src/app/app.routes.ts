@@ -48,14 +48,9 @@ export const routes: Routes = [
           import('./features/archives/archives.routes').then((m) => m.ARCHIVES_ROUTES)
       },
       {
-        path: 'relances',
+        path: 'envois',
         loadChildren: () =>
-          import('./features/reminder/reminder.routes').then((m) => m.REMINDER_ROUTES)
-      },
-      {
-        path: 'documents',
-        loadChildren: () =>
-          import('./features/receipt/receipt.routes').then((m) => m.RECEIPT_ROUTES)
+          import('./features/mail/mail.routes').then((m) => m.MAIL_ROUTES)
       },
       {
         path: 'recherche',

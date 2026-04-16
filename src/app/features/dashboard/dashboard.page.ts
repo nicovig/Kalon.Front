@@ -9,6 +9,7 @@ import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
 import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
 import { ToastService } from '../../layout/toast/toast.service';
+import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserStore } from '../../core/auth/user.store';
 import { DonationStoreService } from '../donation/donation.store';
@@ -21,8 +22,8 @@ import { ContactSettingsStore } from '../contact/settings/contact-settings.store
 import { DonationPaymentMethod } from '../../core/models/donation.model';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { MailLogApiModel } from '../../core/api/backend-api.model';
-import { ReceiptArchiveStore } from '../receipt/receipt-archive.store';
 import { RouterLink } from '@angular/router';
+import { OrganizationDocumentsStore } from '../archives/organization-documents.store';
 
 @Component({
   selector: 'dashboard-page',
@@ -37,6 +38,7 @@ import { RouterLink } from '@angular/router';
     TopbarComponent,
     CardComponent,
     InlineLoaderComponent,
+    ButtonLabelComponent,
     ContactCreateLauncherComponent,
     EmptyContactsWelcomeComponent,
     ImportBannerComponent,
@@ -50,7 +52,7 @@ export class DashboardPageComponent {
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
-  private readonly receiptArchiveStore = inject(ReceiptArchiveStore);
+  private readonly organizationDocumentsStore = inject(OrganizationDocumentsStore);
   private readonly toast = inject(ToastService);
   protected readonly loadingData = signal(false);
 
@@ -80,30 +82,33 @@ export class DashboardPageComponent {
     () =>
       this.contactStore
         .contacts()
-        .filter((c) => this.contactSettings.statusOf(c) === 'active').length
+        .filter((c) => this.contactSettings.statusOf(c) === 'active').length.toString()
   );
 
   protected readonly kpiYearDonationsTotal = computed(() => {
     const y = new Date().getFullYear();
-    return +this.donationStore
+    return this.donationStore
       .donations()
       .filter((d) => d.date.getFullYear() === y)
-      .reduce((sum, d) => sum + d.amount, 0).toFixed(2);
+      .reduce((sum, d) => sum + d.amount, 0)
+      .toFixed(2);
   });
 
   protected readonly kpiToRemind = computed(
     () =>
       this.contactStore
         .contacts()
-        .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length
+        .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length.toString()
   );
 
-  protected readonly kpiGeneratedDocumentsCount = computed(() => this.receiptArchiveStore.records().length);
+  protected readonly kpiGeneratedDocumentsCount = computed(
+    () => this.organizationDocumentsStore.generatedDocuments().length.toString()
+  );
 
   protected readonly mailLogsPrintedPending = signal(0);
 
   protected readonly paperToConfirmTotal = computed(
-    () => this.mailLogsPrintedPending() + this.receiptArchiveStore.pendingPaperConfirmationsCount()
+    () => (this.mailLogsPrintedPending() + this.organizationDocumentsStore.pendingPaperConfirmationsCount()).toString()
   );
 
   protected readonly contactCount = computed(() => this.contactStore.contacts().length);
@@ -132,7 +137,12 @@ export class DashboardPageComponent {
     const ids = this.priorityRelanceContacts()
       .map((c) => c.id)
       .join(',');
-    return ids ? { contactIds: ids } : {};
+    return {
+      type: 'relance',
+      canal: 'email',
+      step: 'modele',
+      ...(ids ? { contactIds: ids } : {})
+    };
   });
 
   protected contactLabel(c: IContact): string {
@@ -159,6 +169,7 @@ export class DashboardPageComponent {
   ];
 
   constructor() {
+    this.organizationDocumentsStore.load();
     this.loadDashboardData();
   }
 

@@ -1,0 +1,48 @@
+{
+  "name": "ngx-tiptap",
+  "description": "Angular bindings for Tiptap 3",
+  "version": "14.0.1",
+  "license": "MIT",
+  "repository": "https://github.com/sibiraj-s/ngx-tiptap.git",
+  "bugs": "https://github.com/sibiraj-s/ngx-tiptap/issues",
+  "homepage": "https://github.com/sibiraj-s/ngx-tiptap#readme",
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/sibiraj-s"
+    }
+  ],
+  "keywords": [
+    "tiptap",
+    "angular-tiptap",
+    "angular-editor",
+    "angular-rich-text-editor",
+    "wysiwyg-editor",
+    "rich-text-editor"
+  ],
+  "sideEffects": false,
+  "peerDependencies": {
+    "@angular/common": ">=20.0.0",
+    "@angular/core": ">=20.0.0",
+    "@angular/forms": ">=20.0.0",
+    "@tiptap/core": "^3.0.1",
+    "@floating-ui/dom": "^1.0.0",
+    "@tiptap/extension-bubble-menu": "^3.0.1",
+    "@tiptap/extension-floating-menu": "^3.0.1",
+    "@tiptap/pm": "^3.0.1"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "module": "fesm2022/ngx-tiptap.mjs",
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./fesm2022/ngx-tiptap.mjs"
+    }
+  }
+}

@@ -4,7 +4,7 @@
 ></topbar>
 
 <section class="archives-wrap">
-  @if (!receiptArchives().length) {
+  @if (!hasAny()) {
     <div class="archives-empty-panel">
       <div class="archives-empty-illus" aria-hidden="true">
         <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,42 +49,40 @@
       </ul>
     </div>
   } @else {
+    <div class="archives-table" style="margin-bottom: 14px;">
+      <div class="archives-head">
+        <span>Date</span>
+        <span>Type</span>
+        <span>Référence</span>
+        <span>Statut</span>
+        <span>Source</span>
+      </div>
+      @for (item of generatedDocuments(); track item.id) {
+        <div class="archives-row">
+          <span>{{ formatDate(item.createdAt) }}</span>
+          <span>{{ documentTypeLabel(item.documentType) }}</span>
+          <span>{{ item.orderNumber || '—' }}</span>
+          <span>{{ item.status || '—' }}</span>
+          <span>OrganizationDocuments / generated-documents</span>
+        </div>
+      }
+    </div>
+
     <div class="archives-table">
       <div class="archives-head">
-        <span>Date d’envoi</span>
-        <span>Profil</span>
-        <span>Type</span>
+        <span>Date</span>
         <span>Canal</span>
-        <span>Modèle</span>
-        <span>Suivi courrier</span>
+        <span>Profil</span>
+        <span>Statut</span>
+        <span>Source</span>
       </div>
-      @for (item of receiptArchives(); track item.id) {
+      @for (log of mailLogs(); track log.id) {
         <div class="archives-row">
-          <span>{{ formatDate(item.sentAt) }}</span>
-          <span>{{ item.contactName }}</span>
-          <span>{{ kindLabel(item.documentKind) }}</span>
-          <span>{{ channelLabel(item.channel) }}</span>
-          <span>{{ item.templateTitle }}</span>
-          <span class="archives-follow">
-            @if (item.channel === 'email') {
-              <span class="archives-dash">—</span>
-            } @else if (isPaperPending(item)) {
-              <div class="archives-paper-pending">
-                <span class="archives-status-pill">À confirmer</span>
-                <input
-                  class="archives-date-input"
-                  type="date"
-                  [ngModel]="draftDateFor(item)"
-                  (ngModelChange)="onDraftDateChange(item.id, $event)"
-                />
-                <button-label-component type="ghost" (click)="confirmPaperPosted(item)">Envoyé le…</button-label-component>
-              </div>
-            } @else if (typeof item.paperPostedAt === 'number') {
-              <span class="archives-posted">Envoyé le {{ formatShortDate(item.paperPostedAt) }}</span>
-            } @else {
-              <span class="archives-dash">—</span>
-            }
-          </span>
+          <span>{{ formatDate(log.createdAt) }}</span>
+          <span>{{ logChannelLabel(log.isEmail) }}</span>
+          <span>{{ log.contactId || '—' }}</span>
+          <span>{{ logStatusLabel(log.status) }}</span>
+          <span>OrganizationDocuments / mail-logs</span>
         </div>
       }
     </div>
