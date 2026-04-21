@@ -1,3 +1,153 @@
-<topbar [title]="'Paramètres'" [subtitle]="'Gérez vos paramètres de compte, mails et modèles de reçu fiscal'"></topbar>
+<toast-component position="center-third"></toast-component>
+<topbar [title]="'Paramètres'" [subtitle]="'Gérez votre bibliothèque de contenus et vos informations d’envoi'"></topbar>
 
-<account-mail-manager></account-mail-manager>
+<div class="account-page">
+  <section class="account-card">
+    <h2 class="account-title">Informations de compte</h2>
+    <div class="account-info-grid">
+      <div class="account-info-item">
+        <div class="account-info-label">Nom de l’association</div>
+        <div class="account-info-value">{{ organizationInfo().associationName }}</div>
+      </div>
+      <div class="account-info-item">
+        <div class="account-info-label">Email mailing</div>
+        <div class="account-info-value">{{ organizationInfo().senderEmail }}</div>
+      </div>
+      <div class="account-info-item">
+        <div class="account-info-label">Modèle CERFA utilisé</div>
+        <div class="account-info-value">{{ cerfaLabel() }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="account-card">
+    <h2 class="account-title">Bibliothèque de textes</h2>
+    <p class="account-subtitle">Créez vos encarts réutilisables pour les mails et documents.</p>
+    <div class="account-form-grid">
+      <label>
+        <span>Nom du bloc</span>
+        <input type="text" [ngModel]="textLabel()" (ngModelChange)="textLabel.set($event)" placeholder="Ex: Introduction donateurs" />
+      </label>
+      <label class="account-form-grid-full">
+        <span>Contenu</span>
+        <textarea rows="5" [ngModel]="textContent()" (ngModelChange)="textContent.set($event)" placeholder="Texte réutilisable..."></textarea>
+      </label>
+    </div>
+    <div class="account-actions">
+      <button-label-component type="ghost" (click)="cancelTextEdit()">Réinitialiser</button-label-component>
+      <button-label-component type="primary" [disabled]="!textLabel().trim() || !textContent().trim()" (click)="saveTextBlock()">
+        {{ editingTextId() ? 'Mettre à jour' : 'Créer le bloc' }}
+      </button-label-component>
+    </div>
+    <div class="account-list">
+      @for (item of textBlocks(); track item.id) {
+        <div class="account-list-row">
+          <div class="account-list-main">
+            <div class="account-list-title">{{ item.label }}</div>
+            <div class="account-list-content">{{ item.content }}</div>
+          </div>
+          <div class="account-list-actions">
+            <button-label-component type="ghost" (click)="editTextBlock(item.id)">Modifier</button-label-component>
+            <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="account-card">
+    <h2 class="account-title">Signatures</h2>
+    <p class="account-subtitle">Préparez des signatures prêtes à insérer en un clic.</p>
+    <div class="account-form-grid">
+      <label>
+        <span>Nom de la signature</span>
+        <input type="text" [ngModel]="signatureLabel()" (ngModelChange)="signatureLabel.set($event)" placeholder="Ex: Signature trésorière" />
+      </label>
+      <label class="account-form-grid-full">
+        <span>Contenu</span>
+        <textarea
+          rows="4"
+          [ngModel]="signatureContent()"
+          (ngModelChange)="signatureContent.set($event)"
+          placeholder="Ex: Bien cordialement, Le bureau de l’association"
+        ></textarea>
+      </label>
+    </div>
+    <div class="account-actions">
+      <button-label-component type="ghost" (click)="cancelSignatureEdit()">Réinitialiser</button-label-component>
+      <button-label-component
+        type="primary"
+        [disabled]="!signatureLabel().trim() || !signatureContent().trim()"
+        (click)="saveSignatureBlock()"
+      >
+        {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
+      </button-label-component>
+    </div>
+    <div class="account-list">
+      @for (item of signatureBlocks(); track item.id) {
+        <div class="account-list-row">
+          <div class="account-list-main">
+            <div class="account-list-title">{{ item.label }}</div>
+            <div class="account-list-content">{{ item.content }}</div>
+          </div>
+          <div class="account-list-actions">
+            <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>
+            <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="account-card">
+    <h2 class="account-title">Images réutilisables</h2>
+    <p class="account-subtitle">Logo, visuels, bannières : centralisez vos images.</p>
+    <div class="account-form-grid">
+      <label>
+        <span>Nom de l’image</span>
+        <input type="text" [ngModel]="imageLabel()" (ngModelChange)="imageLabel.set($event)" placeholder="Ex: Logo association" />
+      </label>
+      <label>
+        <span>Fichier image</span>
+        <input type="file" accept="image/*" (change)="onImageFileChange($event)" />
+      </label>
+      @if (imageDataUrl()) {
+        <div class="account-image-preview account-form-grid-full">
+          <img [src]="imageDataUrl()" [alt]="imageLabel() || 'Aperçu image'" />
+        </div>
+      }
+    </div>
+    <div class="account-actions">
+      <button-label-component type="ghost" (click)="cancelImageEdit()">Réinitialiser</button-label-component>
+      <button-label-component type="primary" [disabled]="!imageLabel().trim() || !imageDataUrl().trim()" (click)="saveImage()">
+        {{ imageEditingId() ? 'Mettre à jour' : 'Ajouter l’image' }}
+      </button-label-component>
+    </div>
+    <div class="account-list account-list--images">
+      @for (item of images(); track item.id) {
+        <div class="account-image-card">
+          <img [src]="item.dataUrl" [alt]="item.label" />
+          <div class="account-list-title">{{ item.label }}</div>
+          <div class="account-list-actions">
+            <button-label-component type="ghost" (click)="editImage(item.id)">Modifier</button-label-component>
+            <button-label-component type="ghost" (click)="requestRemoveImage(item.id)">Supprimer</button-label-component>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+</div>
+
+@if (removeTarget(); as target) {
+  <app-popup-shell [maxWidth]="'min(520px, calc(100% - 32px))'" (dismiss)="cancelRemove()">
+    <div popup-header>
+      <div class="app-popup-title">Confirmer la suppression</div>
+      <p class="app-popup-sub">Cette action est définitive.</p>
+    </div>
+    <p class="account-delete-text">Supprimer « {{ target.label }} » ?</p>
+    <div class="account-actions">
+      <button-label-component type="ghost" (click)="cancelRemove()">Annuler</button-label-component>
+      <button-label-component type="primary" (click)="confirmRemove()">Supprimer</button-label-component>
+    </div>
+  </app-popup-shell>
+}

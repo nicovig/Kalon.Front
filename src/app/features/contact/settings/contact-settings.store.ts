@@ -33,7 +33,7 @@ export class ContactSettingsStore {
     if (!this.userStore.isAuthenticated()) {
       return of(this.settingsWrite());
     }
-    const url = API_ENDPOINTS.contactStatusSettings.get({ userId: this.userStore.userId });
+    const url = API_ENDPOINTS.contactStatusSettings.get();
     return this.http.get<ContactStatusSettingsApiModel>(url).pipe(
       map((payload) => this.fromApi(payload)),
       tap((settings) => {
@@ -50,7 +50,7 @@ export class ContactSettingsStore {
     if (!this.userStore.isAuthenticated()) {
       return of(normalized);
     }
-    const url = API_ENDPOINTS.contactStatusSettings.update({ userId: this.userStore.userId });
+    const url = API_ENDPOINTS.contactStatusSettings.update();
     return this.http.put<ContactStatusSettingsApiModel>(url, this.toApi(normalized)).pipe(
       map((payload) => this.fromApi(payload)),
       tap((settings) => {
@@ -65,7 +65,7 @@ export class ContactSettingsStore {
       this.update(DEFAULT_SETTINGS);
       return of(this.settingsWrite());
     }
-    const url = API_ENDPOINTS.contactStatusSettings.reset({ userId: this.userStore.userId });
+    const url = API_ENDPOINTS.contactStatusSettings.reset();
     return this.http.post<ContactStatusSettingsApiModel>(url, {}).pipe(
       map((payload) => this.fromApi(payload)),
       tap((settings) => {
@@ -140,8 +140,11 @@ export class ContactSettingsStore {
 
   private toApi(s: ContactStatusSettings): Record<string, unknown> {
     const snapshot = this.settingsApiSnapshotWrite();
+    const snapshotWithoutUserId = snapshot
+      ? Object.fromEntries(Object.entries(snapshot).filter(([key]) => key !== 'userId'))
+      : {};
     return {
-      ...(snapshot ?? {}),
+      ...snapshotWithoutUserId,
       newDurationDays: s.newForDays,
       toRemindAfterMonths: s.toRemindAfterMonths,
       inactiveAfterMonths: s.inactiveAfterMonths

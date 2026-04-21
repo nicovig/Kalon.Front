@@ -11,7 +11,6 @@ import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.
 import { ToastService } from '../../layout/toast/toast.service';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { AuthService } from '../../core/auth/auth.service';
-import { UserStore } from '../../core/auth/user.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactCreateLauncherComponent } from '../contact/contact-create-launcher.component';
@@ -47,7 +46,6 @@ import { OrganizationDocumentsStore } from '../archives/organization-documents.s
 })
 export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
-  private readonly userStore = inject(UserStore);
   private readonly http = inject(HttpClient);
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactStore = inject(ContactStoreService);
@@ -138,7 +136,7 @@ export class DashboardPageComponent {
       .map((c) => c.id)
       .join(',');
     return {
-      type: 'relance',
+      type: 'message',
       canal: 'email',
       step: 'modele',
       ...(ids ? { contactIds: ids } : {})
@@ -197,12 +195,7 @@ export class DashboardPageComponent {
     if (!this.authService.isAuthenticated()) {
       return of(undefined);
     }
-    const userId = this.userStore.userId;
-    if (!userId) {
-      this.mailLogsPrintedPending.set(0);
-      return of(undefined);
-    }
-    const url = API_ENDPOINTS.mailLog.list({ userId });
+    const url = API_ENDPOINTS.mailLog.list();
     return this.http.get<unknown>(url).pipe(
       map((payload) =>
         this.extractMailLogs(payload).filter(

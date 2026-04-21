@@ -60,6 +60,7 @@ export class AuthService {
     return {
       id: u.id,
       organizationId: u.organization?.id,
+      role: u.role ?? null,
       firstname: u.firstname ?? '',
       lastname: u.lastname ?? '',
       email: u.email ?? '',
@@ -85,6 +86,7 @@ export class AuthService {
     const user: AuthUser = {
       id: '11111111-1111-1111-1111-111111111111',
       organizationId: '22222222-2222-2222-2222-222222222222',
+      role: 'admin',
       firstname: 'Marie',
       lastname: 'Dupont',
       email: normalizedEmail,

@@ -122,6 +122,44 @@ export interface ContactStatusSettingsApiModel {
   updatedAt?: string | null;
 }
 
+export interface ContactStatusSettingsSummaryApiModel {
+  newDurationDays?: number;
+  toRemindAfterMonths?: number;
+  inactiveAfterMonths?: number;
+}
+
+export interface OrganizationApiModel {
+  id?: string;
+  name?: string | null;
+  fiscalStatus?: string | null;
+  senderName?: string | null;
+}
+
+export interface OrganizationLoginResponseApiModel {
+  id?: string;
+  name?: string | null;
+  fiscalStatus?: string | null;
+  contactStatusSettings?: ContactStatusSettingsSummaryApiModel | null;
+}
+
+export interface OrganizationLogoUpsertRequestApiModel {
+  fileName?: string | null;
+  storedPath?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number;
+}
+
+export interface OrganizationLogoResponseApiModel {
+  id?: string;
+  organizationId?: string;
+  fileName?: string | null;
+  storedPath?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number;
+  createdAt?: string;
+  updatedAt?: string | null;
+}
+
 export interface EmailTemplateUpsertRequestApiModel {
   name?: string | null;
   subject?: string | null;
@@ -217,4 +255,26 @@ export interface MailLogDetailsResponseApiModel {
   mailedAt?: string | null;
   mailedBy?: string | null;
   createdAt?: string;
+}
+
+export interface SendDocumentDtoApiModel {
+  documentType?: string | null;
+  channel?: string | null;
+  subject?: string | null;
+  bodyHtml?: string | null;
+  recipientIds?: string[] | null;
+  signatureBlockId?: string | null;
+  donationIds?: string[] | null;
+}
+
+export interface SendDocumentErrorDtoApiModel {
+  contactId?: string;
+  contactName?: string | null;
+  reason?: string | null;
+}
+
+export interface SendDocumentResultDtoApiModel {
+  successCount?: number;
+  errorCount?: number;
+  errors?: SendDocumentErrorDtoApiModel[] | null;
 }

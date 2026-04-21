@@ -48,8 +48,7 @@ export class ContactStoreService {
       const local = this.contactsSignal().find((c) => c.id === contactId) ?? null;
       return of(local);
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.contact.getById({ id: contactId, userId });
+    const url = API_ENDPOINTS.contact.getById({ id: contactId });
     return this.http.get<ContactApiModel>(url).pipe(
       map((payload) => this.mapApiContact(payload, 'details')),
       tap((contact) => {
@@ -62,8 +61,7 @@ export class ContactStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(this.contactsSignal());
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.contact.list({ userId });
+    const url = API_ENDPOINTS.contact.list();
     return this.http.get<ContactApiModel[]>(url).pipe(
       map((payload) => payload.map((row) => this.mapApiContact(row, 'list'))),
       tap((contacts) => this.contactsSignal.set(contacts))
@@ -290,8 +288,7 @@ export class ContactStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(contact);
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.contact.create({ userId });
+    const url = API_ENDPOINTS.contact.create();
     return this.http.post<ContactApiModel>(url, this.toContactUpsertBody(contact)).pipe(
       map((payload) => this.mapApiContact(payload, 'details')),
       tap((created) => {
@@ -307,8 +304,7 @@ export class ContactStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(contact);
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.contact.update({ id: contact.id, userId });
+    const url = API_ENDPOINTS.contact.update({ id: contact.id });
     return this.http.put<ContactApiModel>(url, this.toContactUpsertBody(contact)).pipe(
       map((payload) => this.mapApiContact(payload, 'details')),
       tap((updated) => this.upsertContact(updated))

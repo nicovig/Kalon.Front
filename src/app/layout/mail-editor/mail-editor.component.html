@@ -1,24 +1,51 @@
 <div class="mail-editor">
-  <div class="mail-editor-head">
-    <label for="mail-editor-subject">Objet</label>
-    <input
-      id="mail-editor-subject"
-      type="text"
-      [ngModel]="subject"
-      (ngModelChange)="onSubjectInput($event)"
-      placeholder="Objet du message"
-    />
-  </div>
-
   <div class="mail-editor-layout">
     <div class="mail-editor-main">
-      <div class="mail-editor-actions-card">
-        <div class="mail-editor-actions-title">Actions de mise en forme</div>
+      @if (showSubject) {
+        <div class="mail-editor-subject-card">
+          <div class="mail-editor-subject-inline">
+            <label for="mail-editor-subject">Objet</label>
+            <input
+              id="mail-editor-subject"
+              type="text"
+              [ngModel]="subject"
+              (ngModelChange)="onSubjectInput($event)"
+              placeholder="Objet du message"
+            />
+          </div>
+        </div>
+      }
+
+      <div class="mail-editor-body-card">
         <div class="mail-editor-toolbar">
-          <button-label-component type="mail" (click)="toggleMark('bold')"><strong>Bold</strong></button-label-component>
+          <button-label-component type="mail" (click)="toggleMark('bold')"><strong>Gras</strong></button-label-component>
           <button-label-component type="mail" (click)="toggleUnderline()"><u>Souligner</u></button-label-component>
-          <button-label-component type="mail" (click)="toggleMark('bold')">Texte épais</button-label-component>
           <button-label-component type="mail" (click)="toggleMark('italic')"><em>Italique</em></button-label-component>
+          <button-label-component type="mail" (click)="toggleHighlight()">Surligner</button-label-component>
+          <label class="mail-editor-color">
+            <span>Surlignage</span>
+            <input
+              type="color"
+              [ngModel]="selectedHighlightColor"
+              (ngModelChange)="onHighlightColorChange($event)"
+            />
+          </label>
+          <label class="mail-editor-select">
+            <span>Police</span>
+            <select [ngModel]="selectedFontFamily" (ngModelChange)="onFontFamilyChange($event)">
+              @for (item of fontFamilies; track item.value) {
+                <option [value]="item.value">{{ item.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="mail-editor-select">
+            <span>Taille</span>
+            <select [ngModel]="selectedFontSize" (ngModelChange)="onFontSizeChange($event)">
+              @for (size of fontSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
           <label class="mail-editor-color">
             <span>Couleur</span>
             <input
@@ -28,10 +55,11 @@
             />
           </label>
         </div>
-      </div>
-
-      <div class="mail-editor-body">
-        <tiptap-editor [editor]="editor" [ngModel]="body"></tiptap-editor>
+        <div class="mail-editor-body">
+          <div class="mail-editor-dropzone" (dragover)="onEditorDragOver($event)" (drop)="onEditorDrop($event)">
+            <tiptap-editor [editor]="editor"></tiptap-editor>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -49,50 +77,57 @@
       </div>
 
       <div class="mail-editor-side-card mail-editor-side-card--assets">
-        <div class="mail-editor-side-title">Blocs et images enregistrés</div>
+        <div class="mail-editor-side-title mail-editor-side-title--main">Blocs et images enregistrés</div>
         <div class="mail-editor-asset-group">
-          <label for="mail-editor-text-block">Bloc de texte</label>
-          <div class="mail-editor-asset-row">
-            <select
-              id="mail-editor-text-block"
-              [ngModel]="selectedTextBlockId ?? ''"
-              (ngModelChange)="onSelectedTextBlockChange($event)"
-            >
-              <option value="">Sélectionner un bloc</option>
-              @for (block of textBlocks; track block.id) {
-                <option [value]="block.id">{{ block.label }}</option>
-              }
-            </select>
-            <button-label-component
-              type="ghost"
-              [disabled]="!selectedTextBlockId"
-              (click)="insertSelectedTextBlock()"
-            >
-              Insérer
-            </button-label-component>
+          <label>Bloc de texte</label>
+          <div class="mail-editor-tags">
+            @for (block of textBlocks; track block.id) {
+              <button
+                type="button"
+                class="mail-editor-tag"
+                [class.mail-editor-tag--selected]="selectedTextBlockId === block.id"
+                draggable="true"
+                (dragstart)="onTextBlockDragStart($event, block)"
+                (click)="onTextBlockClick(block.id)"
+              >
+                {{ block.label }}
+              </button>
+            }
           </div>
         </div>
 
         <div class="mail-editor-asset-group">
-          <label for="mail-editor-image">Image</label>
-          <div class="mail-editor-asset-row">
-            <select
-              id="mail-editor-image"
-              [ngModel]="selectedImageId ?? ''"
-              (ngModelChange)="onSelectedImageChange($event)"
-            >
-              <option value="">Sélectionner une image</option>
-              @for (image of images; track image.id) {
-                <option [value]="image.id">{{ image.label }}</option>
-              }
-            </select>
-            <button-label-component
-              type="ghost"
-              [disabled]="!selectedImageId"
-              (click)="insertSelectedImage()"
-            >
-              Insérer
-            </button-label-component>
+          <label>Image</label>
+          <div class="mail-editor-tags">
+            @for (image of images; track image.id) {
+              <button
+                type="button"
+                class="mail-editor-tag"
+                [class.mail-editor-tag--selected]="selectedImageId === image.id"
+                draggable="true"
+                (dragstart)="onImageDragStart($event, image)"
+                (click)="onImageClick(image.id)"
+              >
+                {{ image.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="mail-editor-asset-group">
+          <label>Données contact</label>
+          <div class="mail-editor-tags">
+            @for (tag of variableTags; track tag.id) {
+              <button
+                type="button"
+                class="mail-editor-tag mail-editor-tag--variable"
+                draggable="true"
+                (dragstart)="onVariableTagDragStart($event, tag)"
+                (click)="onVariableTagClick(tag)"
+              >
+                {{ tag.label }}
+              </button>
+            }
           </div>
         </div>
       </div>

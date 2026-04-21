@@ -96,10 +96,9 @@ export class OrganizationCustomContentStore {
       this.loadedWrite.set(true);
       return;
     }
-    const userId = this.userStore.userId;
     forkJoin({
-      blocks: this.http.get<ContentBlockResponseApiModel[]>(API_ENDPOINTS.contentBlock.list({ userId })),
-      templates: this.http.get<EmailTemplateResponseApiModel[]>(API_ENDPOINTS.emailTemplate.list({ userId }))
+      blocks: this.http.get<ContentBlockResponseApiModel[]>(API_ENDPOINTS.contentBlock.list()),
+      templates: this.http.get<EmailTemplateResponseApiModel[]>(API_ENDPOINTS.emailTemplate.list())
     })
       .pipe(
         map(({ blocks, templates }) => {
@@ -127,40 +126,44 @@ export class OrganizationCustomContentStore {
       usableInEmail: true,
       usableInReceipt: true
     };
-    const userId = this.userStore.userId;
     const req = id
-      ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id, userId }), payload)
-      : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create({ userId }), payload);
+      ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id }), payload)
+      : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create(), payload);
     req.subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
   removeTextBlock(id: string): void {
     if (!id || !this.userStore.isAuthenticated()) return;
-    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id, userId: this.userStore.userId })).subscribe({
+    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
     });
   }
 
   addImage(label: string, fileName: string, dataUrl: string): void {
-    const l = label.trim() || fileName.trim();
+    this.upsertImage(null, label || fileName, dataUrl, this.mimeFromDataUrl(dataUrl) ?? 'image/*');
+  }
+
+  upsertImage(id: string | null, label: string, dataUrl: string, mimeType: string = 'image/*'): void {
+    const l = label.trim();
     if (!l || !dataUrl.trim() || !this.userStore.isAuthenticated()) return;
     const payload: ContentBlockUpsertRequestApiModel = {
       name: l,
       kind: 'image',
       content: dataUrl,
-      mimeType: this.mimeFromDataUrl(dataUrl) ?? 'image/*',
+      mimeType: mimeType || this.mimeFromDataUrl(dataUrl) || 'image/*',
       usableInEmail: true,
       usableInReceipt: true
     };
-    this.http
-      .post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create({ userId: this.userStore.userId }), payload)
-      .subscribe({ next: () => this.loadAll(), error: () => undefined });
+    const req = id
+      ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id }), payload)
+      : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create(), payload);
+    req.subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
   removeImage(id: string): void {
     if (!id || !this.userStore.isAuthenticated()) return;
-    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id, userId: this.userStore.userId })).subscribe({
+    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
     });
@@ -178,13 +181,13 @@ export class OrganizationCustomContentStore {
       usableInReceipt: true
     };
     this.http
-      .post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create({ userId: this.userStore.userId }), payload)
+      .post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create(), payload)
       .subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
   removeDocument(id: string): void {
     if (!id || !this.userStore.isAuthenticated()) return;
-    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id, userId: this.userStore.userId })).subscribe({
+    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
     });
@@ -194,7 +197,7 @@ export class OrganizationCustomContentStore {
     const payload = this.toTemplatePayload(label, body, footer);
     if (!payload || !this.userStore.isAuthenticated()) return;
     this.http
-      .post<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.create({ userId: this.userStore.userId }), payload)
+      .post<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.create(), payload)
       .subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
@@ -202,13 +205,13 @@ export class OrganizationCustomContentStore {
     const payload = this.toTemplatePayload(label, body, footer);
     if (!id || !payload || !this.userStore.isAuthenticated()) return;
     this.http
-      .put<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.update({ id, userId: this.userStore.userId }), payload)
+      .put<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.update({ id }), payload)
       .subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
   removeFiscalReceiptTemplate(id: string): void {
     if (!id || !this.userStore.isAuthenticated()) return;
-    this.http.delete<void>(API_ENDPOINTS.emailTemplate.remove({ id, userId: this.userStore.userId })).subscribe({
+    this.http.delete<void>(API_ENDPOINTS.emailTemplate.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
     });

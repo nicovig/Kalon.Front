@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -10,8 +11,14 @@ import { ChoiceCardItem, ChoiceCardsComponent } from '../../layout/choice-cards/
 import { TableColumn, TableComponent } from '../../layout/table/table.component';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { ToastService } from '../../layout/toast/toast.service';
-import { MailEditorComponent, MailEditorImageAsset, MailEditorSnippet } from '../../layout/mail-editor/mail-editor.component';
+import {
+  MailEditorComponent,
+  MailEditorImageAsset,
+  MailEditorSnippet,
+  MailEditorVariableTag
+} from '../../layout/mail-editor/mail-editor.component';
 import { FloatingStepBarComponent } from '../../layout/floating-step-bar/floating-step-bar.component';
+import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import {
     MailContactSelectorComponent,
     MailSelectorItem,
@@ -20,14 +27,17 @@ import {
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { ContactStatus, IContact, contactDisplayName } from '../../core/models/contact.model';
-import { FormSelectOption } from '../../layout/forms/select/form-select.component';
+import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { DonationStoreService } from '../donation/donation.store';
 import { OrganizationCustomContentStore } from '../account/organization-custom-content.store';
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
+import { API_ENDPOINTS } from '../../core/api/api.endpoints';
+import { SendDocumentResultDtoApiModel } from '../../core/api/backend-api.model';
+import { UserStore } from '../../core/auth/user.store';
 
 type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
-type SendType = 'relance' | 'recu_fiscal' | 'attestation_cotisation';
+type SendType = 'cerfa_11580' | 'cerfa_16216' | 'payment_attestation' | 'membership_certificate' | 'message';
 type SendMethod = 'email' | 'courrier';
 type TemplateChoiceSource = 'template' | 'ia' | null;
 type ContactContributionSummary = {
@@ -37,6 +47,18 @@ type ContactContributionSummary = {
   lastDate: Date | null;
   lastAmount: number | null;
   averageAmount: number | null;
+};
+type SendResultErrorItem = {
+  contactId: string;
+  contactName: string;
+  reason: string;
+};
+type SendResultModalData = {
+  channel: 'email' | 'courrier';
+  successCount: number;
+  errorCount: number;
+  sentRecipients: string[];
+  failedRecipients: SendResultErrorItem[];
 };
 
 @Component({
@@ -54,16 +76,20 @@ type ContactContributionSummary = {
     ButtonLabelComponent,
     MailEditorComponent,
     FloatingStepBarComponent,
+    PopupShellComponent,
     MailContactSelectorComponent,
+    FormSelectComponent,
     FormTextareaComponent,
     FormsModule
   ]
 })
 export class MailPageComponent {
+  private readonly http = inject(HttpClient);
   protected readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly donationStore = inject(DonationStoreService);
   private readonly customContentStore = inject(OrganizationCustomContentStore);
+  private readonly userStore = inject(UserStore);
   private readonly iaAgent = inject(IaAgentCore);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
@@ -110,22 +136,28 @@ export class MailPageComponent {
   ];
   protected readonly typeOptions: ChoiceCardItem[] = [
     {
-      key: 'relance',
+      key: 'message',
       icon: '💌',
       title: 'Relance ou message personnalisé',
       hint: 'Envoyez une relance ou un message personnalisé à vos contacts.',
     },
     {
-      key: 'recu_fiscal',
+      key: 'cerfa_11580',
       icon: '🧾',
       title: 'Reçu fiscal (Cerfa)',
       hint: 'Envoyez un reçu fiscal à vos contacts.',
     },
     {
-      key: 'attestation_cotisation',
+      key: 'payment_attestation',
       icon: '📄',
       title: 'Attestation de cotisation',
       hint: 'Envoyez une attestation de cotisation à vos contacts.',
+    },
+    {
+      key: 'membership_certificate',
+      icon: '🏅',
+      title: "Certificat d'adhésion",
+      hint: 'Idéal pour les clubs sportifs et associations.'
     }
   ];
 
@@ -235,7 +267,23 @@ export class MailPageComponent {
   });
 
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
-  protected readonly hasTemplateStep = computed(() => this.selectedSendType() === 'relance');
+  protected readonly hasTemplateStep = computed(() => this.selectedSendType() === 'message');
+  protected readonly showEditorSubject = computed(() => {
+    const type = this.selectedSendType();
+    return type !== 'cerfa_11580' && type !== 'cerfa_16216';
+  });
+  protected readonly flowSteps = computed<StepTrailItem[]>(() =>
+    this.hasTemplateStep() ? this.steps : this.steps.filter((s) => s.key !== 'modele')
+  );
+  protected readonly revealedSteps = computed<StepTrailItem[]>(() => {
+    const flow = this.flowSteps();
+    const current = this.activeStepKey();
+    const index = flow.findIndex((s) => s.key === current);
+    if (index < 0) {
+      return flow.slice(0, 1);
+    }
+    return flow.slice(0, index + 1);
+  });
 
   protected readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.filteredContacts().length / this.itemsPerPage))
@@ -321,7 +369,7 @@ export class MailPageComponent {
       }
 
       if (step === 'modele') {
-        this.activeStepKey.set(type === 'relance' ? 'modele' : 'ecriture');
+        this.activeStepKey.set(type === 'message' ? 'modele' : 'ecriture');
         return;
       }
       if (step === 'ecriture') {
@@ -335,6 +383,10 @@ export class MailPageComponent {
   }
 
   protected chooseType(kind: SendType): void {
+    if (kind === 'cerfa_11580' || kind === 'cerfa_16216') {
+      this.selectedSendType.set(this.preferredCerfaSendType());
+      return;
+    }
     this.selectedSendType.set(kind);
   }
 
@@ -414,11 +466,48 @@ export class MailPageComponent {
   protected readonly iaGenerationState = signal<'idle' | 'loading' | 'done'>('idle');
   protected readonly generatedSubject = signal('');
   protected readonly generatedBody = signal('');
+  protected readonly previewRecipientId = signal<string>('');
+  protected readonly sendingState = signal<'idle' | 'loading'>('idle');
+  protected readonly sendResultModal = signal<SendResultModalData | null>(null);
   protected readonly canContinueFromTemplateStep = computed(() => {
     if (!this.hasTemplateStep()) return true;
     if (this.templateChoiceSource() === 'template') return !!this.getSelectedEmailTemplate();
     if (this.templateChoiceSource() === 'ia') return this.iaGenerationState() === 'done' && !!this.generatedBody();
     return false;
+  });
+  protected readonly selectedRecipientContacts = computed(() => {
+    const selectedIds = this.selectedContactIds();
+    return this.contactStore.contacts().filter((c) => selectedIds.has(c.id));
+  });
+  protected readonly previewRecipientOptions = computed<FormSelectOption[]>(() =>
+    this.selectedRecipientContacts().map((c) => ({
+      value: c.id,
+      label: contactDisplayName(c)
+    }))
+  );
+  protected readonly selectedPreviewRecipient = computed<IContact | null>(() => {
+    const id = this.previewRecipientId();
+    return this.selectedRecipientContacts().find((c) => c.id === id) ?? null;
+  });
+  protected readonly previewSubject = computed(() => this.interpolateTemplate(this.generatedSubject(), this.selectedPreviewRecipient()));
+  protected readonly previewBodyHtml = computed(() =>
+    this.normalizeBodyToHtml(this.interpolateTemplate(this.generatedBody(), this.selectedPreviewRecipient()))
+  );
+  protected readonly editorVariableTags = computed<MailEditorVariableTag[]>(() => {
+    const tags: MailEditorVariableTag[] = [
+      { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
+      { id: 'nom', label: 'Nom', token: '{{nom}}' },
+      { id: 'totalDonation', label: 'total des contributions', token: '{{totalDonation}}' },
+      { id: 'firstDonationAt', label: 'date première contribution', token: '{{firstDonationAt}}' },
+      { id: 'lastDonation', label: 'date dernière contribution', token: '{{lastDonation}}' },
+      { id: 'averageDonationAmount', label: 'moyenne des contributions', token: '{{averageDonationAmount}}' },
+      { id: 'donationCount', label: 'nombre de contributions', token: '{{donationCount}}' }
+    ];
+    const hasCompanyRecipient = this.selectedRecipientContacts().some((contact) => contact.kind === 'company');
+    if (hasCompanyRecipient) {
+      tags.splice(2, 0, { id: 'enterprise_name', label: "nom de l'entreprise", token: '{{enterprise_name}}' });
+    }
+    return tags;
   });
 
   private readonly syncSelectedSignatureBlockEffect = effect(() => {
@@ -427,8 +516,9 @@ export class MailPageComponent {
     }
   });
   private readonly syncSelectedEmailTemplateEffect = effect(() => {
-    if (!this.selectedEmailTemplateId() && this.emailTemplates().length) {
-      this.selectedEmailTemplateId.set(this.emailTemplates()[0]?.id ?? null);
+    const selectedId = this.selectedEmailTemplateId();
+    if (selectedId && !this.emailTemplates().some((tpl) => tpl.id === selectedId)) {
+      this.selectedEmailTemplateId.set(null);
     }
   });
   private readonly syncEditorAssetsEffect = effect(() => {
@@ -438,6 +528,14 @@ export class MailPageComponent {
     if (!this.selectedEditorImageId() && this.editorImages().length) {
       this.selectedEditorImageId.set(this.editorImages()[0]?.id ?? null);
     }
+  });
+  private readonly syncPreviewRecipientEffect = effect(() => {
+    const options = this.previewRecipientOptions();
+    const current = this.previewRecipientId();
+    if (current && options.some((o) => o.value === current)) {
+      return;
+    }
+    this.previewRecipientId.set(options[0]?.value ?? '');
   });
 
   protected getSelectedSignatureContent(): string {
@@ -565,6 +663,109 @@ export class MailPageComponent {
     this.activeStepKey.set('apercu');
   }
 
+  protected writingStepTitle(): string {
+    return this.hasTemplateStep() ? 'Écriture' : 'Texte';
+  }
+
+  protected writingStepLead(): string {
+    if (this.hasTemplateStep()) {
+      return 'Rédigez et personnalisez votre contenu avant aperçu.';
+    }
+    return "Ce texte est un encart d'accompagnement ajouté au document généré.";
+  }
+
+  protected previewStepLead(): string {
+    if (this.hasTemplateStep()) {
+      return 'Vérifiez le rendu final avant envoi.';
+    }
+    return "Vérifiez le rendu du document et de l'encart avant envoi.";
+  }
+
+  protected previewPrimaryLabel(): string {
+    if (this.sendingState() === 'loading') {
+      return this.selectedSendMethod() === 'courrier' ? 'Impression en cours...' : 'Envoi en cours...';
+    }
+    if (this.selectedSendMethod() === 'courrier') {
+      return `Imprimer les courriers (${this.selectedCount()})`;
+    }
+    return 'Envoyer';
+  }
+
+  protected onPreviewRecipientChange(value: string): void {
+    this.previewRecipientId.set(value);
+  }
+
+  protected async sendEmail(): Promise<void> {
+    await this.dispatchSend('email');
+  }
+
+  protected async printCourrier(): Promise<void> {
+    await this.dispatchSend('courrier');
+  }
+
+  private async dispatchSend(channel: 'email' | 'courrier'): Promise<void> {
+    if (this.selectedSendMethod() !== channel) return;
+    const recipientIds = Array.from(this.selectedContactIds());
+    if (!recipientIds.length) return;
+    if (this.sendingState() === 'loading') return;
+    this.sendingState.set('loading');
+    try {
+      const payload = {
+        documentType: this.selectedSendType() ?? 'message',
+        channel,
+        subject: this.generatedSubject(),
+        bodyHtml: this.normalizeBodyToHtml(this.generatedBody()),
+        recipientIds,
+        signatureBlockId: this.selectedSignatureBlockId(),
+        donationIds: []
+      };
+      const endpoint = channel === 'courrier' ? API_ENDPOINTS.sending.print() : API_ENDPOINTS.sending.send();
+      const result = await firstValueFrom(
+        this.http.post<SendDocumentResultDtoApiModel>(endpoint, payload)
+      );
+      const successCount = result?.successCount ?? 0;
+      const errorCount = result?.errorCount ?? 0;
+      const failedRecipients = (result?.errors ?? []).map((error) => ({
+        contactId: String(error?.contactId ?? ''),
+        contactName: String(error?.contactName ?? '').trim(),
+        reason: String(error?.reason ?? '').trim()
+      }));
+      const failedById = new Set(failedRecipients.map((item) => item.contactId).filter(Boolean));
+      const selectedRecipients = this.selectedRecipients();
+      const sentRecipients = selectedRecipients
+        .filter((recipient) => !failedById.has(recipient.id))
+        .map((recipient) => recipient.name);
+      this.sendResultModal.set({
+        channel,
+        successCount,
+        errorCount,
+        sentRecipients,
+        failedRecipients
+      });
+      if (errorCount > 0) {
+        this.toast.show(
+          `${channel === 'courrier' ? 'Impression partielle' : 'Envoi partiel'} : ${successCount} succès, ${errorCount} échec(s).`,
+          'alert'
+        );
+      } else {
+        this.toast.show(
+          channel === 'courrier'
+            ? `Impression terminée : ${successCount} courrier(s) prêt(s).`
+            : `Envoi terminé : ${successCount} email(s) envoyé(s).`,
+          'success'
+        );
+      }
+    } catch {
+      this.toast.show(channel === 'courrier' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
+    } finally {
+      this.sendingState.set('idle');
+    }
+  }
+
+  protected closeSendResultModal(): void {
+    this.sendResultModal.set(null);
+  }
+
   protected onSearchQueryChange(value: string): void {
     this.searchQuery.set(value);
     this.pageIndex.set(0);
@@ -663,9 +864,11 @@ export class MailPageComponent {
 
   protected selectedSendTypeLabel(): string {
     const value = this.selectedSendType();
-    if (value === 'relance') return 'Relance / message personnalisé';
-    if (value === 'recu_fiscal') return 'Reçu fiscal';
-    if (value === 'attestation_cotisation') return 'Attestation de cotisation';
+    if (value === 'message') return 'Relance / message personnalisé';
+    if (value === 'cerfa_11580') return 'Reçu fiscal (Cerfa 11580)';
+    if (value === 'cerfa_16216') return 'Reçu fiscal (Cerfa 16216)';
+    if (value === 'payment_attestation') return 'Attestation de cotisation';
+    if (value === 'membership_certificate') return "Certificat d'adhésion";
     return '—';
   }
 
@@ -829,10 +1032,24 @@ export class MailPageComponent {
   }
 
   private parseSendType(value: string | null): SendType | null {
-    if (value === 'relance' || value === 'recu_fiscal' || value === 'attestation_cotisation') {
+    if (
+      value === 'message' ||
+      value === 'cerfa_11580' ||
+      value === 'cerfa_16216' ||
+      value === 'payment_attestation' ||
+      value === 'membership_certificate'
+    ) {
       return value;
     }
     return null;
+  }
+
+  private preferredCerfaSendType(): 'cerfa_11580' | 'cerfa_16216' {
+    const raw = String((this.userStore.currentUser as any)?.cerfaModel ?? '').trim();
+    if (raw === 'cerfa_16216') {
+      return 'cerfa_16216';
+    }
+    return 'cerfa_11580';
   }
 
   private parseSendMethod(value: string | null): SendMethod | null {
@@ -840,6 +1057,62 @@ export class MailPageComponent {
       return value;
     }
     return null;
+  }
+
+  private interpolateTemplate(input: string, recipient: IContact | null): string {
+    if (!input) return '';
+    if (!recipient) return input;
+    const associationName = this.userStore.currentUser?.associationName?.trim() || 'votre association';
+    const fullName = `${recipient.firstname ?? ''} ${recipient.lastname ?? ''}`.trim();
+    const summary = this.contactContributionSummary(recipient);
+    const enterpriseName = recipient.enterprise?.name ?? '';
+    const replacements: Record<string, string> = {
+      prenom: recipient.firstname ?? '',
+      nom: recipient.lastname ?? '',
+      nom_complet: fullName,
+      association: associationName,
+      nom_association: associationName,
+      enterprise_name: enterpriseName,
+      entreprise_name: enterpriseName,
+      email: recipient.email ?? recipient.enterprise?.contactEmail ?? '',
+      ville: recipient.address?.city ?? recipient.enterprise?.address?.city ?? '',
+      code_postal: recipient.address?.postalCode ?? recipient.enterprise?.address?.postalCode ?? '',
+      totalDonation: this.formatAmount(summary.totalAmount),
+      firstDonationAt: summary.firstDate ? this.formatShortDate(summary.firstDate) : '',
+      lastDonation: summary.lastDate ? this.formatShortDate(summary.lastDate) : '',
+      averageDonationAmount: summary.averageAmount == null ? '' : this.formatAmount(summary.averageAmount),
+      donationCount: String(summary.count),
+      lien_paiement: '#'
+    };
+    const replaceWithPattern = (template: string, pattern: RegExp) =>
+      template.replace(pattern, (match, key: string) => {
+        const normalized = String(key ?? '').trim().replace(/\./g, '_');
+        const value = replacements[normalized];
+        return value == null || value === '' ? match : value;
+      });
+    const withDoubleBraces = replaceWithPattern(input, /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g);
+    return replaceWithPattern(withDoubleBraces, /\{\s*([a-zA-Z0-9_.]+)\s*\}/g);
+  }
+
+  private normalizeBodyToHtml(raw: string): string {
+    const value = String(raw ?? '').trim();
+    if (!value) {
+      return '';
+    }
+    if (this.looksLikeHtml(value)) {
+      return value;
+    }
+    const escaped = value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    return escaped.replace(/\r?\n/g, '<br>');
+  }
+
+  private looksLikeHtml(value: string): boolean {
+    return /<\/?[a-z][\s\S]*>/i.test(value);
   }
 }
 

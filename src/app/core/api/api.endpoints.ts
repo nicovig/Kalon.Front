@@ -22,25 +22,19 @@ export const API_ENDPOINTS = {
     login: () => toUrl('/api/Auth/login')
   },
   contact: {
-    create: ({ userId }: { userId?: string }) => toUrl(withQuery('/api/Contact', { userId })),
-    list: ({ userId }: { userId?: string }) => toUrl(withQuery('/api/Contact', { userId })),
-    getById: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/Contact/${encodeURIComponent(id)}`, { userId })),
-    update: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/Contact/${encodeURIComponent(id)}`, { userId }))
+    create: () => toUrl('/api/Contact'),
+    list: () => toUrl('/api/Contact'),
+    getById: ({ id }: { id: string }) => toUrl(`/api/Contact/${encodeURIComponent(id)}`),
+    update: ({ id }: { id: string }) => toUrl(`/api/Contact/${encodeURIComponent(id)}`)
   },
   contactStatusSettings: {
-    get: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/contact-status-settings', { userId })),
-    update: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/contact-status-settings', { userId })),
-    reset: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/contact-status-settings/reset', { userId }))
+    get: () => toUrl('/api/contact-status-settings'),
+    update: () => toUrl('/api/contact-status-settings'),
+    reset: () => toUrl('/api/contact-status-settings/reset')
   },
   donation: {
-    create: ({ userId }: { userId?: string }) => toUrl(withQuery('/api/Donation', { userId })),
+    create: () => toUrl('/api/Donation'),
     list: ({
-      userId,
       fromDate,
       toDate,
       donationType,
@@ -50,7 +44,6 @@ export const API_ENDPOINTS = {
       page,
       pageSize
     }: {
-      userId?: string;
       fromDate?: string;
       toDate?: string;
       donationType?: string;
@@ -62,7 +55,6 @@ export const API_ENDPOINTS = {
     }) =>
       toUrl(
         withQuery('/api/Donation', {
-          userId,
           fromDate,
           toDate,
           donationType,
@@ -73,48 +65,54 @@ export const API_ENDPOINTS = {
           pageSize
         })
       ),
-    getById: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/Donation/${encodeURIComponent(id)}`, { userId })),
-    update: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/Donation/${encodeURIComponent(id)}`, { userId }))
+    getById: ({ id }: { id: string }) => toUrl(`/api/Donation/${encodeURIComponent(id)}`),
+    update: ({ id }: { id: string }) => toUrl(`/api/Donation/${encodeURIComponent(id)}`)
   },
   health: {
     check: () => toUrl('/api/Health')
   },
+  organization: {
+    get: () => toUrl('/api/Organization'),
+    update: () => toUrl('/api/Organization'),
+    updateStatusSettings: () => toUrl('/api/Organization/status-settings')
+  },
   emailTemplate: {
-    create: ({ userId }: { userId?: string }) => toUrl(withQuery('/api/EmailTemplate', { userId })),
-    list: ({ userId }: { userId?: string }) => toUrl(withQuery('/api/EmailTemplate', { userId })),
-    getById: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/EmailTemplate/${encodeURIComponent(id)}`, { userId })),
-    update: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/EmailTemplate/${encodeURIComponent(id)}`, { userId })),
-    remove: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/EmailTemplate/${encodeURIComponent(id)}`, { userId }))
+    create: () => toUrl('/api/EmailTemplate'),
+    list: () => toUrl('/api/EmailTemplate'),
+    getById: ({ id }: { id: string }) => toUrl(`/api/EmailTemplate/${encodeURIComponent(id)}`),
+    update: ({ id }: { id: string }) => toUrl(`/api/EmailTemplate/${encodeURIComponent(id)}`),
+    remove: ({ id }: { id: string }) => toUrl(`/api/EmailTemplate/${encodeURIComponent(id)}`)
   },
   contentBlock: {
-    create: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/OrganizationCustomContent/content-blocks', { userId })),
-    list: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/OrganizationCustomContent/content-blocks', { userId })),
-    getById: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`, { userId })),
-    update: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`, { userId })),
-    remove: ({ id, userId }: { id: string; userId?: string }) =>
-      toUrl(withQuery(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`, { userId }))
+    create: () => toUrl('/api/OrganizationCustomContent/content-blocks'),
+    list: () => toUrl('/api/OrganizationCustomContent/content-blocks'),
+    getById: ({ id }: { id: string }) =>
+      toUrl(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`),
+    update: ({ id }: { id: string }) =>
+      toUrl(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`),
+    remove: ({ id }: { id: string }) =>
+      toUrl(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`)
+  },
+  organizationCustomContent: {
+    getLogo: () => toUrl('/api/OrganizationCustomContent/logo'),
+    createLogo: () => toUrl('/api/OrganizationCustomContent/logo'),
+    updateLogo: () => toUrl('/api/OrganizationCustomContent/logo')
   },
   organizationDocuments: {
-    listGenerated: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/OrganizationDocuments/generated-documents', { userId })),
-    getGeneratedById: ({ id, userId, light }: { id: string; userId?: string; light?: boolean }) =>
-      toUrl(withQuery(`/api/OrganizationDocuments/generated-documents/${encodeURIComponent(id)}`, { userId, light })),
-    listMailLogs: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/OrganizationDocuments/mail-logs', { userId })),
-    getMailLogById: ({ id, userId, light }: { id: string; userId?: string; light?: boolean }) =>
-      toUrl(withQuery(`/api/OrganizationDocuments/mail-logs/${encodeURIComponent(id)}`, { userId, light }))
+    listGenerated: () => toUrl('/api/OrganizationDocuments/generated-documents'),
+    getGeneratedById: ({ id, light }: { id: string; light?: boolean }) =>
+      toUrl(withQuery(`/api/OrganizationDocuments/generated-documents/${encodeURIComponent(id)}`, { light })),
+    listMailLogs: () => toUrl('/api/OrganizationDocuments/mail-logs'),
+    getMailLogById: ({ id, light }: { id: string; light?: boolean }) =>
+      toUrl(withQuery(`/api/OrganizationDocuments/mail-logs/${encodeURIComponent(id)}`, { light }))
   },
   mailLog: {
-    list: ({ userId }: { userId?: string }) =>
-      toUrl(withQuery('/api/OrganizationDocuments/mail-logs', { userId }))
+    list: () => toUrl('/api/OrganizationDocuments/mail-logs')
+  },
+  sending: {
+    send: () => toUrl('/api/Sending/send'),
+    print: () => toUrl('/api/Sending/print'),
+    confirmMailed: ({ mailLogId }: { mailLogId: string }) =>
+      toUrl(`/api/Sending/confirm-mailed/${encodeURIComponent(mailLogId)}`)
   }
 };

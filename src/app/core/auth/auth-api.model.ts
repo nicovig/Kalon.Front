@@ -10,6 +10,7 @@ export interface LoginResponseBody {
     firstname?: string | null;
     lastname?: string | null;
     email?: string | null;
+    role?: string | null;
     organization?: {
       id?: string;
       name?: string;

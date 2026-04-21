@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MailPageComponent } from './mail.page';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -15,8 +16,14 @@ describe('MailPageComponent filters', () => {
   let contacts: IContact[];
   let donations: IDonation[];
   let component: MailPageComponent;
+  let capturedSendPayload: any = null;
+  let capturedPostUrl: string | null = null;
+  let sendResultResponse: { successCount: number; errorCount: number; errors: Array<{ contactId?: string; contactName?: string; reason?: string }> };
 
   beforeEach(() => {
+    capturedSendPayload = null;
+    capturedPostUrl = null;
+    sendResultResponse = { successCount: 1, errorCount: 0, errors: [] };
     contacts = buildContacts();
     donations = buildDonations();
 
@@ -88,13 +95,23 @@ describe('MailPageComponent filters', () => {
           useValue: {
             queryParamMap: of(convertToParamMap({}))
           }
+        },
+        {
+          provide: HttpClient,
+          useValue: {
+            post: (url: string, payload: unknown) => {
+              capturedPostUrl = url;
+              capturedSendPayload = payload;
+              return of(sendResultResponse);
+            }
+          }
         }
       ]
     });
 
     component = TestBed.runInInjectionContext(() => new MailPageComponent());
     const cmp = component as any;
-    cmp.chooseType('relance');
+    cmp.chooseType('message');
     cmp.chooseMethod('email');
     cmp.goToRecipientsStep();
   });
@@ -300,11 +317,82 @@ describe('MailPageComponent filters', () => {
   it('saute directement a ecriture pour un recu fiscal', () => {
     const cmp = component as any;
 
-    cmp.chooseType('recu_fiscal');
+    cmp.chooseType('cerfa_11580');
     cmp.toggleContact('c1');
     cmp.goToTemplateStep();
 
     expect(cmp.activeStepKey()).toBe('ecriture');
+  });
+
+  it('saute directement a ecriture pour un certificat d adhesion', () => {
+    const cmp = component as any;
+
+    cmp.chooseType('membership_certificate');
+    cmp.toggleContact('c1');
+    cmp.goToTemplateStep();
+
+    expect(cmp.activeStepKey()).toBe('ecriture');
+  });
+
+  it('affiche le wording encart pour les types documentaires', () => {
+    const cmp = component as any;
+    cmp.chooseType('payment_attestation');
+
+    expect(cmp.writingStepTitle()).toBe('Texte');
+    expect(cmp.writingStepLead()).toContain("encart d'accompagnement");
+  });
+
+  it('masque objet uniquement pour les recus fiscaux', () => {
+    const cmp = component as any;
+
+    cmp.chooseType('cerfa_11580');
+    expect(cmp.showEditorSubject()).toBe(false);
+
+    cmp.chooseType('payment_attestation');
+    expect(cmp.showEditorSubject()).toBe(true);
+
+    cmp.chooseType('membership_certificate');
+    expect(cmp.showEditorSubject()).toBe(true);
+
+    cmp.chooseType('message');
+    expect(cmp.showEditorSubject()).toBe(true);
+  });
+
+  it('reveal progressif des etapes sur tunnel message', () => {
+    const cmp = component as any;
+    cmp.chooseType('message');
+    cmp.goToMethodStep();
+    cmp.chooseMethod('email');
+    cmp.goToRecipientsStep();
+
+    expect(cmp.revealedSteps().map((s: { key: string }) => s.key)).toEqual([
+      'choix_type',
+      'choix_canal',
+      'destinataires'
+    ]);
+  });
+
+  it('n affiche pas l etape modele pour les types hors message', () => {
+    const cmp = component as any;
+    cmp.chooseType('payment_attestation');
+    cmp.goToMethodStep();
+    cmp.chooseMethod('email');
+    cmp.toggleContact('c1');
+    cmp.goToTemplateStep();
+
+    expect(cmp.flowSteps().map((s: { key: string }) => s.key)).toEqual([
+      'choix_type',
+      'choix_canal',
+      'destinataires',
+      'ecriture',
+      'apercu'
+    ]);
+    expect(cmp.revealedSteps().map((s: { key: string }) => s.key)).toEqual([
+      'choix_type',
+      'choix_canal',
+      'destinataires',
+      'ecriture'
+    ]);
   });
 
   it('precharge le tunnel depuis les query params dashboard', () => {
@@ -355,12 +443,18 @@ describe('MailPageComponent filters', () => {
           useValue: {
             queryParamMap: of(
               convertToParamMap({
-                type: 'relance',
+                type: 'message',
                 canal: 'email',
                 contactIds: 'c1,c4',
                 step: 'modele'
               })
             )
+          }
+        },
+        {
+          provide: HttpClient,
+          useValue: {
+            post: () => of({ successCount: 1, errorCount: 0, errors: [] })
           }
         }
       ]
@@ -368,10 +462,142 @@ describe('MailPageComponent filters', () => {
 
     const routedComponent = TestBed.runInInjectionContext(() => new MailPageComponent()) as any;
 
-    expect(routedComponent.selectedSendType()).toBe('relance');
+    expect(routedComponent.selectedSendType()).toBe('message');
     expect(routedComponent.selectedSendMethod()).toBe('email');
     expect(Array.from(routedComponent.selectedContactIds())).toEqual(['c1', 'c4']);
     expect(routedComponent.activeStepKey()).toBe('modele');
+  });
+
+  it('interpole l apercu email selon le destinataire choisi', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedSubject.set('Bonjour {{prenom}}');
+    cmp.generatedBody.set('<p>Ville: {{ville}}</p>');
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c1');
+
+    expect(cmp.previewSubject()).toBe('Bonjour Marie');
+    expect(cmp.previewBodyHtml()).toContain('Ville: Paris');
+  });
+
+  it('interpole aussi les tokens avec une seule accolade', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedSubject.set('Bonjour {prenom}');
+    cmp.generatedBody.set('<p>{association} - {nom}</p>');
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c1');
+
+    expect(cmp.previewSubject()).toBe('Bonjour Marie');
+    expect(cmp.previewBodyHtml()).toContain('votre association - Dupont');
+  });
+
+  it('preserve les retours a la ligne dans l apercu', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set('Ligne 1\nLigne 2');
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c1');
+
+    expect(cmp.previewBodyHtml()).toContain('Ligne 1<br>Ligne 2');
+  });
+
+  it('envoie via Sending/send en mode email', async () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedSubject.set('Sujet');
+    cmp.generatedBody.set('<p>Contenu</p>');
+
+    await cmp.sendEmail();
+
+    expect(cmp.sendingState()).toBe('idle');
+    expect(cmp.sendResultModal()).toEqual({
+      channel: 'email',
+      successCount: 1,
+      errorCount: 0,
+      sentRecipients: ['Marie Dupont'],
+      failedRecipients: []
+    });
+  });
+
+  it('envoie le body en html avec retours a la ligne preserves', async () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set('Bonjour\nDeuxieme ligne');
+
+    await cmp.sendEmail();
+
+    expect(capturedSendPayload?.bodyHtml).toContain('Bonjour<br>Deuxieme ligne');
+  });
+
+  it('affiche les destinataires en echec dans le resultat d envoi', async () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.toggleContact('c3');
+    sendResultResponse = {
+      successCount: 1,
+      errorCount: 1,
+      errors: [{ contactId: 'c3', contactName: 'Luc Bernard', reason: 'Adresse email invalide' }]
+    };
+
+    await cmp.sendEmail();
+
+    expect(cmp.sendResultModal()).toEqual({
+      channel: 'email',
+      successCount: 1,
+      errorCount: 1,
+      sentRecipients: ['Marie Dupont'],
+      failedRecipients: [{ contactId: 'c3', contactName: 'Luc Bernard', reason: 'Adresse email invalide' }]
+    });
+  });
+
+  it('imprime via Sending/print en mode courrier', async () => {
+    const cmp = component as any;
+    cmp.chooseMethod('courrier');
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set('Courrier test');
+
+    await cmp.printCourrier();
+
+    expect(capturedPostUrl).toContain('/api/Sending/print');
+    expect(capturedSendPayload?.channel).toBe('courrier');
+    expect(cmp.sendResultModal()?.channel).toBe('courrier');
+  });
+
+  it('interpole les donnees de contribution et entreprise', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set(
+      '{{totalDonation}} / {{firstDonationAt}} / {{lastDonation}} / {{averageDonationAmount}} / {{donationCount}}'
+    );
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c1');
+    const preview = String(cmp.previewBodyHtml());
+    expect(preview).toContain('150');
+    expect(preview).toContain('01/06/2022');
+    expect(preview).toContain('15/01/2024');
+    expect(preview).toContain('50');
+    expect(preview).toContain('3');
+  });
+
+  it('interpole aussi la notation Entreprise.Name', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c6');
+    cmp.generatedBody.set('{{enterprise.name}}');
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c6');
+
+    expect(cmp.previewBodyHtml()).toContain('ACME');
+  });
+
+  it("affiche le tag nom de l'entreprise seulement si un destinataire entreprise est selectionne", () => {
+    const cmp = component as any;
+
+    cmp.toggleContact('c1');
+    expect(cmp.editorVariableTags().some((t: { id: string }) => t.id === 'enterprise_name')).toBe(false);
+
+    cmp.toggleContact('c6');
+    expect(cmp.editorVariableTags().some((t: { id: string }) => t.id === 'enterprise_name')).toBe(true);
   });
 });
 

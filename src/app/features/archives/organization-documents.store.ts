@@ -31,13 +31,12 @@ export class OrganizationDocumentsStore {
       this.mailLogsWrite.set([]);
       return;
     }
-    const userId = this.userStore.userId;
     forkJoin({
       generated: this.http.get<GeneratedDocumentLightResponseApiModel[]>(
-        API_ENDPOINTS.organizationDocuments.listGenerated({ userId })
+        API_ENDPOINTS.organizationDocuments.listGenerated()
       ),
       logs: this.http.get<MailLogLightResponseApiModel[]>(
-        API_ENDPOINTS.organizationDocuments.listMailLogs({ userId })
+        API_ENDPOINTS.organizationDocuments.listMailLogs()
       )
     })
       .pipe(

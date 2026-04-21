@@ -2,7 +2,7 @@
 <topbar [title]="'Envois'" [subtitle]="'Gérez vos envois de mails et courriers papier'"></topbar>
 
 <div class="mail-flow">
-  <step-trail [currentKey]="activeStepKey()" [steps]="steps"></step-trail>
+  <step-trail [currentKey]="activeStepKey()" [steps]="revealedSteps()"></step-trail>
 
   @if (activeStepKey() === 'choix_type') {
     <section class="mail-type-step" aria-labelledby="mail-type-title">
@@ -183,7 +183,7 @@
         </div>
       </details>
 
-      <div class="mail-step4-grid">
+      <div class="mail-step4-grid" [class.mail-step4-grid--with-or]="hasTemplateStep()">
         @if (hasTemplateStep()) {
           <div class="mail-step4-card">
             <div class="mail-step4-card-title">Modèles stockés</div>
@@ -272,8 +272,8 @@
 
   @if (activeStepKey() === 'ecriture') {
     <section class="mail-type-step">
-      <h2 class="mail-type-title">Écriture</h2>
-      <p class="mail-type-lead">Rédigez et personnalisez votre contenu avant aperçu.</p>
+      <h2 class="mail-type-title">{{ writingStepTitle() }}</h2>
+      <p class="mail-type-lead">{{ writingStepLead() }}</p>
       <div class="mail-placeholder-card">
         <div class="mail-placeholder-inline">
           <span class="mail-placeholder-label">Type</span>
@@ -319,6 +319,7 @@
       </details>
       <div class="mail-writing-shell">
         <mail-editor
+          [showSubject]="showEditorSubject()"
           [subject]="generatedSubject()"
           (subjectChange)="generatedSubject.set($event)"
           [body]="generatedBody()"
@@ -329,21 +330,20 @@
           [images]="editorImages()"
           [selectedImageId]="selectedEditorImageId()"
           (selectedImageIdChange)="selectedEditorImageId.set($event)"
+          [variableTags]="editorVariableTags()"
         ></mail-editor>
       </div>
-      <floating-step-bar
-        [centerText]="selectedCount() + ' contact(s) sélectionné(s)'"
-        [nextLabel]="'Aperçu'"
-        (prev)="goToPreviousStep()"
-        (next)="goToPreviewStep()"
-      ></floating-step-bar>
+      <div class="mail-actions">
+        <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+        <button-label-component type="primary" (click)="goToPreviewStep()">Aperçu</button-label-component>
+      </div>
     </section>
   }
 
   @if (activeStepKey() === 'apercu') {
     <section class="mail-type-step">
       <h2 class="mail-type-title">Aperçu</h2>
-      <p class="mail-type-lead">Bientôt : aperçu pour vos destinataires.</p>
+      <p class="mail-type-lead">{{ previewStepLead() }}</p>
       <div class="mail-placeholder-card">
         <div class="mail-placeholder-inline">
           <span class="mail-placeholder-label">Type</span>
@@ -387,9 +387,71 @@
           }
         </div>
       </details>
+      <div class="mail-preview-card">
+        <div class="mail-preview-recipient">
+          <form-select-component
+            [label]="'Destinataire pour aperçu'"
+            [options]="previewRecipientOptions()"
+            [ngModel]="previewRecipientId()"
+            (ngModelChange)="onPreviewRecipientChange($event)"
+          ></form-select-component>
+        </div>
+        <div class="mail-preview-mail">
+          <div class="mail-preview-subject"><strong>Objet :</strong> {{ previewSubject() }}</div>
+          <div class="mail-preview-body" [innerHTML]="previewBodyHtml()"></div>
+        </div>
+      </div>
       <div class="mail-actions">
         <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+        <button-label-component
+          type="primary"
+          [disabled]="sendingState() === 'loading' || !selectedCount()"
+          (click)="selectedSendMethod() === 'courrier' ? printCourrier() : sendEmail()"
+        >
+          {{ previewPrimaryLabel() }}
+        </button-label-component>
       </div>
     </section>
   }
 </div>
+
+@if (sendResultModal(); as result) {
+  <app-popup-shell [maxWidth]="'min(820px, calc(100% - 32px))'" (dismiss)="closeSendResultModal()">
+    <div popup-header>
+      <div class="app-popup-title">Résultat {{ result.channel === 'courrier' ? 'de l’impression' : 'de l’envoi' }}</div>
+      <p class="app-popup-sub">{{ result.successCount }} succès · {{ result.errorCount }} échec(s)</p>
+    </div>
+    <div class="mail-send-result">
+      <section class="mail-send-result-card mail-send-result-card--ok">
+        <h3>{{ result.channel === 'courrier' ? 'Imprimés' : 'Partis' }}</h3>
+        @if (result.sentRecipients.length) {
+          <ul class="mail-send-result-list">
+            @for (name of result.sentRecipients; track name) {
+              <li>{{ name }}</li>
+            }
+          </ul>
+        } @else {
+          <div class="mail-send-result-empty">Aucun envoi confirmé.</div>
+        }
+      </section>
+      <section class="mail-send-result-card mail-send-result-card--ko">
+        <h3>{{ result.channel === 'courrier' ? 'Non imprimés' : 'Non partis' }}</h3>
+        @if (result.failedRecipients.length) {
+          <ul class="mail-send-result-list">
+            @for (item of result.failedRecipients; track item.contactId + item.contactName + item.reason) {
+              <li>
+                <div class="mail-send-result-name">{{ item.contactName || 'Contact inconnu' }}</div>
+                <div class="mail-send-result-reason">{{ item.reason || 'Raison non précisée' }}</div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="mail-send-result-empty">Aucun échec.</div>
+        }
+      </section>
+    </div>
+    <div class="mail-send-result-actions">
+      <button-label-component type="primary" (click)="closeSendResultModal()">Fermer</button-label-component>
+    </div>
+  </app-popup-shell>
+}

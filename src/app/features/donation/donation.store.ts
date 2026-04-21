@@ -34,8 +34,7 @@ export class DonationStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(this.donationsSignal());
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.donation.list({ userId, page: 1, pageSize: 200 });
+    const url = API_ENDPOINTS.donation.list({ page: 1, pageSize: 200 });
     return this.http.get<DonationListResponse>(url).pipe(
       map((payload) => (payload.items ?? []).map((row) => this.mapApiDonation(row))),
       tap((donations) => this.donationsSignal.set(donations))
@@ -105,8 +104,7 @@ export class DonationStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(donation);
     }
-    const userId = this.userStore.userId;
-    const url = API_ENDPOINTS.donation.create({ userId });
+    const url = API_ENDPOINTS.donation.create();
     const { contactId, amount, date, donationType, paymentMethod, notes, isAnonymous } = donation;
     return this.http
       .post<DonationApiModel>(url, {
