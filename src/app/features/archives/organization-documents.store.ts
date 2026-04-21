@@ -5,7 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import {
   GeneratedDocumentLightResponseApiModel,
-  MailLogLightResponseApiModel
+  MailLogListResponseApiModel
 } from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
 
@@ -15,7 +15,7 @@ export class OrganizationDocumentsStore {
   private readonly userStore = inject(UserStore);
 
   private readonly generatedWrite = signal<GeneratedDocumentLightResponseApiModel[]>([]);
-  private readonly mailLogsWrite = signal<MailLogLightResponseApiModel[]>([]);
+  private readonly mailLogsWrite = signal<MailLogListResponseApiModel[]>([]);
   private readonly loadedWrite = signal(false);
 
   readonly generatedDocuments = this.generatedWrite.asReadonly();
@@ -35,14 +35,14 @@ export class OrganizationDocumentsStore {
       generated: this.http.get<GeneratedDocumentLightResponseApiModel[]>(
         API_ENDPOINTS.organizationDocuments.listGenerated()
       ),
-      logs: this.http.get<MailLogLightResponseApiModel[]>(
+      logs: this.http.get<MailLogListResponseApiModel[]>(
         API_ENDPOINTS.organizationDocuments.listMailLogs()
       )
     })
       .pipe(
         map(({ generated, logs }) => {
           this.generatedWrite.set((generated ?? []).slice().sort((a, b) => this.tsOf(b.createdAt) - this.tsOf(a.createdAt)));
-          this.mailLogsWrite.set((logs ?? []).slice().sort((a, b) => this.tsOf(b.createdAt) - this.tsOf(a.createdAt)));
+          this.mailLogsWrite.set((logs ?? []).slice().sort((a, b) => this.tsOf(b.date) - this.tsOf(a.date)));
           this.loadedWrite.set(true);
         }),
         catchError(() => {

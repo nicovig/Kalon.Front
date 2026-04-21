@@ -2523,7 +2523,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MailLogLightResponse"
+                    "$ref": "#/components/schemas/MailLogListResponse"
                   }
                 }
               },
@@ -2531,7 +2531,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MailLogLightResponse"
+                    "$ref": "#/components/schemas/MailLogListResponse"
                   }
                 }
               },
@@ -2539,7 +2539,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MailLogLightResponse"
+                    "$ref": "#/components/schemas/MailLogListResponse"
                   }
                 }
               }
@@ -4076,31 +4076,27 @@
         },
         "additionalProperties": false
       },
-      "MailLogLightResponse": {
+      "MailLogListResponse": {
         "type": "object",
         "properties": {
-          "id": {
+          "type": {
             "type": "string",
-            "format": "uuid"
+            "nullable": true
           },
-          "organizationId": {
+          "date": {
             "type": "string",
-            "format": "uuid"
-          },
-          "contactId": {
-            "type": "string",
-            "format": "uuid"
+            "format": "date-time"
           },
           "isEmail": {
             "type": "boolean"
           },
-          "status": {
+          "sendAt": {
             "type": "string",
             "nullable": true
           },
-          "createdAt": {
+          "status": {
             "type": "string",
-            "format": "date-time"
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -49,42 +49,15 @@
       </ul>
     </div>
   } @else {
-    <div class="archives-table" style="margin-bottom: 14px;">
-      <div class="archives-head">
-        <span>Date</span>
-        <span>Type</span>
-        <span>Référence</span>
-        <span>Statut</span>
-        <span>Source</span>
-      </div>
-      @for (item of generatedDocuments(); track item.id) {
-        <div class="archives-row">
-          <span>{{ formatDate(item.createdAt) }}</span>
-          <span>{{ documentTypeLabel(item.documentType) }}</span>
-          <span>{{ item.orderNumber || '—' }}</span>
-          <span>{{ item.status || '—' }}</span>
-          <span>OrganizationDocuments / generated-documents</span>
-        </div>
-      }
-    </div>
-
-    <div class="archives-table">
-      <div class="archives-head">
-        <span>Date</span>
-        <span>Canal</span>
-        <span>Profil</span>
-        <span>Statut</span>
-        <span>Source</span>
-      </div>
-      @for (log of mailLogs(); track log.id) {
-        <div class="archives-row">
-          <span>{{ formatDate(log.createdAt) }}</span>
-          <span>{{ logChannelLabel(log.isEmail) }}</span>
-          <span>{{ log.contactId || '—' }}</span>
-          <span>{{ logStatusLabel(log.status) }}</span>
-          <span>OrganizationDocuments / mail-logs</span>
-        </div>
-      }
+    <div class="archives-table-host">
+      <table-component
+        [rows]="archiveRows()"
+        [columns]="archiveColumns"
+        [pageSizeOptions]="[10, 25, 50]"
+        [initialPageSize]="10"
+        [showSearch]="true"
+        [clickableRows]="false"
+      ></table-component>
     </div>
   }
 </section>

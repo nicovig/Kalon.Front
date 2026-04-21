@@ -231,13 +231,17 @@ export interface GeneratedDocumentDetailsResponseApiModel {
   createdAt?: string;
 }
 
-export interface MailLogLightResponseApiModel {
+export interface MailLogListResponseApiModel {
   id?: string;
-  organizationId?: string;
-  contactId?: string;
+  type?: string | null;
+  date?: string;
   isEmail?: boolean;
+  sendAt?: string | null;
   status?: string | null;
-  createdAt?: string;
+  firstname?: string | null;
+  lastname?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 export interface MailLogDetailsResponseApiModel {
