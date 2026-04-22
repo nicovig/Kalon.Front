@@ -23,7 +23,14 @@
   margin-bottom: 16px;
 }
 
-.contact-list-page table-component {
+.contact-list-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-list-wrap table-component {
   flex: 1;
   min-height: 0;
   display: flex;

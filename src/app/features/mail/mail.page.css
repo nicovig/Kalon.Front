@@ -245,17 +245,17 @@
   max-width: 920px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 14px;
   position: relative;
 }
 
-.mail-step4-grid--with-or::after {
-  content: 'OU';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+.mail-step4-grid--with-or {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.mail-step4-or {
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -268,8 +268,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
-  pointer-events: none;
+  justify-self: center;
+  align-self: center;
 }
 
 .mail-step4-card {
@@ -563,14 +563,20 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
   .mail-step4-grid {
     grid-template-columns: 1fr;
   }
 
-  .mail-step4-grid--with-or::after {
-    left: 50%;
-    top: 50%;
+  .mail-step4-grid--with-or {
+    grid-template-columns: 1fr;
+  }
+
+  .mail-step4-or {
+    width: 42px;
+    height: 42px;
+    justify-self: center;
+    align-self: center;
   }
 
   .mail-selected-recipient-chip {

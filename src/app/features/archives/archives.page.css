@@ -1,3 +1,10 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .archives-wrap {
   padding: 14px 18px 28px;
   min-height: min(52vh, 520px);
@@ -5,6 +12,19 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
+}
+
+.archives-wrap--table {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.archives-wrap--table table-component {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .archives-empty-panel {
@@ -84,11 +104,6 @@
   .archives-empty-title {
     font-size: 1.1rem;
   }
-}
-
-.archives-table-host {
-  width: 100%;
-  min-width: 0;
 }
 
 @media (max-width: 1366px) {

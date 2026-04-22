@@ -3,7 +3,7 @@
   subtitle="Mails, attestations, reçus fiscaux et suivi des envois papier — tout votre historique au même endroit."
 ></topbar>
 
-<section class="archives-wrap">
+<section class="archives-wrap" [class.archives-wrap--table]="hasAny()">
   @if (!hasAny()) {
     <div class="archives-empty-panel">
       <div class="archives-empty-illus" aria-hidden="true">
@@ -49,15 +49,14 @@
       </ul>
     </div>
   } @else {
-    <div class="archives-table-host">
-      <table-component
-        [rows]="archiveRows()"
-        [columns]="archiveColumns"
-        [pageSizeOptions]="[10, 25, 50]"
-        [initialPageSize]="10"
-        [showSearch]="true"
-        [clickableRows]="false"
-      ></table-component>
-    </div>
+    <table-component
+      [rows]="archiveRows()"
+      [columns]="archiveColumns"
+      [searchWidth]="'100%'"
+      [pageSizeOptions]="[25, 50, 100]"
+      [initialPageSize]="25"
+      [showSearch]="true"
+      [clickableRows]="false"
+    ></table-component>
   }
 </section>

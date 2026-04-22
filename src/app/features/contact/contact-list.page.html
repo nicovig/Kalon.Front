@@ -13,16 +13,18 @@
 
   <import-banner />
 
-  <table-component
-    [rows]="contactsComputed()"
-    [columns]="contactColumns"
-    [searchWidth]="'100%'"
-    [pageSizeOptions]="[25, 50, 100]"
-    [initialPageSize]="25"
-    [showRowActions]="true"
-    (rowEdit)="onEditContact($event)"
-    (rowViewDonations)="onViewDonations($event)"
-  ></table-component>
+  <section class="contact-list-wrap">
+    <table-component
+      [rows]="contactsComputed()"
+      [columns]="contactColumns"
+      [searchWidth]="'100%'"
+      [pageSizeOptions]="[25, 50, 100]"
+      [initialPageSize]="25"
+      [showRowActions]="true"
+      (rowEdit)="onEditContact($event)"
+      (rowViewDonations)="onViewDonations($event)"
+    ></table-component>
+  </section>
 </div>
 
 @if (contactToEdit(); as c) {
