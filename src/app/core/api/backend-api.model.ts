@@ -248,7 +248,11 @@ export interface MailLogDetailsResponseApiModel {
   id?: string;
   organizationId?: string;
   contactId?: string;
+  contactDisplayName?: string | null;
+  contactEmail?: string | null;
   generatedDocumentId?: string | null;
+  generatedDocumentType?: string | null;
+  generatedDocumentOrderNumber?: string | null;
   isEmail?: boolean;
   sentToEmail?: string | null;
   subject?: string | null;
@@ -282,3 +286,13 @@ export interface SendDocumentResultDtoApiModel {
   errorCount?: number;
   errors?: SendDocumentErrorDtoApiModel[] | null;
 }
+
+export interface MailEditorVariableTagApiModel {
+  id?: string | null;
+  label?: string | null;
+  token?: string | null;
+}
+
+export type SendPrintResponseApiModel = Blob;
+
+export type ConfirmMailedResponseApiModel = void;

@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ButtonCheckboxComponent } from '../../../layout/button/checkbox/button-checkbox.component';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
+import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import { FormSelectComponent, FormSelectOption } from '../../../layout/forms/select/form-select.component';
 import { FormSliderComponent } from '../../../layout/forms/slider/form-slider.component';
@@ -21,6 +23,13 @@ export type MailSelectorItem = {
   warningText?: string;
 };
 
+export type MailAvailabilityMode =
+  | 'with_postal_address'
+  | 'without_postal_address'
+  | 'without_email'
+  | 'with_email'
+  | 'without_postal_address_and_email';
+
 @Component({
   selector: 'mail-contact-selector',
   standalone: true,
@@ -30,15 +39,17 @@ export type MailSelectorItem = {
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     ButtonLabelComponent,
     ButtonCheckboxComponent,
+    ButtonRadioComponent,
     FormTextComponent,
     FormSelectComponent,
     FormSliderComponent,
     FormNumberComponent
   ]
 })
-export class MailContactSelectorComponent {
+export class MailContactSelectorComponent implements OnChanges {
   @Input() items: MailSelectorItem[] = [];
   @Input() filteredCount = 0;
   @Input() totalCount = 0;
@@ -58,10 +69,8 @@ export class MailContactSelectorComponent {
   @Input() kindOptions: FormSelectOption[] = [];
   @Input() departmentFilter = 'all';
   @Input() departmentOptions: FormSelectOption[] = [];
-  @Input() includeWithChannel = true;
-  @Input() includeWithoutChannel = true;
-  @Input() availabilityWithLabel = 'Avec email';
-  @Input() availabilityWithoutLabel = 'Sans email';
+  @Input() availabilityMode: MailAvailabilityMode = 'with_email';
+  @Input() showAvailabilityHelp = false;
   @Input() monthsSinceLastDonationMin = 0;
   @Input() totalDonationMin = '';
   @Input() totalDonationMax = '';
@@ -74,8 +83,7 @@ export class MailContactSelectorComponent {
   @Output() statusFilterChange = new EventEmitter<string>();
   @Output() kindFilterChange = new EventEmitter<string>();
   @Output() departmentFilterChange = new EventEmitter<string>();
-  @Output() includeWithChannelChange = new EventEmitter<boolean>();
-  @Output() includeWithoutChannelChange = new EventEmitter<boolean>();
+  @Output() availabilityModeChange = new EventEmitter<MailAvailabilityMode>();
   @Output() monthsSinceLastDonationMinChange = new EventEmitter<number>();
   @Output() totalDonationMinChange = new EventEmitter<string>();
   @Output() totalDonationMaxChange = new EventEmitter<string>();
@@ -85,6 +93,13 @@ export class MailContactSelectorComponent {
   @Output() deselectAll = new EventEmitter<void>();
   @Output() prevPage = new EventEmitter<void>();
   @Output() nextPage = new EventEmitter<void>();
+  protected readonly availabilityModeControl = new FormControl<string>('with_email', { nonNullable: true });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['availabilityMode']) return;
+    if (this.availabilityModeControl.value === this.availabilityMode) return;
+    this.availabilityModeControl.setValue(this.availabilityMode, { emitEvent: false });
+  }
 
   onSearchInput(value: string): void {
     this.searchQueryChange.emit(value);
@@ -111,12 +126,9 @@ export class MailContactSelectorComponent {
     this.monthsSinceLastDonationMinChange.emit(Number.isFinite(n) ? Math.max(0, Math.min(60, n)) : 0);
   }
 
-  onIncludeWithChannelToggle(): void {
-    this.includeWithChannelChange.emit(!this.includeWithChannel);
-  }
-
-  onIncludeWithoutChannelToggle(): void {
-    this.includeWithoutChannelChange.emit(!this.includeWithoutChannel);
+  onSelectAvailabilityMode(mode: MailAvailabilityMode): void {
+    this.availabilityModeControl.setValue(mode, { emitEvent: false });
+    this.availabilityModeChange.emit(mode);
   }
 }
 

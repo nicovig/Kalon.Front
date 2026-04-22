@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
-import { TableComponent, TableColumn } from '../../layout/table/table.component';
+import { TableComponent, TableColumn, TableRowAction } from '../../layout/table/table.component';
 import { IContact } from '../../core/models/contact.model';
 import { ContactCreateLauncherComponent } from './contact-create-launcher.component';
 import { EmptyContactsWelcomeComponent } from './empty-contacts-welcome/empty-contacts-welcome.component';
@@ -58,6 +58,16 @@ export class ContactListPageComponent {
     this.contactToViewDonations.set(row as IContact);
   }
 
+  protected onContactRowAction(event: { actionId: string; row: unknown }): void {
+    if (event.actionId === 'edit') {
+      this.onEditContact(event.row);
+      return;
+    }
+    if (event.actionId === 'donations') {
+      this.onViewDonations(event.row);
+    }
+  }
+
   protected closeViewDonations(): void {
     this.contactToViewDonations.set(null);
   }
@@ -70,6 +80,10 @@ export class ContactListPageComponent {
     { key: 'phone', header: 'Téléphone', searchable: true },
     { key: 'status', header: 'Statut', type: 'badge' },
     { key: 'totalDonation', header: 'Total dons', type: 'number', align: 'right' }
+  ];
+  protected readonly contactRowActions: TableRowAction[] = [
+    { id: 'edit', label: '✏️', type: 'ghost' },
+    { id: 'donations', label: '💰', type: 'ghost' }
   ];
 }
 

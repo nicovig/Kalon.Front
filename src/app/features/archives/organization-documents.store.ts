@@ -1,10 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import {
+  ConfirmMailedResponseApiModel,
   GeneratedDocumentLightResponseApiModel,
+  MailLogDetailsResponseApiModel,
   MailLogListResponseApiModel
 } from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
@@ -57,6 +59,37 @@ export class OrganizationDocumentsStore {
     return this.mailLogsWrite().filter(
       (r) => r.isEmail === false && String(r.status ?? '').toLowerCase() === 'printed'
     ).length;
+  }
+
+  getMailLogById(mailLogId: string): Observable<MailLogDetailsResponseApiModel> {
+    const id = String(mailLogId ?? '').trim();
+    return this.http.get<MailLogDetailsResponseApiModel>(
+      API_ENDPOINTS.organizationDocuments.getMailLogById({ id, light: false })
+    );
+  }
+
+  confirmMailed(mailLogId: string): Observable<boolean> {
+    const id = String(mailLogId ?? '').trim();
+    if (!id) return of(false);
+    return this.http
+      .patch<ConfirmMailedResponseApiModel>(API_ENDPOINTS.sending.confirmMailed({ mailLogId: id }), null)
+      .pipe(
+        map(() => {
+          this.mailLogsWrite.update((logs) =>
+            logs.map((log) =>
+              String(log.id ?? '') === id
+                ? {
+                    ...log,
+                    status: 'mailed',
+                    mailedAt: new Date().toISOString()
+                  }
+                : log
+            )
+          );
+          return true;
+        }),
+        catchError(() => of(false))
+      );
   }
 
   private tsOf(value?: string): number {

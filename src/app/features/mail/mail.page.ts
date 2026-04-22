@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -20,9 +20,9 @@ import {
 import { FloatingStepBarComponent } from '../../layout/floating-step-bar/floating-step-bar.component';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import {
-    MailContactSelectorComponent,
-    MailSelectorItem,
-
+  MailAvailabilityMode,
+  MailContactSelectorComponent,
+  MailSelectorItem
 } from './mail-contact-selector/mail-contact-selector.component';
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
@@ -33,12 +33,16 @@ import { OrganizationCustomContentStore } from '../account/organization-custom-c
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
-import { SendDocumentResultDtoApiModel } from '../../core/api/backend-api.model';
+import {
+  MailEditorVariableTagApiModel,
+  SendDocumentResultDtoApiModel,
+  SendPrintResponseApiModel
+} from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
 
 type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
 type SendType = 'cerfa_11580' | 'cerfa_16216' | 'payment_attestation' | 'membership_certificate' | 'message';
-type SendMethod = 'email' | 'courrier';
+type SendMethod = 'email' | 'print';
 type TemplateChoiceSource = 'template' | 'ia' | null;
 type ContactContributionSummary = {
   totalAmount: number;
@@ -54,11 +58,12 @@ type SendResultErrorItem = {
   reason: string;
 };
 type SendResultModalData = {
-  channel: 'email' | 'courrier';
+  channel: 'email' | 'print';
   successCount: number;
   errorCount: number;
   sentRecipients: string[];
   failedRecipients: SendResultErrorItem[];
+  returnedDocuments: { fileName: string }[];
 };
 
 @Component({
@@ -111,8 +116,7 @@ export class MailPageComponent {
   protected readonly statusFilter = signal('all');
   protected readonly kindFilter = signal('all');
   protected readonly departmentFilter = signal('all');
-  protected readonly includeWithChannel = signal(true);
-  protected readonly includeWithoutChannel = signal(true);
+  protected readonly availabilityMode = signal<MailAvailabilityMode>('with_email');
   protected readonly monthsSinceLastDonationMin = signal(0);
   protected readonly totalDonationMin = signal('');
   protected readonly totalDonationMax = signal('');
@@ -128,7 +132,7 @@ export class MailPageComponent {
       hint: 'L\'adresse email est requise'
     },
     {
-      key: 'courrier',
+      key: 'print',
       icon: '📬',
       title: 'Courrier papier',
       hint: 'L\'adresse postale est requise'
@@ -221,21 +225,23 @@ export class MailPageComponent {
     const status = this.statusFilter();
     const kind = this.kindFilter();
     const dept = this.departmentFilter();
-    const includeWithChannel = this.includeWithChannel();
-    const includeWithoutChannel = this.includeWithoutChannel();
+    const availabilityMode = this.availabilityMode();
     const monthsMin = this.monthsSinceLastDonationMin();
     const totalMin = this.parseOptionalNumber(this.totalDonationMin());
     const totalMax = this.parseOptionalNumber(this.totalDonationMax());
     const donationCountMin = this.parseOptionalNumber(this.donationCountMin());
     return this.contactStore.contacts().filter((c) => {
-      const hasChannel = this.hasSelectedChannel(c);
-      if (!includeWithChannel && !includeWithoutChannel) return false;
+      const hasPostal = this.hasPostalChannel(c);
+      const hasEmail = this.hasEmailChannel(c);
       const computedStatus = this.contactSettings.statusOf(c);
       if (status !== 'all' && computedStatus !== status) return false;
       if (kind !== 'all' && c.kind !== kind) return false;
       if (dept !== 'all' && this.departmentOf(c) !== dept) return false;
-      if (!includeWithChannel && hasChannel) return false;
-      if (!includeWithoutChannel && !hasChannel) return false;
+      if (availabilityMode === 'with_postal_address' && !hasPostal) return false;
+      if (availabilityMode === 'without_postal_address' && hasPostal) return false;
+      if (availabilityMode === 'without_email' && hasEmail) return false;
+      if (availabilityMode === 'with_email' && !hasEmail) return false;
+      if (availabilityMode === 'without_postal_address_and_email' && (hasPostal || hasEmail)) return false;
       if (monthsMin > 0 && !this.matchesLastDonationMonths(c, monthsMin)) return false;
       const stats = this.contactContributionSummary(c);
       const totalDonation = this.parseNumberish(stats.totalAmount);
@@ -299,7 +305,7 @@ export class MailPageComponent {
       const status = this.contactSettings.statusOf(c);
       const warningText = this.hasSelectedChannel(c)
         ? ''
-        : this.selectedSendMethod() === 'courrier'
+        : this.selectedSendMethod() === 'print'
           ? 'Adresse postale manquante pour un envoi papier'
           : 'Adresse email manquante pour un envoi email';
       return {
@@ -340,7 +346,7 @@ export class MailPageComponent {
     if (!invalid.length) return null;
     const names = invalid.slice(0, 3).map((c) => contactDisplayName(c)).join(', ');
     const suffix = invalid.length > 3 ? ` et ${invalid.length - 3} autre(s)` : '';
-    return this.selectedSendMethod() === 'courrier'
+    return this.selectedSendMethod() === 'print'
       ? `Attention, ${names}${suffix} n'ont pas leur adresse postale renseignée.`
       : `Attention, ${names}${suffix} n'ont pas leur adresse email renseignée.`;
   });
@@ -363,6 +369,7 @@ export class MailPageComponent {
       }
       if (method) {
         this.selectedSendMethod.set(method);
+        this.applyDefaultAvailabilityForMethod(method);
       }
       if (contactIds.length) {
         this.selectedContactIds.set(new Set(contactIds));
@@ -392,6 +399,7 @@ export class MailPageComponent {
 
   protected chooseMethod(kind: SendMethod): void {
     this.selectedSendMethod.set(kind);
+    this.applyDefaultAvailabilityForMethod(kind);
   }
 
   protected goToMethodStep(): void {
@@ -466,6 +474,7 @@ export class MailPageComponent {
   protected readonly iaGenerationState = signal<'idle' | 'loading' | 'done'>('idle');
   protected readonly generatedSubject = signal('');
   protected readonly generatedBody = signal('');
+  private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
   protected readonly previewRecipientId = signal<string>('');
   protected readonly sendingState = signal<'idle' | 'loading'>('idle');
   protected readonly sendResultModal = signal<SendResultModalData | null>(null);
@@ -493,21 +502,14 @@ export class MailPageComponent {
   protected readonly previewBodyHtml = computed(() =>
     this.normalizeBodyToHtml(this.interpolateTemplate(this.generatedBody(), this.selectedPreviewRecipient()))
   );
+  protected readonly hasCompanyRecipient = computed(() =>
+    this.selectedRecipientContacts().some((contact) => contact.kind === 'company')
+  );
   protected readonly editorVariableTags = computed<MailEditorVariableTag[]>(() => {
-    const tags: MailEditorVariableTag[] = [
-      { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
-      { id: 'nom', label: 'Nom', token: '{{nom}}' },
-      { id: 'totalDonation', label: 'total des contributions', token: '{{totalDonation}}' },
-      { id: 'firstDonationAt', label: 'date première contribution', token: '{{firstDonationAt}}' },
-      { id: 'lastDonation', label: 'date dernière contribution', token: '{{lastDonation}}' },
-      { id: 'averageDonationAmount', label: 'moyenne des contributions', token: '{{averageDonationAmount}}' },
-      { id: 'donationCount', label: 'nombre de contributions', token: '{{donationCount}}' }
-    ];
-    const hasCompanyRecipient = this.selectedRecipientContacts().some((contact) => contact.kind === 'company');
-    if (hasCompanyRecipient) {
-      tags.splice(2, 0, { id: 'enterprise_name', label: "nom de l'entreprise", token: '{{enterprise_name}}' });
-    }
-    return tags;
+    const hasCompanyRecipient = this.hasCompanyRecipient();
+    return this.editorVariableTagsWrite().filter((tag) =>
+      tag.id === 'enterprise_name' ? hasCompanyRecipient : true
+    );
   });
 
   private readonly syncSelectedSignatureBlockEffect = effect(() => {
@@ -536,6 +538,9 @@ export class MailPageComponent {
       return;
     }
     this.previewRecipientId.set(options[0]?.value ?? '');
+  });
+  private readonly loadEditorVariableTagsEffect = effect(() => {
+    this.loadMailEditorTags();
   });
 
   protected getSelectedSignatureContent(): string {
@@ -579,7 +584,7 @@ export class MailPageComponent {
       const method = this.selectedSendMethod();
 
       this.generatedSubject.set(response.subject);
-      this.generatedBody.set(method === 'courrier' ? body : body);
+      this.generatedBody.set(method === 'print' ? body : body);
       this.templateChoiceSource.set('ia');
       this.iaGenerationState.set('done');
       this.toast.show('Texte généré.', 'success');
@@ -683,9 +688,9 @@ export class MailPageComponent {
 
   protected previewPrimaryLabel(): string {
     if (this.sendingState() === 'loading') {
-      return this.selectedSendMethod() === 'courrier' ? 'Impression en cours...' : 'Envoi en cours...';
+      return this.selectedSendMethod() === 'print' ? 'Génération du courrier en cours' : 'Envoi en cours';
     }
-    if (this.selectedSendMethod() === 'courrier') {
+    if (this.selectedSendMethod() === 'print') {
       return `Imprimer les courriers (${this.selectedCount()})`;
     }
     return 'Envoyer';
@@ -699,12 +704,12 @@ export class MailPageComponent {
     await this.dispatchSend('email');
   }
 
-  protected async printCourrier(): Promise<void> {
-    await this.dispatchSend('courrier');
+  protected async print(): Promise<void> {
+    await this.dispatchSend('print');
   }
 
-  private async dispatchSend(channel: 'email' | 'courrier'): Promise<void> {
-    if (this.selectedSendMethod() !== channel) return;
+  private async dispatchSend(channel: 'email' | 'print'): Promise<void> {
+    if (!this.matchesSendChannel(channel)) return;
     const recipientIds = Array.from(this.selectedContactIds());
     if (!recipientIds.length) return;
     if (this.sendingState() === 'loading') return;
@@ -719,44 +724,62 @@ export class MailPageComponent {
         signatureBlockId: this.selectedSignatureBlockId(),
         donationIds: []
       };
-      const endpoint = channel === 'courrier' ? API_ENDPOINTS.sending.print() : API_ENDPOINTS.sending.send();
-      const result = await firstValueFrom(
-        this.http.post<SendDocumentResultDtoApiModel>(endpoint, payload)
-      );
-      const successCount = result?.successCount ?? 0;
-      const errorCount = result?.errorCount ?? 0;
-      const failedRecipients = (result?.errors ?? []).map((error) => ({
-        contactId: String(error?.contactId ?? ''),
-        contactName: String(error?.contactName ?? '').trim(),
-        reason: String(error?.reason ?? '').trim()
-      }));
-      const failedById = new Set(failedRecipients.map((item) => item.contactId).filter(Boolean));
       const selectedRecipients = this.selectedRecipients();
-      const sentRecipients = selectedRecipients
-        .filter((recipient) => !failedById.has(recipient.id))
-        .map((recipient) => recipient.name);
-      this.sendResultModal.set({
-        channel,
-        successCount,
-        errorCount,
-        sentRecipients,
-        failedRecipients
-      });
+      if (channel === 'print') {
+        const response = await firstValueFrom(
+          this.http.post(API_ENDPOINTS.sending.print(), payload, { observe: 'response', responseType: 'blob' })
+        );
+        const fileName = this.extractFileNameFromResponse(response) ?? 'courriers.pdf';
+        this.downloadBlob(response.body, fileName);
+        this.sendResultModal.set({
+          channel,
+          successCount: selectedRecipients.length,
+          errorCount: 0,
+          sentRecipients: selectedRecipients.map((recipient) => recipient.name),
+          failedRecipients: [],
+          returnedDocuments: [{ fileName }]
+        });
+      } else {
+        const result = await firstValueFrom(
+          this.http.post<SendDocumentResultDtoApiModel>(API_ENDPOINTS.sending.send(), payload)
+        );
+        const successCount = result?.successCount ?? 0;
+        const errorCount = result?.errorCount ?? 0;
+        const failedRecipients = (result?.errors ?? []).map((error) => ({
+          contactId: String(error?.contactId ?? ''),
+          contactName: String(error?.contactName ?? '').trim(),
+          reason: String(error?.reason ?? '').trim()
+        }));
+        const failedById = new Set(failedRecipients.map((item) => item.contactId).filter(Boolean));
+        const sentRecipients = selectedRecipients
+          .filter((recipient) => !failedById.has(recipient.id))
+          .map((recipient) => recipient.name);
+        this.sendResultModal.set({
+          channel,
+          successCount,
+          errorCount,
+          sentRecipients,
+          failedRecipients,
+          returnedDocuments: []
+        });
+      }
+      const successCount = this.sendResultModal()?.successCount ?? 0;
+      const errorCount = this.sendResultModal()?.errorCount ?? 0;
       if (errorCount > 0) {
         this.toast.show(
-          `${channel === 'courrier' ? 'Impression partielle' : 'Envoi partiel'} : ${successCount} succès, ${errorCount} échec(s).`,
+          `${channel === 'print' ? 'Impression partielle' : 'Envoi partiel'} : ${successCount} succès, ${errorCount} échec(s).`,
           'alert'
         );
       } else {
         this.toast.show(
-          channel === 'courrier'
+          channel === 'print'
             ? `Impression terminée : ${successCount} courrier(s) prêt(s).`
             : `Envoi terminé : ${successCount} email(s) envoyé(s).`,
           'success'
         );
       }
     } catch {
-      this.toast.show(channel === 'courrier' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
+      this.toast.show(channel === 'print' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
     } finally {
       this.sendingState.set('idle');
     }
@@ -786,13 +809,8 @@ export class MailPageComponent {
     this.pageIndex.set(0);
   }
 
-  protected onIncludeWithChannelChange(value: boolean): void {
-    this.includeWithChannel.set(value);
-    this.pageIndex.set(0);
-  }
-
-  protected onIncludeWithoutChannelChange(value: boolean): void {
-    this.includeWithoutChannel.set(value);
+  protected onAvailabilityModeChange(mode: MailAvailabilityMode): void {
+    this.availabilityMode.set(mode);
     this.pageIndex.set(0);
   }
 
@@ -849,16 +867,75 @@ export class MailPageComponent {
   }
 
   private hasSelectedChannel(c: IContact): boolean {
-    if (this.selectedSendMethod() === 'courrier') {
-      return Boolean(
-        c.address?.street?.trim() ||
-        c.address?.postalCode?.trim() ||
-        c.address?.city?.trim() ||
-        c.enterprise?.address?.street?.trim() ||
-        c.enterprise?.address?.postalCode?.trim() ||
-        c.enterprise?.address?.city?.trim()
-      );
+    if (this.selectedSendMethod() === 'print') {
+      return this.hasPostalChannel(c);
     }
+    return this.hasEmailChannel(c);
+  }
+
+  private matchesSendChannel(channel: 'email' | 'print'): boolean {
+    if (channel === 'email') return this.selectedSendMethod() === 'email';
+    return this.selectedSendMethod() === 'print';
+  }
+
+  private loadMailEditorTags(): void {
+    this.http
+      .get<MailEditorVariableTagApiModel[]>(
+        API_ENDPOINTS.sending.mailEditorTags({ hasCompanyRecipient: true })
+      )
+      .subscribe({
+        next: (tags) => {
+          const normalized = (tags ?? [])
+            .map((tag) => ({
+              id: String(tag?.id ?? '').trim(),
+              label: String(tag?.label ?? '').trim(),
+              token: String(tag?.token ?? '').trim()
+            }))
+            .filter((tag) => tag.id && tag.label && tag.token);
+          this.editorVariableTagsWrite.set(normalized);
+        },
+        error: () => {
+          this.editorVariableTagsWrite.set([]);
+        }
+      });
+  }
+
+  private extractFileNameFromResponse(response: HttpResponse<SendPrintResponseApiModel>): string | null {
+    const contentDisposition = response.headers.get('content-disposition') ?? '';
+    const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]).trim();
+    }
+    const basicMatch = /filename="?([^"]+)"?/i.exec(contentDisposition);
+    if (basicMatch?.[1]) {
+      return basicMatch[1].trim();
+    }
+    return null;
+  }
+
+  private downloadBlob(blob: Blob | null, fileName: string): void {
+    if (!blob || typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(url);
+  }
+
+  private hasPostalChannel(c: IContact): boolean {
+    const personalAddress = c.address;
+    const enterpriseAddress = c.enterprise?.address;
+    const hasCompleteAddress = (address?: { street?: string; postalCode?: string; city?: string }) =>
+      Boolean(address?.street?.trim() && address?.postalCode?.trim() && address?.city?.trim());
+    return hasCompleteAddress(personalAddress) || hasCompleteAddress(enterpriseAddress);
+  }
+
+  private hasEmailChannel(c: IContact): boolean {
     return Boolean(c.email?.trim() || c.enterprise?.contactEmail?.trim());
   }
 
@@ -875,7 +952,7 @@ export class MailPageComponent {
   protected selectedSendMethodLabel(): string {
     const value = this.selectedSendMethod();
     if (value === 'email') return 'Email';
-    if (value === 'courrier') return 'Courrier papier';
+    if (value === 'print') return 'Courrier papier';
     return '—';
   }
 
@@ -1053,10 +1130,15 @@ export class MailPageComponent {
   }
 
   private parseSendMethod(value: string | null): SendMethod | null {
-    if (value === 'email' || value === 'courrier') {
+    if (value === 'email' || value === 'print') {
       return value;
     }
     return null;
+  }
+
+  private applyDefaultAvailabilityForMethod(method: SendMethod): void {
+    this.availabilityMode.set(method === 'print' ? 'with_postal_address' : 'with_email');
+    this.pageIndex.set(0);
   }
 
   private interpolateTemplate(input: string, recipient: IContact | null): string {

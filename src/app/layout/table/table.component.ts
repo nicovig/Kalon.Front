@@ -14,6 +14,14 @@ export interface TableColumn {
   align?: 'left' | 'right' | 'center';
 }
 
+export interface TableRowAction {
+  id: string;
+  label: string;
+  type?: 'ghost' | 'primary' | 'page' | 'mail';
+  visible?: (row: unknown) => boolean;
+  disabled?: (row: unknown) => boolean;
+}
+
 @Component({
   selector: 'table-component',
   standalone: true,
@@ -41,13 +49,10 @@ export class TableComponent implements OnChanges {
   @Input() clickableRows = false;
   @Input() selectedRowId: string | null = null;
   @Input() selectedRowKey = 'id';
-  @Input() showRowActions = false;
-  @Input() rowActionEditLabel = '✏️';
-  @Input() rowActionDonationsLabel = '💰';
+  @Input() rowActions: TableRowAction[] = [];
 
   @Output() rowClick = new EventEmitter<unknown>();
-  @Output() rowEdit = new EventEmitter<unknown>();
-  @Output() rowViewDonations = new EventEmitter<unknown>();
+  @Output() rowAction = new EventEmitter<{ actionId: string; row: unknown }>();
 
   searchTerm = '';
   currentPage = 1;
@@ -171,14 +176,30 @@ export class TableComponent implements OnChanges {
     this.rowClick.emit(row);
   }
 
-  onEditClick(row: unknown, event: Event): void {
+  onRowActionClick(action: TableRowAction, row: unknown, event: Event): void {
     event.stopPropagation();
-    this.rowEdit.emit(row);
+    if (!action?.id) return;
+    this.rowAction.emit({ actionId: action.id, row });
   }
 
-  onViewDonationsClick(row: unknown, event: Event): void {
-    event.stopPropagation();
-    this.rowViewDonations.emit(row);
+  getVisibleRowActions(row: unknown): TableRowAction[] {
+    return this.rowActions.filter((action) => {
+      if (!action.visible) return true;
+      try {
+        return action.visible(row);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  isRowActionDisabled(action: TableRowAction, row: unknown): boolean {
+    if (!action.disabled) return false;
+    try {
+      return action.disabled(row);
+    } catch {
+      return false;
+    }
   }
 
   isSelectedRow(row: unknown): boolean {
@@ -190,7 +211,7 @@ export class TableComponent implements OnChanges {
   }
 
   get columnCount(): number {
-    return this.columns.length + (this.showRowActions ? 1 : 0);
+    return this.columns.length + (this.rowActions.length > 0 ? 1 : 0);
   }
 
   private applyInitialPageSize(): void {

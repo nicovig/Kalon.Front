@@ -83,19 +83,20 @@
   gap: 10px;
 }
 
-.availability-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  min-height: 24px;
+.availability-options button-radio {
+  display: block;
 }
 
-.availability-option span {
+.availability-options ::ng-deep .radio-option {
   font-size: 12.5px;
-  color: var(--ink);
   font-weight: 600;
+  color: var(--ink);
+}
+
+.availability-help {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--ink-70);
 }
 
 .filter-select ::ng-deep .fs-select {

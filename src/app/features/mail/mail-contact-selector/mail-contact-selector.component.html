@@ -46,15 +46,52 @@
       <div class="filter-card">
         <div class="advanced-filter-label">Disponibilité</div>
         <div class="availability-options">
-          <div class="availability-option" (click)="onIncludeWithChannelToggle()">
-            <button-checkbox [checked]="includeWithChannel"></button-checkbox>
-            <span>{{ availabilityWithLabel }}</span>
-          </div>
-          <div class="availability-option" (click)="onIncludeWithoutChannelToggle()">
-            <button-checkbox [checked]="includeWithoutChannel"></button-checkbox>
-            <span>{{ availabilityWithoutLabel }}</span>
-          </div>
+          <button-radio
+            [control]="availabilityModeControl"
+            [name]="'availability-mode'"
+            [value]="'with_postal_address'"
+            (click)="onSelectAvailabilityMode('with_postal_address')"
+          >
+            Avec adresse postale
+          </button-radio>
+          <button-radio
+            [control]="availabilityModeControl"
+            [name]="'availability-mode'"
+            [value]="'without_postal_address'"
+            (click)="onSelectAvailabilityMode('without_postal_address')"
+          >
+            Sans adresse postale
+          </button-radio>
+          <button-radio
+            [control]="availabilityModeControl"
+            [name]="'availability-mode'"
+            [value]="'without_email'"
+            (click)="onSelectAvailabilityMode('without_email')"
+          >
+            Sans email
+          </button-radio>
+          <button-radio
+            [control]="availabilityModeControl"
+            [name]="'availability-mode'"
+            [value]="'with_email'"
+            (click)="onSelectAvailabilityMode('with_email')"
+          >
+            Avec email
+          </button-radio>
+          <button-radio
+            [control]="availabilityModeControl"
+            [name]="'availability-mode'"
+            [value]="'without_postal_address_and_email'"
+            (click)="onSelectAvailabilityMode('without_postal_address_and_email')"
+          >
+            Sans adresse postale ni email
+          </button-radio>
         </div>
+        @if (showAvailabilityHelp) {
+          <div class="availability-help">
+            Adresse postale complète requise : rue, code postal et ville.
+          </div>
+        }
       </div>
       <div class="filter-card">
         <div class="advanced-filter-label">Total des contributions (€)</div>

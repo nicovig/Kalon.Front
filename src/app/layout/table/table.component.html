@@ -15,7 +15,7 @@
         <th *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
           {{ col.header }}
         </th>
-        <th *ngIf="showRowActions" class="tbl-th-actions">Actions</th>
+        <th *ngIf="rowActions.length > 0" class="tbl-th-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -69,13 +69,15 @@
             }
           }
         </td>
-        <td *ngIf="showRowActions" class="tbl-actions" (click)="$event.stopPropagation()">
-          <button-label-component type="ghost" (click)="onEditClick(row, $event)">{{
-            rowActionEditLabel
-          }}</button-label-component>
-          <button-label-component type="ghost" (click)="onViewDonationsClick(row, $event)">{{
-            rowActionDonationsLabel
-          }}</button-label-component>
+        <td *ngIf="rowActions.length > 0" class="tbl-actions" (click)="$event.stopPropagation()">
+          <button-label-component
+            *ngFor="let action of getVisibleRowActions(row)"
+            [type]="action.type || 'ghost'"
+            [disabled]="isRowActionDisabled(action, row)"
+            (click)="onRowActionClick(action, row, $event)"
+          >
+            {{ action.label }}
+          </button-label-component>
         </td>
       </tr>
       <tr *ngIf="totalRows === 0">

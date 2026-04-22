@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
+import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
+import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
+import { ToastService } from '../../layout/toast/toast.service';
 import { TableColumn, TableComponent } from '../../layout/table/table.component';
 import { OrganizationDocumentsStore } from './organization-documents.store';
-import { MailLogListResponseApiModel } from '../../core/api/backend-api.model';
+import { MailLogDetailsResponseApiModel, MailLogListResponseApiModel } from '../../core/api/backend-api.model';
 
 type SendType =
   | 'cerfa_11580'
@@ -14,6 +17,7 @@ type SendType =
 
 type ArchiveTableRow = {
   id: string;
+  entryType: 'mail';
   typeLabel: string;
   dateLabel: string;
   channelLabel: string;
@@ -27,17 +31,17 @@ type ArchiveTableRow = {
   templateUrl: './archives.page.html',
   styleUrls: ['./archives.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TopbarComponent, TableComponent]
+  imports: [CommonModule, TopbarComponent, TableComponent, PopupShellComponent, ButtonLabelComponent]
 })
 export class ArchivesPageComponent {
   private readonly documentsStore = inject(OrganizationDocumentsStore);
-
-  protected readonly generatedDocuments = computed(() =>
-    this.documentsStore
-      .generatedDocuments()
-      .slice()
-      .sort((a, b) => this.tsOf(b.createdAt) - this.tsOf(a.createdAt))
-  );
+  private readonly toast = inject(ToastService);
+  protected readonly selectedMailLogId = signal<string | null>(null);
+  protected readonly selectedMailLogDetails = signal<MailLogDetailsResponseApiModel | null>(null);
+  protected readonly detailsLoading = signal(false);
+  protected readonly detailsError = signal<string | null>(null);
+  protected readonly confirmLoading = signal(false);
+  protected readonly regenerateConfirmOpen = signal(false);
   protected readonly mailLogs = computed(() =>
     this.documentsStore
       .mailLogs()
@@ -45,45 +49,18 @@ export class ArchivesPageComponent {
       .sort((a, b) => this.tsOf(b.date) - this.tsOf(a.date))
   );
 
-  protected readonly hasAny = computed(
-    () => this.generatedDocuments().length > 0 || this.mailLogs().length > 0
-  );
+  protected readonly hasAny = computed(() => this.mailLogs().length > 0);
 
   protected readonly archiveRows = computed(() => {
-    const merged: { ts: number; row: ArchiveTableRow }[] = [];
-    let genFallback = 0;
-    for (const doc of this.generatedDocuments()) {
-      const id = doc.id ? `gen-${doc.id}` : `gen-${genFallback++}`;
-      merged.push({
-        ts: this.tsOf(doc.createdAt),
-        row: {
-          id,
-          typeLabel: this.sendTypeLabelFr(doc.documentType),
-          dateLabel: this.formatDateReadable(doc.createdAt),
-          channelLabel: '—',
-          recipientName: '—',
-          statusLabel: this.archiveStatusLabelFr(doc.status)
-        }
-      });
-    }
-    let mailFallback = 0;
-    for (const log of this.mailLogs()) {
-      const id = this.mailLogRowId(log, mailFallback++);
-      merged.push({
-        ts: this.tsOf(log.date),
-        row: {
-          id,
-          typeLabel: this.sendTypeLabelFr(log.type),
-          dateLabel: this.formatDateReadable(log.date),
-          channelLabel:
-            log.isEmail === true ? 'Email' : log.isEmail === false ? 'Courrier' : '—',
-          recipientName: this.recipientNameFromMailLog(log),
-          statusLabel: this.archiveStatusLabelFr(log.status)
-        }
-      });
-    }
-    merged.sort((a, b) => b.ts - a.ts);
-    return merged.map((m) => m.row);
+    return this.mailLogs().map((log) => ({
+      id: String(log.id ?? '').trim(),
+      entryType: 'mail',
+      typeLabel: this.sendTypeLabelFr(log.type),
+      dateLabel: this.formatDateReadable(log.date),
+      channelLabel: log.isEmail === true ? 'Email' : 'Courrier',
+      recipientName: this.recipientNameFromMailLog(log),
+      statusLabel: this.archiveStatusLabelFr(log.status)
+    }));
   });
 
   protected readonly archiveColumns: TableColumn[] = [
@@ -98,12 +75,121 @@ export class ArchivesPageComponent {
     this.documentsStore.load();
   }
 
-  private mailLogRowId(log: MailLogListResponseApiModel, fallbackIndex: number): string {
-    if (log.id) {
-      return `mail-${log.id}`;
+  protected onArchiveRowClick(row: unknown): void {
+    if (!row || typeof row !== 'object') return;
+    const typed = row as ArchiveTableRow;
+    if (typed.entryType !== 'mail') return;
+    const id = String(typed.id ?? '').trim();
+    if (!id) {
+      this.toast.show('Détail indisponible pour ce log (identifiant manquant).', 'alert');
+      return;
     }
-    const t = this.tsOf(log.date);
-    return `mail-${fallbackIndex}-${t}`;
+    this.openMailLogDetails(id);
+  }
+
+  protected closeMailLogDetails(): void {
+    this.selectedMailLogId.set(null);
+    this.selectedMailLogDetails.set(null);
+    this.detailsLoading.set(false);
+    this.detailsError.set(null);
+    this.confirmLoading.set(false);
+    this.regenerateConfirmOpen.set(false);
+  }
+
+  protected canConfirmSelectedMailLog(): boolean {
+    const details = this.selectedMailLogDetails();
+    if (!details?.id) return false;
+    if (details.isEmail !== false) return false;
+    return String(details.status ?? '').trim().toLowerCase() === 'printed';
+  }
+
+  protected canRegenerateSelectedMailLog(): boolean {
+    const details = this.selectedMailLogDetails();
+    if (!details?.id) return false;
+    if (details.isEmail === false) return false;
+    return true;
+  }
+
+  protected detailContactCoordinateLabel(detail: MailLogDetailsResponseApiModel): string {
+    if (detail.isEmail !== false) {
+      return detail.contactEmail || 'Non renseigné';
+    }
+    const street = String((detail as any)?.contactStreet ?? '').trim();
+    const postalCode = String((detail as any)?.contactPostalCode ?? '').trim();
+    const city = String((detail as any)?.contactCity ?? '').trim();
+    const address = [street, postalCode, city].filter(Boolean).join(', ');
+    return address || 'Adresse postale non renseignée';
+  }
+
+  protected detailDocumentTypeLabel(raw: string | null | undefined): string {
+    return this.sendTypeLabelFr(raw);
+  }
+
+  protected confirmSelectedMailLog(): void {
+    const details = this.selectedMailLogDetails();
+    const id = String(details?.id ?? '').trim();
+    if (!id || this.confirmLoading()) return;
+    this.confirmLoading.set(true);
+    this.documentsStore.confirmMailed(id).subscribe((ok) => {
+      this.confirmLoading.set(false);
+      if (!ok) {
+        this.toast.show("La confirmation d'envoi papier a échoué.", 'alert');
+        return;
+      }
+      this.selectedMailLogDetails.set({
+        ...(details ?? {}),
+        id,
+        status: 'mailed',
+        mailedAt: new Date().toISOString()
+      });
+      this.toast.show('Courrier marqué comme expédié.', 'success');
+    });
+  }
+
+  protected openRegenerateConfirm(): void {
+    if (!this.canRegenerateSelectedMailLog()) return;
+    this.regenerateConfirmOpen.set(true);
+  }
+
+  protected closeRegenerateConfirm(): void {
+    this.regenerateConfirmOpen.set(false);
+  }
+
+  protected confirmRegenerateFromLog(): void {
+    const details = this.selectedMailLogDetails();
+    if (!details?.id) {
+      this.regenerateConfirmOpen.set(false);
+      return;
+    }
+    this.toast.show("La régénération sera branchée sur l'endpoint backend dédié.", 'info');
+    this.regenerateConfirmOpen.set(false);
+  }
+
+  protected getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      sent: 'Envoyé',
+      error: 'Erreur',
+      printed: 'À confirmer',
+      mailed: 'Expédié',
+    };
+    return map[status] ?? 'Non renseigné';
+  }
+
+  private openMailLogDetails(mailLogId: string): void {
+    this.selectedMailLogId.set(mailLogId);
+    this.selectedMailLogDetails.set(null);
+    this.detailsError.set(null);
+    this.detailsLoading.set(true);
+    this.documentsStore.getMailLogById(mailLogId).subscribe({
+      next: (details) => {
+        this.selectedMailLogDetails.set(details ?? null);
+        this.detailsLoading.set(false);
+      },
+      error: () => {
+        this.detailsError.set('Impossible de charger le détail du log.');
+        this.detailsLoading.set(false);
+      }
+    });
   }
 
   private recipientNameFromMailLog(log: MailLogListResponseApiModel): string {
@@ -114,7 +200,7 @@ export class ArchivesPageComponent {
     const fn = String(log.firstname ?? log.firstName ?? '').trim();
     const ln = String(log.lastname ?? log.lastName ?? '').trim();
     const combined = `${fn} ${ln}`.trim();
-    return combined || '—';
+    return combined || 'Non renseigné';
   }
 
   private sendTypeLabelFr(raw: string | null | undefined): string {
@@ -130,7 +216,7 @@ export class ArchivesPageComponent {
       return this.labelForSendType('cerfa_16216');
     }
     const t = String(raw ?? '').trim();
-    return t || '—';
+    return t || 'Type inconnu';
   }
 
   private parseSendTypeKey(value: string): SendType | null {
@@ -162,16 +248,16 @@ export class ArchivesPageComponent {
     if (value === 'membership_certificate') {
       return "Certificat d'adhésion";
     }
-    return '—';
+    return 'Type inconnu';
   }
 
   private formatDateReadable(value?: string): string {
     if (!value) {
-      return '—';
+      return 'Date non renseignée';
     }
     const d = new Date(value);
     if (!Number.isFinite(d.getTime())) {
-      return '—';
+      return 'Date invalide';
     }
     return d.toLocaleString('fr-FR', {
       weekday: 'long',
@@ -186,15 +272,16 @@ export class ArchivesPageComponent {
   private archiveStatusLabelFr(status?: string | null): string {
     const s = String(status ?? '').trim().toLowerCase();
     if (!s) {
-      return '—';
+      return 'Non renseigné';
     }
     const map: Record<string, string> = {
+      sent: 'Envoyé',
+      error: 'Erreur',
+      
       printed: 'À confirmer',
       mailed: 'Expédié',
-      sent: 'Envoyé',
       delivered: 'Livré',
       failed: 'Échec',
-      error: 'Erreur',
       pending: 'En attente',
       processing: 'En cours',
       completed: 'Terminé',

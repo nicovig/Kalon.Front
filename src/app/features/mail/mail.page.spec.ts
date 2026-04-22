@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MailPageComponent } from './mail.page';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -18,12 +18,29 @@ describe('MailPageComponent filters', () => {
   let component: MailPageComponent;
   let capturedSendPayload: any = null;
   let capturedPostUrl: string | null = null;
+  let capturedGetUrls: string[] = [];
   let sendResultResponse: { successCount: number; errorCount: number; errors: Array<{ contactId?: string; contactName?: string; reason?: string }> };
+  let printResponse: HttpResponse<Blob>;
+  const mailEditorTagsBase = [
+    { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
+    { id: 'nom', label: 'Nom', token: '{{nom}}' },
+    { id: 'totalDonation', label: 'Total des contributions', token: '{{totalDonation}}' },
+    { id: 'firstDonationAt', label: 'Date première contribution', token: '{{firstDonationAt}}' },
+    { id: 'lastDonation', label: 'Date dernière contribution', token: '{{lastDonation}}' },
+    { id: 'averageDonationAmount', label: 'Moyenne des contributions', token: '{{averageDonationAmount}}' },
+    { id: 'donationCount', label: 'Nombre de contributions', token: '{{donationCount}}' }
+  ];
 
   beforeEach(() => {
     capturedSendPayload = null;
     capturedPostUrl = null;
+    capturedGetUrls = [];
     sendResultResponse = { successCount: 1, errorCount: 0, errors: [] };
+    printResponse = new HttpResponse({
+      body: new Blob(['pdf'], { type: 'application/pdf' }),
+      headers: new HttpHeaders({ 'content-disposition': 'attachment; filename="courriers_20260422.pdf"' }),
+      status: 200
+    });
     contacts = buildContacts();
     donations = buildDonations();
 
@@ -99,9 +116,26 @@ describe('MailPageComponent filters', () => {
         {
           provide: HttpClient,
           useValue: {
+            get: (url: string) => {
+              capturedGetUrls.push(url);
+              const hasCompany = String(url).includes('hasCompanyRecipient=true');
+              return of(
+                hasCompany
+                  ? [
+                      { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
+                      { id: 'nom', label: 'Nom', token: '{{nom}}' },
+                      { id: 'enterprise_name', label: "Nom de l'entreprise", token: '{{enterprise_name}}' },
+                      ...mailEditorTagsBase.slice(2)
+                    ]
+                  : mailEditorTagsBase
+              );
+            },
             post: (url: string, payload: unknown) => {
               capturedPostUrl = url;
               capturedSendPayload = payload;
+              if (String(url).includes('/api/Sending/print')) {
+                return of(printResponse);
+              }
               return of(sendResultResponse);
             }
           }
@@ -114,6 +148,7 @@ describe('MailPageComponent filters', () => {
     cmp.chooseType('message');
     cmp.chooseMethod('email');
     cmp.goToRecipientsStep();
+    cmp.onAvailabilityModeChange('with_email');
   });
 
   it('filtre sur le dernier don en mois', () => {
@@ -171,7 +206,7 @@ describe('MailPageComponent filters', () => {
     cmp.onKindFilterChange('donor');
     cmp.onStatusFilterChange('to_remind');
     cmp.onDepartmentFilterChange('75');
-    cmp.onIncludeWithoutChannelChange(false);
+    cmp.onAvailabilityModeChange('with_email');
     cmp.onMonthsSinceLastDonationMinChange(12);
     cmp.onTotalDonationMinChange('100');
     cmp.onTotalDonationMaxChange('200');
@@ -197,28 +232,56 @@ describe('MailPageComponent filters', () => {
 
     cmp.onStatusFilterChange('active');
     cmp.onDepartmentFilterChange('69');
-    cmp.onIncludeWithoutChannelChange(false);
+    cmp.onAvailabilityModeChange('with_email');
     cmp.onTotalDonationMinChange('100');
     cmp.onDonationCountMinChange('1');
 
     expect(idsOf(cmp.filteredContacts())).toEqual(['c3']);
   });
 
-  it('retourne uniquement les contacts sans email si avec email est decoche', () => {
+  it('retourne uniquement les contacts sans email avec le filtre radio', () => {
     const cmp = component as any;
 
-    cmp.onIncludeWithChannelChange(false);
+    cmp.onAvailabilityModeChange('without_email');
 
     expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
-  it('retourne zero resultat si les deux disponibilites sont decochees', () => {
+  it('retourne uniquement les contacts sans adresse postale ni email', () => {
     const cmp = component as any;
 
-    cmp.onIncludeWithChannelChange(false);
-    cmp.onIncludeWithoutChannelChange(false);
+    cmp.onAvailabilityModeChange('without_postal_address_and_email');
 
-    expect(idsOf(cmp.filteredContacts())).toEqual([]);
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
+  });
+
+  it('applique par defaut le filtre avec email apres selection du canal email', () => {
+    const cmp = component as any;
+    cmp.onAvailabilityModeChange('without_email');
+
+    cmp.chooseMethod('email');
+
+    expect(cmp.availabilityMode()).toBe('with_email');
+  });
+
+  it('applique par defaut le filtre avec adresse postale apres selection du canal courrier', () => {
+    const cmp = component as any;
+    cmp.onAvailabilityModeChange('without_email');
+
+    cmp.chooseMethod('print');
+
+    expect(cmp.availabilityMode()).toBe('with_postal_address');
+  });
+
+  it('en courrier permet de filtrer les contacts sans email', () => {
+    const cmp = component as any;
+    cmp.chooseMethod('print');
+
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c1', 'c2', 'c3', 'c5', 'c6']);
+
+    cmp.onAvailabilityModeChange('without_email');
+
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
   it('affiche les infos de dernier don et don moyen dans la liste', () => {
@@ -516,7 +579,8 @@ describe('MailPageComponent filters', () => {
       successCount: 1,
       errorCount: 0,
       sentRecipients: ['Marie Dupont'],
-      failedRecipients: []
+      failedRecipients: [],
+      returnedDocuments: []
     });
   });
 
@@ -547,21 +611,23 @@ describe('MailPageComponent filters', () => {
       successCount: 1,
       errorCount: 1,
       sentRecipients: ['Marie Dupont'],
-      failedRecipients: [{ contactId: 'c3', contactName: 'Luc Bernard', reason: 'Adresse email invalide' }]
+      failedRecipients: [{ contactId: 'c3', contactName: 'Luc Bernard', reason: 'Adresse email invalide' }],
+      returnedDocuments: []
     });
   });
 
   it('imprime via Sending/print en mode courrier', async () => {
     const cmp = component as any;
-    cmp.chooseMethod('courrier');
+    cmp.chooseMethod('print');
     cmp.toggleContact('c1');
     cmp.generatedBody.set('Courrier test');
 
     await cmp.printCourrier();
 
     expect(capturedPostUrl).toContain('/api/Sending/print');
-    expect(capturedSendPayload?.channel).toBe('courrier');
-    expect(cmp.sendResultModal()?.channel).toBe('courrier');
+    expect(capturedSendPayload?.channel).toBe('print');
+    expect(cmp.sendResultModal()?.channel).toBe('print');
+    expect(cmp.sendResultModal()?.returnedDocuments).toEqual([{ fileName: 'courriers_20260422.pdf' }]);
   });
 
   it('interpole les donnees de contribution et entreprise', () => {
@@ -598,6 +664,17 @@ describe('MailPageComponent filters', () => {
 
     cmp.toggleContact('c6');
     expect(cmp.editorVariableTags().some((t: { id: string }) => t.id === 'enterprise_name')).toBe(true);
+  });
+
+  it('charge les tags editeur via API avec le bon filtre entreprise', () => {
+    const cmp = component as any;
+    expect(capturedGetUrls.some((url) => url.includes('/api/Sending/mail-editor-tags'))).toBe(true);
+    expect(capturedGetUrls.some((url) => url.includes('hasCompanyRecipient=true'))).toBe(true);
+
+    cmp.toggleContact('c6');
+
+    const tagsRequests = capturedGetUrls.filter((url) => url.includes('/api/Sending/mail-editor-tags'));
+    expect(tagsRequests).toHaveLength(1);
   });
 });
 

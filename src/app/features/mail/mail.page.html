@@ -94,10 +94,8 @@
           [kindOptions]="kindOptions"
           [departmentFilter]="departmentFilter()"
           [departmentOptions]="departmentOptions()"
-          [includeWithChannel]="includeWithChannel()"
-          [includeWithoutChannel]="includeWithoutChannel()"
-          [availabilityWithLabel]="selectedSendMethod() === 'courrier' ? 'Avec adresse postale' : 'Avec email'"
-          [availabilityWithoutLabel]="selectedSendMethod() === 'courrier' ? 'Sans adresse postale' : 'Sans email'"
+          [availabilityMode]="availabilityMode()"
+          [showAvailabilityHelp]="true"
           [monthsSinceLastDonationMin]="monthsSinceLastDonationMin()"
           [totalDonationMin]="totalDonationMin()"
           [totalDonationMax]="totalDonationMax()"
@@ -112,8 +110,7 @@
           (statusFilterChange)="onStatusFilterChange($event)"
           (kindFilterChange)="onKindFilterChange($event)"
           (departmentFilterChange)="onDepartmentFilterChange($event)"
-          (includeWithChannelChange)="onIncludeWithChannelChange($event)"
-          (includeWithoutChannelChange)="onIncludeWithoutChannelChange($event)"
+          (availabilityModeChange)="onAvailabilityModeChange($event)"
           (monthsSinceLastDonationMinChange)="onMonthsSinceLastDonationMinChange($event)"
           (totalDonationMinChange)="onTotalDonationMinChange($event)"
           (totalDonationMaxChange)="onTotalDonationMaxChange($event)"
@@ -407,7 +404,7 @@
         <button-label-component
           type="primary"
           [disabled]="sendingState() === 'loading' || !selectedCount()"
-          (click)="selectedSendMethod() === 'courrier' ? printCourrier() : sendEmail()"
+          (click)="selectedSendMethod() === 'print' ? print() : sendEmail()"
         >
           {{ previewPrimaryLabel() }}
         </button-label-component>
@@ -419,12 +416,12 @@
 @if (sendResultModal(); as result) {
   <app-popup-shell [maxWidth]="'min(820px, calc(100% - 32px))'" (dismiss)="closeSendResultModal()">
     <div popup-header>
-      <div class="app-popup-title">Résultat {{ result.channel === 'courrier' ? 'de l’impression' : 'de l’envoi' }}</div>
+      <div class="app-popup-title">Résultat {{ result.channel === 'print' ? 'de l’impression' : 'de l’envoi' }}</div>
       <p class="app-popup-sub">{{ result.successCount }} succès · {{ result.errorCount }} échec(s)</p>
     </div>
     <div class="mail-send-result">
       <section class="mail-send-result-card mail-send-result-card--ok">
-        <h3>{{ result.channel === 'courrier' ? 'Imprimés' : 'Partis' }}</h3>
+        <h3>{{ result.channel === 'print' ? 'Imprimés' : 'Partis' }}</h3>
         @if (result.sentRecipients.length) {
           <ul class="mail-send-result-list">
             @for (name of result.sentRecipients; track name) {
@@ -436,7 +433,7 @@
         }
       </section>
       <section class="mail-send-result-card mail-send-result-card--ko">
-        <h3>{{ result.channel === 'courrier' ? 'Non imprimés' : 'Non partis' }}</h3>
+        <h3>{{ result.channel === 'print' ? 'Non imprimés' : 'Non partis' }}</h3>
         @if (result.failedRecipients.length) {
           <ul class="mail-send-result-list">
             @for (item of result.failedRecipients; track item.contactId + item.contactName + item.reason) {
@@ -450,6 +447,16 @@
           <div class="mail-send-result-empty">Aucun échec.</div>
         }
       </section>
+      @if (result.returnedDocuments.length) {
+        <section class="mail-send-result-card mail-send-result-card--docs">
+          <h3>Documents renvoyés</h3>
+          <ul class="mail-send-result-list">
+            @for (doc of result.returnedDocuments; track doc.fileName) {
+              <li>{{ doc.fileName }}</li>
+            }
+          </ul>
+        </section>
+      }
     </div>
     <div class="mail-send-result-actions">
       <button-label-component type="primary" (click)="closeSendResultModal()">Fermer</button-label-component>

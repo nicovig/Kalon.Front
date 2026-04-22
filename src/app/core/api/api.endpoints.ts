@@ -110,6 +110,8 @@ export const API_ENDPOINTS = {
     list: () => toUrl('/api/OrganizationDocuments/mail-logs')
   },
   sending: {
+    mailEditorTags: ({ hasCompanyRecipient }: { hasCompanyRecipient?: boolean }) =>
+      toUrl(withQuery('/api/Sending/mail-editor-tags', { hasCompanyRecipient })),
     send: () => toUrl('/api/Sending/send'),
     print: () => toUrl('/api/Sending/print'),
     confirmMailed: ({ mailLogId }: { mailLogId: string }) =>

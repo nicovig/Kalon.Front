@@ -1,6 +1,6 @@
 <topbar
   title="Archives"
-  subtitle="Mails, attestations, reçus fiscaux et suivi des envois papier — tout votre historique au même endroit."
+  subtitle="Mails, attestations, reçus fiscaux et suivi des envois papier : tout votre historique au même endroit."
 ></topbar>
 
 <section class="archives-wrap" [class.archives-wrap--table]="hasAny()">
@@ -56,7 +56,80 @@
       [pageSizeOptions]="[25, 50, 100]"
       [initialPageSize]="25"
       [showSearch]="true"
-      [clickableRows]="false"
+      [clickableRows]="true"
+      (rowClick)="onArchiveRowClick($event)"
     ></table-component>
   }
 </section>
+
+@if (selectedMailLogId()) {
+  <app-popup-shell [maxWidth]="'min(820px, calc(100% - 32px))'" (dismiss)="closeMailLogDetails()">
+    <div popup-header>
+      <div class="app-popup-title">Détail de l'envoi</div>
+      @if (selectedMailLogDetails(); as d) {
+        <p class="app-popup-sub archives-popup-sub">
+          <span class="archives-popup-pill archives-popup-pill--status">
+            Statut : {{ getStatusLabel(d?.status ?? '') }}
+          </span>
+          <span class="archives-popup-pill archives-popup-pill--channel">
+            Canal : {{ d.isEmail === false ? 'Courrier' : 'Email' }}
+          </span>
+        </p>
+      } @else {
+        <p class="app-popup-sub">Chargement du détail…</p>
+      }
+    </div>
+
+    @if (detailsLoading()) {
+      <div class="archives-detail-loading">Chargement en cours…</div>
+    } @else if (detailsError(); as err) {
+      <div class="archives-detail-error">{{ err }}</div>
+    } @else if (selectedMailLogDetails(); as detail) {
+      <div class="archives-detail-grid">
+        <div class="archives-detail-item"><strong>Contact</strong><span>{{ detail.contactDisplayName || detail.contactId || 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item">
+          <strong>{{ detail.isEmail === false ? 'Adresse postale' : 'Email contact' }}</strong>
+          <span>{{ detailContactCoordinateLabel(detail) }}</span>
+        </div>
+        @if (detail.isEmail !== false) {
+          <div class="archives-detail-item"><strong>Email cible</strong><span>{{ detail.sentToEmail || 'Non renseigné' }}</span></div>
+        }
+        <div class="archives-detail-item"><strong>Type document</strong><span>{{ detailDocumentTypeLabel(detail.generatedDocumentType) }}</span></div>
+        @if (detail.generatedDocumentId) {
+          <div class="archives-detail-item"><strong>N° document</strong><span>{{ detail.generatedDocumentOrderNumber || 'Non renseigné' }}</span></div>
+        }
+        <div class="archives-detail-item"><strong>Imprimé le</strong><span>{{ detail.printedAt ? (detail.printedAt | date: 'dd/MM/yyyy HH:mm' : undefined : 'fr-FR') : 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item"><strong>Expédié le</strong><span>{{ detail.mailedAt ? (detail.mailedAt | date: 'dd/MM/yyyy HH:mm' : undefined : 'fr-FR') : 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item archives-detail-item--full"><strong>Objet</strong><span>{{ detail.subject || 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item archives-detail-item--full"><strong>Erreur</strong><span>{{ detail.errorMessage || 'Aucune' }}</span></div>
+      </div>
+      <div class="archives-detail-actions">
+        @if (canConfirmSelectedMailLog()) {
+          <button-label-component type="primary" [disabled]="confirmLoading()" (click)="confirmSelectedMailLog()">
+            {{ confirmLoading() ? 'Confirmation...' : "Confirmer l'envoi courrier" }}
+          </button-label-component>
+        } @else if (canRegenerateSelectedMailLog()) {
+          <button-label-component type="primary" (click)="openRegenerateConfirm()">
+            Régénérer le document
+          </button-label-component>
+        }
+        <button-label-component type="ghost" (click)="closeMailLogDetails()">Fermer</button-label-component>
+      </div>
+    }
+  </app-popup-shell>
+}
+
+@if (regenerateConfirmOpen()) {
+  <app-popup-shell [maxWidth]="'min(560px, calc(100% - 32px))'" (dismiss)="closeRegenerateConfirm()">
+    <div popup-header>
+      <div class="app-popup-title">Confirmer la régénération</div>
+      <p class="app-popup-sub">Voulez-vous régénérer le document lié à ce log ?</p>
+    </div>
+    <div class="archives-detail-actions">
+      <button-label-component type="primary" (click)="confirmRegenerateFromLog()">
+        Oui, régénérer
+      </button-label-component>
+      <button-label-component type="ghost" (click)="closeRegenerateConfirm()">Annuler</button-label-component>
+    </div>
+  </app-popup-shell>
+}

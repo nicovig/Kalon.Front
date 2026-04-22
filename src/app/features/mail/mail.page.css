@@ -535,6 +535,10 @@
   color: #b54444;
 }
 
+.mail-send-result-card--docs h3 {
+  color: var(--violet-md);
+}
+
 .mail-send-result-list {
   margin: 0;
   padding-left: 18px;
