@@ -270,6 +270,7 @@ export interface SendDocumentDtoApiModel {
   channel?: string | null;
   subject?: string | null;
   bodyHtml?: string | null;
+  documentBodyHtml?: string | null;
   recipientIds?: string[] | null;
   signatureBlockId?: string | null;
   donationIds?: string[] | null;
@@ -293,6 +294,12 @@ export interface MailEditorVariableTagApiModel {
   token?: string | null;
 }
 
-export type SendPrintResponseApiModel = Blob;
+export interface PrintDocumentResultDtoApiModel {
+  pdfBytes?: number[] | null;
+  pageCount?: number;
+  generatedDocumentIds?: string[] | null;
+}
+
+export type SendPrintResponseApiModel = Blob | PrintDocumentResultDtoApiModel;
 
 export type ConfirmMailedResponseApiModel = void;

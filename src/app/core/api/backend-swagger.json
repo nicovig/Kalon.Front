@@ -4581,6 +4581,10 @@
             "type": "string",
             "nullable": true
           },
+          "documentBodyHtml": {
+            "type": "string",
+            "nullable": true
+          },
           "recipientIds": {
             "type": "array",
             "items": {

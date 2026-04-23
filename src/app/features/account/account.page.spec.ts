@@ -29,8 +29,7 @@ describe('AccountPageComponent', () => {
           useValue: {
             currentUser: {
               associationName: 'Asso Test',
-              email: 'mail@asso.test',
-              cerfaModel: '16216'
+              email: 'mail@asso.test'
             }
           }
         },
@@ -52,8 +51,7 @@ describe('AccountPageComponent', () => {
             get: () =>
               of({
                 name: 'Association API',
-                senderEmail: 'api@asso.test',
-                cerfaModel: '11580'
+                senderEmail: 'api@asso.test'
               })
           }
         },
@@ -73,12 +71,6 @@ describe('AccountPageComponent', () => {
     await Promise.resolve();
     expect((component as any).organizationInfo().associationName).toBe('Association API');
     expect((component as any).organizationInfo().senderEmail).toBe('api@asso.test');
-    expect((component as any).organizationInfo().cerfaModel).toBe('11580');
-  });
-
-  it('formatte le label CERFA', async () => {
-    await Promise.resolve();
-    expect((component as any).cerfaLabel()).toBe('CERFA 11580');
   });
 
   it('sauvegarde un bloc texte', () => {

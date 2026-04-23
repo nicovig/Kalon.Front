@@ -380,7 +380,7 @@ describe('MailPageComponent filters', () => {
   it('saute directement a ecriture pour un recu fiscal', () => {
     const cmp = component as any;
 
-    cmp.chooseType('cerfa_11580');
+    cmp.chooseType('tax_receipt');
     cmp.toggleContact('c1');
     cmp.goToTemplateStep();
 
@@ -402,13 +402,13 @@ describe('MailPageComponent filters', () => {
     cmp.chooseType('payment_attestation');
 
     expect(cmp.writingStepTitle()).toBe('Texte');
-    expect(cmp.writingStepLead()).toContain("encart d'accompagnement");
+    expect(cmp.writingStepLead()).toContain("message d'accompagnement");
   });
 
   it('masque objet uniquement pour les recus fiscaux', () => {
     const cmp = component as any;
 
-    cmp.chooseType('cerfa_11580');
+    cmp.chooseType('tax_receipt');
     expect(cmp.showEditorSubject()).toBe(false);
 
     cmp.chooseType('payment_attestation');
@@ -594,6 +594,19 @@ describe('MailPageComponent filters', () => {
     expect(capturedSendPayload?.bodyHtml).toContain('Bonjour<br>Deuxieme ligne');
   });
 
+  it('envoie documentBodyHtml pour un envoi avec document', async () => {
+    const cmp = component as any;
+    cmp.chooseType('tax_receipt');
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set('Message accompagnement');
+    cmp.generatedDocumentBody.set('Bloc document');
+
+    await cmp.sendEmail();
+
+    expect(capturedSendPayload?.bodyHtml).toContain('Message accompagnement');
+    expect(capturedSendPayload?.documentBodyHtml).toContain('Bloc document');
+  });
+
   it('affiche les destinataires en echec dans le resultat d envoi', async () => {
     const cmp = component as any;
     cmp.toggleContact('c1');
@@ -622,7 +635,7 @@ describe('MailPageComponent filters', () => {
     cmp.toggleContact('c1');
     cmp.generatedBody.set('Courrier test');
 
-    await cmp.printCourrier();
+    await cmp.print();
 
     expect(capturedPostUrl).toContain('/api/Sending/print');
     expect(capturedSendPayload?.channel).toBe('print');

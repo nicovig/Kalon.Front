@@ -15,7 +15,6 @@ import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 type AccountOrganizationInfo = {
   associationName: string;
   senderEmail: string;
-  cerfaModel: string;
 };
 type RemoveTarget = { id: string; type: 'text' | 'signature' | 'image'; label: string } | null;
 
@@ -35,13 +34,7 @@ export class AccountPageComponent {
 
   protected readonly organizationInfo = signal<AccountOrganizationInfo>({
     associationName: this.userStore.currentUser?.associationName?.trim() || 'Association',
-    senderEmail: this.userStore.currentUser?.email?.trim() || '—',
-    cerfaModel: String((this.userStore.currentUser as { cerfaModel?: string } | null)?.cerfaModel ?? '').trim() || '11580'
-  });
-  protected readonly cerfaLabel = computed(() => {
-    const value = String(this.organizationInfo().cerfaModel ?? '').trim();
-    if (!value) return 'Non concerné';
-    return value.startsWith('CERFA') ? value : `CERFA ${value}`;
+    senderEmail: this.userStore.currentUser?.email?.trim() || '—'
   });
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
@@ -183,8 +176,7 @@ export class AccountPageComponent {
       const response = await firstValueFrom(this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()));
       const associationName = String(response?.['name'] ?? this.organizationInfo().associationName).trim() || 'Association';
       const senderEmail = String(response?.['senderEmail'] ?? response?.['email'] ?? this.organizationInfo().senderEmail).trim() || '—';
-      const cerfaModel = String(response?.['cerfaModel'] ?? this.organizationInfo().cerfaModel).trim() || '11580';
-      this.organizationInfo.set({ associationName, senderEmail, cerfaModel });
+      this.organizationInfo.set({ associationName, senderEmail });
     } catch {
     }
   }

@@ -316,6 +316,12 @@
         </div>
       </details>
       <div class="mail-writing-shell">
+        @if (hasDocumentPayload()) {
+          <section class="mail-writing-block">
+            <h3 class="mail-writing-block-title">Message d'accompagnement</h3>
+            <p class="mail-writing-block-lead">Ce texte sera envoyé dans l'email ou le courrier.</p>
+          </section>
+        }
         <mail-editor
           [showSubject]="showEditorSubject()"
           [subject]="generatedSubject()"
@@ -330,6 +336,28 @@
           (selectedImageIdChange)="selectedEditorImageId.set($event)"
           [variableTags]="editorVariableTags()"
         ></mail-editor>
+        @if (hasDocumentPayload()) {
+          <section class="mail-writing-block mail-writing-block--document">
+            <h3 class="mail-writing-block-title">Texte injecté dans le document</h3>
+            <p class="mail-writing-block-lead">
+              Ce contenu est inséré dans le document généré (reçu, attestation ou certificat).
+            </p>
+            <mail-editor
+              [showSubject]="false"
+              [showSidePanel]="false"
+              [subject]="''"
+              [body]="generatedDocumentBody()"
+              (bodyChange)="generatedDocumentBody.set($event)"
+              [textBlocks]="editorTextBlocks()"
+              [selectedTextBlockId]="selectedEditorTextBlockId()"
+              (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
+              [images]="editorImages()"
+              [selectedImageId]="selectedEditorImageId()"
+              (selectedImageIdChange)="selectedEditorImageId.set($event)"
+              [variableTags]="editorVariableTags()"
+            ></mail-editor>
+          </section>
+        }
       </div>
       <div class="mail-actions">
         <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
@@ -397,6 +425,12 @@
         <div class="mail-preview-mail">
           <div class="mail-preview-subject"><strong>Objet :</strong> {{ previewSubject() }}</div>
           <div class="mail-preview-body" [innerHTML]="previewBodyHtml()"></div>
+          @if (hasDocumentPayload()) {
+            <div class="mail-preview-document-block">
+              <div class="mail-preview-document-title">Texte injecté dans le document</div>
+              <div class="mail-preview-body" [innerHTML]="previewDocumentBodyHtml()"></div>
+            </div>
+          }
         </div>
       </div>
       <div class="mail-actions">

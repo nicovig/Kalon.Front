@@ -86,6 +86,7 @@ const FontSize = Extension.create({
 })
 export class MailEditorComponent implements OnChanges, OnDestroy {
   @Input() showSubject = true;
+  @Input() showSidePanel = true;
   @Input() subject = '';
   @Output() subjectChange = new EventEmitter<string>();
 

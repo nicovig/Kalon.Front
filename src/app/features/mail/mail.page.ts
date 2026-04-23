@@ -35,13 +35,15 @@ import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import {
   MailEditorVariableTagApiModel,
+  PrintDocumentResultDtoApiModel,
+  SendDocumentDtoApiModel,
   SendDocumentResultDtoApiModel,
   SendPrintResponseApiModel
 } from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
 
 type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
-type SendType = 'cerfa_11580' | 'cerfa_16216' | 'payment_attestation' | 'membership_certificate' | 'message';
+type SendType = 'tax_receipt' | 'payment_attestation' | 'membership_certificate' | 'message';
 type SendMethod = 'email' | 'print';
 type TemplateChoiceSource = 'template' | 'ia' | null;
 type ContactContributionSummary = {
@@ -146,9 +148,9 @@ export class MailPageComponent {
       hint: 'Envoyez une relance ou un message personnalisé à vos contacts.',
     },
     {
-      key: 'cerfa_11580',
+      key: 'tax_receipt',
       icon: '🧾',
-      title: 'Reçu fiscal (Cerfa)',
+      title: 'Reçu fiscal',
       hint: 'Envoyez un reçu fiscal à vos contacts.',
     },
     {
@@ -276,7 +278,7 @@ export class MailPageComponent {
   protected readonly hasTemplateStep = computed(() => this.selectedSendType() === 'message');
   protected readonly showEditorSubject = computed(() => {
     const type = this.selectedSendType();
-    return type !== 'cerfa_11580' && type !== 'cerfa_16216';
+    return type !== 'tax_receipt';
   });
   protected readonly flowSteps = computed<StepTrailItem[]>(() =>
     this.hasTemplateStep() ? this.steps : this.steps.filter((s) => s.key !== 'modele')
@@ -390,10 +392,6 @@ export class MailPageComponent {
   }
 
   protected chooseType(kind: SendType): void {
-    if (kind === 'cerfa_11580' || kind === 'cerfa_16216') {
-      this.selectedSendType.set(this.preferredCerfaSendType());
-      return;
-    }
     this.selectedSendType.set(kind);
   }
 
@@ -474,6 +472,7 @@ export class MailPageComponent {
   protected readonly iaGenerationState = signal<'idle' | 'loading' | 'done'>('idle');
   protected readonly generatedSubject = signal('');
   protected readonly generatedBody = signal('');
+  protected readonly generatedDocumentBody = signal('');
   private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
   protected readonly previewRecipientId = signal<string>('');
   protected readonly sendingState = signal<'idle' | 'loading'>('idle');
@@ -502,6 +501,10 @@ export class MailPageComponent {
   protected readonly previewBodyHtml = computed(() =>
     this.normalizeBodyToHtml(this.interpolateTemplate(this.generatedBody(), this.selectedPreviewRecipient()))
   );
+  protected readonly previewDocumentBodyHtml = computed(() =>
+    this.normalizeBodyToHtml(this.interpolateTemplate(this.generatedDocumentBody(), this.selectedPreviewRecipient()))
+  );
+  protected readonly hasDocumentPayload = computed(() => this.selectedSendType() !== 'message');
   protected readonly hasCompanyRecipient = computed(() =>
     this.selectedRecipientContacts().some((contact) => contact.kind === 'company')
   );
@@ -676,7 +679,7 @@ export class MailPageComponent {
     if (this.hasTemplateStep()) {
       return 'Rédigez et personnalisez votre contenu avant aperçu.';
     }
-    return "Ce texte est un encart d'accompagnement ajouté au document généré.";
+    return "Rédigez le message d'accompagnement et le texte injecté dans le document généré.";
   }
 
   protected previewStepLead(): string {
@@ -715,11 +718,14 @@ export class MailPageComponent {
     if (this.sendingState() === 'loading') return;
     this.sendingState.set('loading');
     try {
-      const payload = {
+      const payload: SendDocumentDtoApiModel = {
         documentType: this.selectedSendType() ?? 'message',
         channel,
         subject: this.generatedSubject(),
         bodyHtml: this.normalizeBodyToHtml(this.generatedBody()),
+        documentBodyHtml: this.hasDocumentPayload()
+          ? this.normalizeBodyToHtml(this.generatedDocumentBody())
+          : null,
         recipientIds,
         signatureBlockId: this.selectedSignatureBlockId(),
         donationIds: []
@@ -729,15 +735,20 @@ export class MailPageComponent {
         const response = await firstValueFrom(
           this.http.post(API_ENDPOINTS.sending.print(), payload, { observe: 'response', responseType: 'blob' })
         );
+        const printResult = await this.parsePrintResponse(response);
         const fileName = this.extractFileNameFromResponse(response) ?? 'courriers.pdf';
-        this.downloadBlob(response.body, fileName);
+        const downloaded = this.extractPdfBlobFromPrintResult(printResult, response.body);
+        this.downloadBlob(downloaded, fileName);
+        const returnedDocuments = (printResult?.generatedDocumentIds ?? []).map((id) => ({
+          fileName: `Document ${id}`
+        }));
         this.sendResultModal.set({
           channel,
           successCount: selectedRecipients.length,
           errorCount: 0,
           sentRecipients: selectedRecipients.map((recipient) => recipient.name),
           failedRecipients: [],
-          returnedDocuments: [{ fileName }]
+          returnedDocuments: returnedDocuments.length ? returnedDocuments : [{ fileName }]
         });
       } else {
         const result = await firstValueFrom(
@@ -783,6 +794,35 @@ export class MailPageComponent {
     } finally {
       this.sendingState.set('idle');
     }
+  }
+
+  private async parsePrintResponse(response: HttpResponse<SendPrintResponseApiModel>): Promise<PrintDocumentResultDtoApiModel | null> {
+    const body = response.body;
+    if (!body) {
+      return null;
+    }
+    if (body instanceof Blob) {
+      const contentType = String(response.headers.get('content-type') ?? body.type ?? '').toLowerCase();
+      if (contentType.includes('application/json') || contentType.includes('text/json')) {
+        try {
+          return JSON.parse(await body.text()) as PrintDocumentResultDtoApiModel;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+    return body as PrintDocumentResultDtoApiModel;
+  }
+
+  private extractPdfBlobFromPrintResult(
+    printResult: PrintDocumentResultDtoApiModel | null,
+    fallbackBlob: SendPrintResponseApiModel | null
+  ): Blob | null {
+    if (printResult?.pdfBytes?.length) {
+      return new Blob([new Uint8Array(printResult.pdfBytes)], { type: 'application/pdf' });
+    }
+    return fallbackBlob instanceof Blob ? fallbackBlob : null;
   }
 
   protected closeSendResultModal(): void {
@@ -942,8 +982,7 @@ export class MailPageComponent {
   protected selectedSendTypeLabel(): string {
     const value = this.selectedSendType();
     if (value === 'message') return 'Relance / message personnalisé';
-    if (value === 'cerfa_11580') return 'Reçu fiscal (Cerfa 11580)';
-    if (value === 'cerfa_16216') return 'Reçu fiscal (Cerfa 16216)';
+    if (value === 'tax_receipt') return 'Reçu fiscal';
     if (value === 'payment_attestation') return 'Attestation de cotisation';
     if (value === 'membership_certificate') return "Certificat d'adhésion";
     return '—';
@@ -1109,24 +1148,10 @@ export class MailPageComponent {
   }
 
   private parseSendType(value: string | null): SendType | null {
-    if (
-      value === 'message' ||
-      value === 'cerfa_11580' ||
-      value === 'cerfa_16216' ||
-      value === 'payment_attestation' ||
-      value === 'membership_certificate'
-    ) {
+    if (value === 'message' || value === 'tax_receipt' || value === 'payment_attestation' || value === 'membership_certificate') {
       return value;
     }
     return null;
-  }
-
-  private preferredCerfaSendType(): 'cerfa_11580' | 'cerfa_16216' {
-    const raw = String((this.userStore.currentUser as any)?.cerfaModel ?? '').trim();
-    if (raw === 'cerfa_16216') {
-      return 'cerfa_16216';
-    }
-    return 'cerfa_11580';
   }
 
   private parseSendMethod(value: string | null): SendMethod | null {

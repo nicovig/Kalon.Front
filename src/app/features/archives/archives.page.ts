@@ -9,8 +9,7 @@ import { OrganizationDocumentsStore } from './organization-documents.store';
 import { MailLogDetailsResponseApiModel, MailLogListResponseApiModel } from '../../core/api/backend-api.model';
 
 type SendType =
-  | 'cerfa_11580'
-  | 'cerfa_16216'
+  | 'tax_receipt'
   | 'payment_attestation'
   | 'membership_certificate'
   | 'message';
@@ -210,10 +209,10 @@ export class ArchivesPageComponent {
       return this.labelForSendType(asSend);
     }
     if (normalized.includes('11580')) {
-      return this.labelForSendType('cerfa_11580');
+      return this.labelForSendType('tax_receipt');
     }
     if (normalized.includes('16216')) {
-      return this.labelForSendType('cerfa_16216');
+      return this.labelForSendType('tax_receipt');
     }
     const t = String(raw ?? '').trim();
     return t || 'Type inconnu';
@@ -221,8 +220,7 @@ export class ArchivesPageComponent {
 
   private parseSendTypeKey(value: string): SendType | null {
     if (
-      value === 'cerfa_11580' ||
-      value === 'cerfa_16216' ||
+      value === 'tax_receipt' ||
       value === 'payment_attestation' ||
       value === 'membership_certificate' ||
       value === 'message'
@@ -236,11 +234,8 @@ export class ArchivesPageComponent {
     if (value === 'message') {
       return 'Relance / message personnalisé';
     }
-    if (value === 'cerfa_11580') {
-      return 'Reçu fiscal (Cerfa 11580)';
-    }
-    if (value === 'cerfa_16216') {
-      return 'Reçu fiscal (Cerfa 16216)';
+    if (value === 'tax_receipt') {
+      return 'Reçu fiscal';
     }
     if (value === 'payment_attestation') {
       return 'Attestation de cotisation';
