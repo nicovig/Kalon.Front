@@ -315,39 +315,21 @@
           }
         </div>
       </details>
-      <div class="mail-writing-shell">
-        @if (hasDocumentPayload()) {
-          <section class="mail-writing-block">
-            <h3 class="mail-writing-block-title">Message d'accompagnement</h3>
-            <p class="mail-writing-block-lead">Ce texte sera envoyé dans l'email ou le courrier.</p>
-          </section>
-        }
-        <mail-editor
-          [showSubject]="showEditorSubject()"
-          [subject]="generatedSubject()"
-          (subjectChange)="generatedSubject.set($event)"
-          [body]="generatedBody()"
-          (bodyChange)="generatedBody.set($event)"
-          [textBlocks]="editorTextBlocks()"
-          [selectedTextBlockId]="selectedEditorTextBlockId()"
-          (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
-          [images]="editorImages()"
-          [selectedImageId]="selectedEditorImageId()"
-          (selectedImageIdChange)="selectedEditorImageId.set($event)"
-          [variableTags]="editorVariableTags()"
-        ></mail-editor>
-        @if (hasDocumentPayload()) {
-          <section class="mail-writing-block mail-writing-block--document">
-            <h3 class="mail-writing-block-title">Texte injecté dans le document</h3>
-            <p class="mail-writing-block-lead">
-              Ce contenu est inséré dans le document généré (reçu, attestation ou certificat).
-            </p>
+      <div class="mail-writing-shell" [class.mail-writing-shell--with-floating-side]="hasDocumentPayload()">
+        @for (block of writingBlocks(); track block) {
+          <div class="mail-writing-block" [class.mail-writing-block--document]="block === 'document'">
+            @if (hasDocumentPayload()) {
+              <h3 class="mail-writing-block-title">{{ writingBlockTitle(block) }}</h3>
+              <p class="mail-writing-block-lead">{{ writingBlockLead(block) }}</p>
+            }
             <mail-editor
-              [showSubject]="false"
-              [showSidePanel]="false"
-              [subject]="''"
-              [body]="generatedDocumentBody()"
-              (bodyChange)="generatedDocumentBody.set($event)"
+              [floatingSidePanel]="writingBlockFloatingSidePanel(block)"
+              [showSubject]="writingBlockShowSubject(block)"
+              [showSidePanel]="writingBlockShowSidePanel(block)"
+              [subject]="generatedSubject()"
+              (subjectChange)="generatedSubject.set($event)"
+              [body]="writingBlockBody(block)"
+              (bodyChange)="onWritingBlockBodyChange(block, $event)"
               [textBlocks]="editorTextBlocks()"
               [selectedTextBlockId]="selectedEditorTextBlockId()"
               (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
@@ -356,7 +338,7 @@
               (selectedImageIdChange)="selectedEditorImageId.set($event)"
               [variableTags]="editorVariableTags()"
             ></mail-editor>
-          </section>
+          </div>
         }
       </div>
       <div class="mail-actions">

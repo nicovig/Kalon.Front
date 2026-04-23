@@ -128,6 +128,10 @@
   margin: 0 auto;
 }
 
+.mail-writing-shell--with-floating-side {
+  padding-right: 296px;
+}
+
 .mail-writing-block {
   margin: 0 0 10px;
 }
@@ -637,6 +641,10 @@
   .mail-preview-card {
     max-width: 100%;
   }
+
+  .mail-writing-shell--with-floating-side {
+    padding-right: 284px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -655,6 +663,10 @@
 
   .mail-recipient-shell {
     min-height: 0;
+  }
+
+  .mail-writing-shell--with-floating-side {
+    padding-right: 0;
   }
 }
 

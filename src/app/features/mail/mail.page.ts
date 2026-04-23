@@ -46,6 +46,7 @@ type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | '
 type SendType = 'tax_receipt' | 'payment_attestation' | 'membership_certificate' | 'message';
 type SendMethod = 'email' | 'print';
 type TemplateChoiceSource = 'template' | 'ia' | null;
+type WritingBlockKey = 'message' | 'document';
 type ContactContributionSummary = {
   totalAmount: number;
   count: number;
@@ -505,6 +506,9 @@ export class MailPageComponent {
     this.normalizeBodyToHtml(this.interpolateTemplate(this.generatedDocumentBody(), this.selectedPreviewRecipient()))
   );
   protected readonly hasDocumentPayload = computed(() => this.selectedSendType() !== 'message');
+  protected readonly writingBlocks = computed<WritingBlockKey[]>(() =>
+    this.hasDocumentPayload() ? ['message', 'document'] : ['message']
+  );
   protected readonly hasCompanyRecipient = computed(() =>
     this.selectedRecipientContacts().some((contact) => contact.kind === 'company')
   );
@@ -680,6 +684,50 @@ export class MailPageComponent {
       return 'Rédigez et personnalisez votre contenu avant aperçu.';
     }
     return "Rédigez le message d'accompagnement et le texte injecté dans le document généré.";
+  }
+
+  protected writingBlockTitle(kind: WritingBlockKey): string {
+    if (kind === 'document') {
+      return 'Texte injecté dans le document';
+    }
+    return "Message d'accompagnement";
+  }
+
+  protected writingBlockLead(kind: WritingBlockKey): string {
+    if (kind === 'document') {
+      return "Ce contenu est inséré dans le document généré (reçu, attestation ou certificat).";
+    }
+    return "Ce texte sera envoyé dans l'email ou le courrier.";
+  }
+
+  protected writingBlockBody(kind: WritingBlockKey): string {
+    if (kind === 'document') {
+      return this.generatedDocumentBody();
+    }
+    return this.generatedBody();
+  }
+
+  protected onWritingBlockBodyChange(kind: WritingBlockKey, value: string): void {
+    if (kind === 'document') {
+      this.generatedDocumentBody.set(value);
+      return;
+    }
+    this.generatedBody.set(value);
+  }
+
+  protected writingBlockShowSubject(kind: WritingBlockKey): boolean {
+    if (kind === 'document') {
+      return false;
+    }
+    return this.showEditorSubject();
+  }
+
+  protected writingBlockShowSidePanel(kind: WritingBlockKey): boolean {
+    return kind === 'message';
+  }
+
+  protected writingBlockFloatingSidePanel(kind: WritingBlockKey): boolean {
+    return kind === 'message' && this.hasDocumentPayload();
   }
 
   protected previewStepLead(): string {
