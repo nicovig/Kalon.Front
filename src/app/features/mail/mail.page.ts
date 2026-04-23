@@ -277,10 +277,7 @@ export class MailPageComponent {
 
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
   protected readonly hasTemplateStep = computed(() => this.selectedSendType() === 'message');
-  protected readonly showEditorSubject = computed(() => {
-    const type = this.selectedSendType();
-    return type !== 'tax_receipt';
-  });
+  protected readonly showEditorSubject = computed(() => true);
   protected readonly flowSteps = computed<StepTrailItem[]>(() =>
     this.hasTemplateStep() ? this.steps : this.steps.filter((s) => s.key !== 'modele')
   );
@@ -474,6 +471,7 @@ export class MailPageComponent {
   protected readonly generatedSubject = signal('');
   protected readonly generatedBody = signal('');
   protected readonly generatedDocumentBody = signal('');
+  protected readonly activeWritingBlock = signal<WritingBlockKey>('message');
   private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
   protected readonly previewRecipientId = signal<string>('');
   protected readonly sendingState = signal<'idle' | 'loading'>('idle');
@@ -715,6 +713,10 @@ export class MailPageComponent {
     this.generatedBody.set(value);
   }
 
+  protected onWritingBlockFocus(kind: WritingBlockKey): void {
+    this.activeWritingBlock.set(kind);
+  }
+
   protected writingBlockShowSubject(kind: WritingBlockKey): boolean {
     if (kind === 'document') {
       return false;
@@ -726,8 +728,34 @@ export class MailPageComponent {
     return kind === 'message';
   }
 
-  protected writingBlockFloatingSidePanel(kind: WritingBlockKey): boolean {
-    return kind === 'message' && this.hasDocumentPayload();
+  protected onSidebarEmojiInsert(emoji: string): void {
+    this.appendToActiveWritingBlock(emoji);
+  }
+
+  protected onSidebarTextBlockInsert(id: string): void {
+    const text = this.editorTextBlocks().find((block) => block.id === id)?.text ?? '';
+    if (!text) return;
+    this.appendToActiveWritingBlock(text);
+  }
+
+  protected onSidebarImageInsert(id: string): void {
+    const image = this.editorImages().find((item) => item.id === id);
+    if (!image?.dataUrl) return;
+    this.appendToActiveWritingBlock(`<img src="${image.dataUrl}" alt="${image.label}" />`);
+  }
+
+  protected onSidebarVariableTagInsert(tag: MailEditorVariableTag): void {
+    if (!tag?.token) return;
+    this.appendToActiveWritingBlock(tag.token);
+  }
+
+  private appendToActiveWritingBlock(fragment: string): void {
+    if (!fragment) return;
+    if (this.activeWritingBlock() === 'document') {
+      this.generatedDocumentBody.update((current) => `${current ?? ''}${fragment}`);
+      return;
+    }
+    this.generatedBody.update((current) => `${current ?? ''}${fragment}`);
   }
 
   protected previewStepLead(): string {
@@ -875,6 +903,32 @@ export class MailPageComponent {
 
   protected closeSendResultModal(): void {
     this.sendResultModal.set(null);
+    if (typeof window !== 'undefined') {
+      window.location.assign(window.location.pathname);
+      return;
+    }
+    this.activeStepKey.set('choix_type');
+    this.selectedSendType.set(null);
+    this.selectedSendMethod.set(null);
+    this.selectedContactIds.set(new Set());
+    this.searchQuery.set('');
+    this.statusFilter.set('all');
+    this.kindFilter.set('all');
+    this.departmentFilter.set('all');
+    this.availabilityMode.set('with_email');
+    this.monthsSinceLastDonationMin.set(0);
+    this.totalDonationMin.set('');
+    this.totalDonationMax.set('');
+    this.donationCountMin.set('');
+    this.pageIndex.set(0);
+    this.selectedSignatureBlockId.set(null);
+    this.selectedEmailTemplateId.set(null);
+    this.templateChoiceSource.set(null);
+    this.iaGenerationState.set('idle');
+    this.generatedSubject.set('');
+    this.generatedBody.set('');
+    this.generatedDocumentBody.set('');
+    this.previewRecipientId.set('');
   }
 
   protected onSearchQueryChange(value: string): void {

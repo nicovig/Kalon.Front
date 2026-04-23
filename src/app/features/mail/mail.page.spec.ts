@@ -156,11 +156,12 @@ describe('MailPageComponent filters', () => {
 
     cmp.onMonthsSinceLastDonationMinChange(24);
 
-    expect(idsOf(cmp.filteredContacts())).toEqual(['c1', 'c4']);
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
   });
 
   it('filtre sur le total de contributions minimum depuis les dons reels', () => {
     const cmp = component as any;
+    cmp.onAvailabilityModeChange('without_email');
 
     cmp.onTotalDonationMinChange('300');
 
@@ -177,6 +178,7 @@ describe('MailPageComponent filters', () => {
 
   it('accepte les montants saisis avec une virgule', () => {
     const cmp = component as any;
+    cmp.onAvailabilityModeChange('without_email');
 
     cmp.onTotalDonationMinChange('300,5');
 
@@ -252,7 +254,7 @@ describe('MailPageComponent filters', () => {
 
     cmp.onAvailabilityModeChange('without_postal_address_and_email');
 
-    expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
+    expect(idsOf(cmp.filteredContacts())).toEqual([]);
   });
 
   it('applique par defaut le filtre avec email apres selection du canal email', () => {
@@ -277,7 +279,7 @@ describe('MailPageComponent filters', () => {
     const cmp = component as any;
     cmp.chooseMethod('print');
 
-    expect(idsOf(cmp.filteredContacts())).toEqual(['c1', 'c2', 'c3', 'c5', 'c6']);
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c1', 'c2', 'c3', 'c4', 'c5', 'c6']);
 
     cmp.onAvailabilityModeChange('without_email');
 
@@ -405,11 +407,11 @@ describe('MailPageComponent filters', () => {
     expect(cmp.writingStepLead()).toContain("message d'accompagnement");
   });
 
-  it('masque objet uniquement pour les recus fiscaux', () => {
+  it("affiche l'objet pour tous les types d'envoi", () => {
     const cmp = component as any;
 
     cmp.chooseType('tax_receipt');
-    expect(cmp.showEditorSubject()).toBe(false);
+    expect(cmp.showEditorSubject()).toBe(true);
 
     cmp.chooseType('payment_attestation');
     expect(cmp.showEditorSubject()).toBe(true);
@@ -671,6 +673,7 @@ describe('MailPageComponent filters', () => {
 
   it("affiche le tag nom de l'entreprise seulement si un destinataire entreprise est selectionne", () => {
     const cmp = component as any;
+    cmp.loadMailEditorTags();
 
     cmp.toggleContact('c1');
     expect(cmp.editorVariableTags().some((t: { id: string }) => t.id === 'enterprise_name')).toBe(false);
@@ -681,8 +684,9 @@ describe('MailPageComponent filters', () => {
 
   it('charge les tags editeur via API avec le bon filtre entreprise', () => {
     const cmp = component as any;
+    cmp.loadMailEditorTags();
     expect(capturedGetUrls.some((url) => url.includes('/api/Sending/mail-editor-tags'))).toBe(true);
-    expect(capturedGetUrls.some((url) => url.includes('hasCompanyRecipient=true'))).toBe(true);
+    expect(capturedGetUrls.some((url) => url.toLowerCase().includes('hascompanyrecipient=true'))).toBe(true);
 
     cmp.toggleContact('c6');
 

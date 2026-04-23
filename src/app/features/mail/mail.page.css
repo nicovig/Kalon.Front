@@ -129,7 +129,29 @@
 }
 
 .mail-writing-shell--with-floating-side {
-  padding-right: 296px;
+  --mail-writing-sticky-top: 12px;
+}
+
+.mail-writing-layout {
+  display: block;
+}
+
+.mail-writing-layout--with-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 272px;
+  gap: 12px;
+  align-items: start;
+}
+
+.mail-writing-left {
+  min-width: 0;
+}
+
+.mail-writing-side {
+  position: sticky;
+  top: var(--mail-writing-sticky-top);
+  align-self: start;
+  max-height: calc(100vh - 130px);
 }
 
 .mail-writing-block {
@@ -642,8 +664,8 @@
     max-width: 100%;
   }
 
-  .mail-writing-shell--with-floating-side {
-    padding-right: 284px;
+  .mail-writing-layout--with-side {
+    grid-template-columns: minmax(0, 1fr) 260px;
   }
 }
 
@@ -665,8 +687,14 @@
     min-height: 0;
   }
 
-  .mail-writing-shell--with-floating-side {
-    padding-right: 0;
+  .mail-writing-layout--with-side {
+    grid-template-columns: 1fr;
+  }
+
+  .mail-writing-side {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 

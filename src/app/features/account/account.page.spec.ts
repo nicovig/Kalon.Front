@@ -10,6 +10,7 @@ describe('AccountPageComponent', () => {
   let component: AccountPageComponent;
   let upsertTextArgs: unknown[] = [];
   let upsertImageArgs: unknown[] = [];
+  let updateOrganizationArgs: unknown[] = [];
   let removedTextIds: string[] = [];
   let removedImageIds: string[] = [];
   let textBlocksData: Array<{ id: string; label: string; content: string; role: string }> = [];
@@ -18,6 +19,7 @@ describe('AccountPageComponent', () => {
   beforeEach(() => {
     upsertTextArgs = [];
     upsertImageArgs = [];
+    updateOrganizationArgs = [];
     removedTextIds = [];
     removedImageIds = [];
     textBlocksData = [];
@@ -51,8 +53,20 @@ describe('AccountPageComponent', () => {
             get: () =>
               of({
                 name: 'Association API',
-                senderEmail: 'api@asso.test'
-              })
+                senderEmail: 'api@asso.test',
+                description: 'Description API',
+                foundedYear: 2001,
+                activitySector: 'Sport',
+                audienceDescription: 'Jeunes',
+                rna: 'W123',
+                siret: '123',
+                userId: '00000000-0000-0000-0000-000000000001',
+                defaultReceiptFrequency: 0
+              }),
+            put: (_url: string, payload: unknown) => {
+              updateOrganizationArgs.push(payload);
+              return of(payload);
+            }
           }
         },
         {
@@ -71,6 +85,32 @@ describe('AccountPageComponent', () => {
     await Promise.resolve();
     expect((component as any).organizationInfo().associationName).toBe('Association API');
     expect((component as any).organizationInfo().senderEmail).toBe('api@asso.test');
+    expect((component as any).organizationInfo().description).toBe('Description API');
+    expect((component as any).organizationInfo().foundedYear).toBe('2001');
+  });
+
+  it('met a jour les infos organisation via API', async () => {
+    const cmp = component as any;
+    await Promise.resolve();
+    cmp.onOrganizationFieldChange('associationName', 'Nouvelle Asso');
+    cmp.onOrganizationFieldChange('senderEmail', 'nouveau@asso.test');
+    cmp.onOrganizationFieldChange('description', 'Nouvelle description');
+    cmp.onOrganizationFieldChange('foundedYear', '2015');
+    cmp.onOrganizationFieldChange('activitySector', 'Culture');
+    cmp.onOrganizationFieldChange('audienceDescription', 'Familles');
+
+    await cmp.saveOrganizationInfo();
+
+    expect(updateOrganizationArgs).toHaveLength(1);
+    expect(updateOrganizationArgs[0]).toMatchObject({
+      name: 'Nouvelle Asso',
+      email: 'nouveau@asso.test',
+      senderEmail: 'nouveau@asso.test',
+      description: 'Nouvelle description',
+      foundedYear: 2015,
+      activitySector: 'Culture',
+      audienceDescription: 'Familles'
+    });
   });
 
   it('sauvegarde un bloc texte', () => {

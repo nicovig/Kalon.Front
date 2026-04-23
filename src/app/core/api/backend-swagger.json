@@ -5,6 +5,114 @@
     "version": "1.0"
   },
   "paths": {
+    "/api/AIMail/generate-mail": {
+      "post": {
+        "tags": [
+          "AIMail"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiMailRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiMailRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiMailRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiMailResultDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiMailResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiMailResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -1553,6 +1661,26 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -1596,6 +1724,46 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
                 }
               }
             }
@@ -2729,6 +2897,8 @@
         "tags": [
           "Sending"
         ],
+        "summary": "Envoi email",
+        "description": "Envoie un email. Si DocumentType = tax_receipt, le backend choisit automatiquement le CERFA par destinataire: cerfa_11580 (particulier) ou cerfa_16216 (entreprise), y compris pour des listes RecipientIds mixtes.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2817,6 +2987,8 @@
         "tags": [
           "Sending"
         ],
+        "summary": "Génération PDF courrier",
+        "description": "Génère un PDF pour impression. Si DocumentType = tax_receipt, le backend choisit automatiquement le CERFA par destinataire: cerfa_11580 (particulier) ou cerfa_16216 (entreprise), y compris pour des listes RecipientIds mixtes.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2969,6 +3141,34 @@
   },
   "components": {
     "schemas": {
+      "AiMailRequestDto": {
+        "type": "object",
+        "properties": {
+          "userContext": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailType": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiMailResultDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "bodyHtml": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ApiMessageResponse": {
         "type": "object",
         "properties": {
@@ -4389,6 +4589,23 @@
           "contactStatusSettings": {
             "$ref": "#/components/schemas/ContactStatusSettings"
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "foundedYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "activitySector": {
+            "type": "string",
+            "nullable": true
+          },
+          "audienceDescription": {
+            "type": "string",
+            "nullable": true
+          },
           "contacts": {
             "type": "array",
             "items": {
@@ -4567,22 +4784,27 @@
         "properties": {
           "documentType": {
             "type": "string",
+            "description": "Type de document demandé. Valeurs: message, tax_receipt, membership_certificate, payment_attestation.",
             "nullable": true
           },
           "channel": {
             "type": "string",
+            "description": "Canal d'envoi. Valeurs: email, print.",
             "nullable": true
           },
           "subject": {
             "type": "string",
+            "description": "Sujet du message d'accompagnement (email ou courrier).",
             "nullable": true
           },
           "bodyHtml": {
             "type": "string",
+            "description": "Contenu HTML du message d'accompagnement (email ou courrier).",
             "nullable": true
           },
           "documentBodyHtml": {
             "type": "string",
+            "description": "Contenu HTML injecté dans le document généré. Requis si DocumentType != message.",
             "nullable": true
           },
           "recipientIds": {
@@ -4591,10 +4813,12 @@
               "type": "string",
               "format": "uuid"
             },
+            "description": "Liste des contacts destinataires. Avec DocumentType = tax_receipt, le backend choisit automatiquement le CERFA par destinataire: particulier -> cerfa_11580, entreprise -> cerfa_16216.",
             "nullable": true
           },
           "signatureBlockId": {
             "type": "string",
+            "description": "Identifiant optionnel du bloc de signature.",
             "format": "uuid",
             "nullable": true
           },
@@ -4604,6 +4828,7 @@
               "type": "string",
               "format": "uuid"
             },
+            "description": "Liste optionnelle des dons à rattacher au document généré.",
             "nullable": true
           }
         },

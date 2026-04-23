@@ -4,15 +4,72 @@
 <div class="account-page">
   <section class="account-card">
     <h2 class="account-title">Informations de compte</h2>
-    <div class="account-info-grid">
-      <div class="account-info-item">
-        <div class="account-info-label">Nom de l’association</div>
-        <div class="account-info-value">{{ organizationInfo().associationName }}</div>
-      </div>
-      <div class="account-info-item">
-        <div class="account-info-label">Email mailing</div>
-        <div class="account-info-value">{{ organizationInfo().senderEmail }}</div>
-      </div>
+    <div class="account-form-grid">
+      <label>
+        <span>Nom de l’association</span>
+        <input
+          type="text"
+          [ngModel]="organizationInfo().associationName"
+          (ngModelChange)="onOrganizationFieldChange('associationName', $event)"
+          placeholder="Ex: Association Kalon"
+        />
+      </label>
+      <label>
+        <span>Email mailing</span>
+        <input
+          type="email"
+          [ngModel]="organizationInfo().senderEmail"
+          (ngModelChange)="onOrganizationFieldChange('senderEmail', $event)"
+          placeholder="contact@association.fr"
+        />
+      </label>
+      <label>
+        <span>Année de fondation</span>
+        <input
+          type="number"
+          min="1800"
+          max="2100"
+          [ngModel]="organizationInfo().foundedYear"
+          (ngModelChange)="onOrganizationFieldChange('foundedYear', $event)"
+          placeholder="Ex: 1998"
+        />
+      </label>
+      <label>
+        <span>Secteur d’activité</span>
+        <input
+          type="text"
+          [ngModel]="organizationInfo().activitySector"
+          (ngModelChange)="onOrganizationFieldChange('activitySector', $event)"
+          placeholder="Ex: Sport, solidarité, culture"
+        />
+      </label>
+      <label class="account-form-grid-full">
+        <span>Description</span>
+        <textarea
+          rows="3"
+          [ngModel]="organizationInfo().description"
+          (ngModelChange)="onOrganizationFieldChange('description', $event)"
+          placeholder="Description de l’association"
+        ></textarea>
+      </label>
+      <label class="account-form-grid-full">
+        <span>Audience visée</span>
+        <textarea
+          rows="3"
+          [ngModel]="organizationInfo().audienceDescription"
+          (ngModelChange)="onOrganizationFieldChange('audienceDescription', $event)"
+          placeholder="Public concerné, bénéficiaires, membres..."
+        ></textarea>
+      </label>
+    </div>
+    <div class="account-actions">
+      <button-label-component
+        type="primary"
+        [disabled]="!organizationInfo().associationName.trim()"
+        (click)="saveOrganizationInfo()"
+      >
+        Enregistrer les informations
+      </button-label-component>
     </div>
   </section>
 

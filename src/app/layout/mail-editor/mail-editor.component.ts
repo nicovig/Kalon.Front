@@ -87,7 +87,7 @@ const FontSize = Extension.create({
 export class MailEditorComponent implements OnChanges, OnDestroy {
   @Input() showSubject = true;
   @Input() showSidePanel = true;
-  @Input() floatingSidePanel = false;
+  @Input() showMainPanel = true;
   @Input() subject = '';
   @Output() subjectChange = new EventEmitter<string>();
 
@@ -103,6 +103,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   @Output() selectedImageIdChange = new EventEmitter<string | null>();
 
   @Input() variableTags: MailEditorVariableTag[] = [];
+  @Output() emojiInsert = new EventEmitter<string>();
+  @Output() textBlockInsert = new EventEmitter<string>();
+  @Output() imageInsert = new EventEmitter<string>();
+  @Output() variableTagInsert = new EventEmitter<MailEditorVariableTag>();
 
   protected selectedTextColor = '#1a1625';
   protected selectedHighlightColor = '#fff3a3';
@@ -163,6 +167,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   }
 
   protected onEmojiSelected(emoji: string): void {
+    if (!this.showMainPanel) {
+      this.emojiInsert.emit(emoji);
+      return;
+    }
     this.editor.chain().focus().insertContent(emoji).run();
   }
 
@@ -184,6 +192,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
 
   protected onTextBlockClick(id: string): void {
     this.selectedTextBlockIdChange.emit(id || null);
+    if (!this.showMainPanel) {
+      this.textBlockInsert.emit(id || '');
+      return;
+    }
     this.insertTextBlockById(id);
   }
 
@@ -195,6 +207,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
 
   protected onImageClick(id: string): void {
     this.selectedImageIdChange.emit(id || null);
+    if (!this.showMainPanel) {
+      this.imageInsert.emit(id || '');
+      return;
+    }
     this.insertImageById(id);
   }
 
@@ -207,6 +223,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
 
   protected onVariableTagClick(tag: MailEditorVariableTag): void {
     if (!tag?.token) return;
+    if (!this.showMainPanel) {
+      this.variableTagInsert.emit(tag);
+      return;
+    }
     this.editor.chain().focus().insertContent(tag.token).run();
   }
 

@@ -15,6 +15,10 @@ import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 type AccountOrganizationInfo = {
   associationName: string;
   senderEmail: string;
+  description: string;
+  foundedYear: string;
+  activitySector: string;
+  audienceDescription: string;
 };
 type RemoveTarget = { id: string; type: 'text' | 'signature' | 'image'; label: string } | null;
 
@@ -34,8 +38,13 @@ export class AccountPageComponent {
 
   protected readonly organizationInfo = signal<AccountOrganizationInfo>({
     associationName: this.userStore.currentUser?.associationName?.trim() || 'Association',
-    senderEmail: this.userStore.currentUser?.email?.trim() || '—'
+    senderEmail: this.userStore.currentUser?.email?.trim() || '',
+    description: '',
+    foundedYear: '',
+    activitySector: '',
+    audienceDescription: ''
   });
+  private readonly organizationRaw = signal<Record<string, unknown> | null>(null);
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
@@ -171,14 +180,69 @@ export class AccountPageComponent {
     this.removeTarget.set(null);
   }
 
+  protected onOrganizationFieldChange<K extends keyof AccountOrganizationInfo>(key: K, value: string): void {
+    this.organizationInfo.update((current) => ({ ...current, [key]: String(value ?? '') }));
+  }
+
+  protected async saveOrganizationInfo(): Promise<void> {
+    const info = this.organizationInfo();
+    const base = this.organizationRaw() ?? {};
+    const foundedYearRaw = String(info.foundedYear ?? '').trim();
+    const parsedFoundedYear = Number.parseInt(foundedYearRaw, 10);
+    const payload: Record<string, unknown> = {
+      ...base,
+      name: info.associationName.trim(),
+      email: info.senderEmail.trim(),
+      senderEmail: info.senderEmail.trim(),
+      description: info.description.trim() || null,
+      foundedYear: Number.isFinite(parsedFoundedYear) ? parsedFoundedYear : null,
+      activitySector: info.activitySector.trim() || null,
+      audienceDescription: info.audienceDescription.trim() || null
+    };
+    try {
+      const response = await firstValueFrom(this.http.put<Record<string, unknown>>(API_ENDPOINTS.organization.update(), payload));
+      this.organizationRaw.set(response ?? payload);
+      this.organizationInfo.set({
+        associationName: String(response?.['name'] ?? payload['name'] ?? info.associationName).trim() || 'Association',
+        senderEmail: String(response?.['senderEmail'] ?? response?.['email'] ?? payload['senderEmail'] ?? '').trim(),
+        description: String(response?.['description'] ?? payload['description'] ?? '').trim(),
+        foundedYear: this.normalizeFoundedYear(response?.['foundedYear'] ?? payload['foundedYear']),
+        activitySector: String(response?.['activitySector'] ?? payload['activitySector'] ?? '').trim(),
+        audienceDescription: String(response?.['audienceDescription'] ?? payload['audienceDescription'] ?? '').trim()
+      });
+      this.toast.show('Informations de compte mises à jour.', 'success');
+    } catch {
+      this.toast.show("Impossible de mettre à jour les informations de compte.", 'alert');
+    }
+  }
+
   private async loadOrganizationInfo(): Promise<void> {
     try {
       const response = await firstValueFrom(this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()));
+      this.organizationRaw.set(response ?? null);
       const associationName = String(response?.['name'] ?? this.organizationInfo().associationName).trim() || 'Association';
-      const senderEmail = String(response?.['senderEmail'] ?? response?.['email'] ?? this.organizationInfo().senderEmail).trim() || '—';
-      this.organizationInfo.set({ associationName, senderEmail });
+      const senderEmail = String(response?.['senderEmail'] ?? response?.['email'] ?? this.organizationInfo().senderEmail).trim();
+      const description = String(response?.['description'] ?? '').trim();
+      const foundedYear = this.normalizeFoundedYear(response?.['foundedYear']);
+      const activitySector = String(response?.['activitySector'] ?? '').trim();
+      const audienceDescription = String(response?.['audienceDescription'] ?? '').trim();
+      this.organizationInfo.set({
+        associationName,
+        senderEmail,
+        description,
+        foundedYear,
+        activitySector,
+        audienceDescription
+      });
     } catch {
     }
+  }
+
+  private normalizeFoundedYear(value: unknown): string {
+    if (value == null) return '';
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return '';
+    return String(Math.trunc(numeric));
   }
 
   private readAsDataUrl(file: File): Promise<string> {

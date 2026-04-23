@@ -1,67 +1,69 @@
-<div class="mail-editor" [class.mail-editor--floating-side]="floatingSidePanel">
+<div class="mail-editor">
   <div class="mail-editor-layout">
-    <div class="mail-editor-main">
-      @if (showSubject) {
-        <div class="mail-editor-subject-card">
-          <div class="mail-editor-subject-inline">
-            <label for="mail-editor-subject">Objet</label>
-            <input
-              id="mail-editor-subject"
-              type="text"
-              [ngModel]="subject"
-              (ngModelChange)="onSubjectInput($event)"
-              placeholder="Objet du message"
-            />
+    @if (showMainPanel) {
+      <div class="mail-editor-main">
+        @if (showSubject) {
+          <div class="mail-editor-subject-card">
+            <div class="mail-editor-subject-inline">
+              <label for="mail-editor-subject">Objet</label>
+              <input
+                id="mail-editor-subject"
+                type="text"
+                [ngModel]="subject"
+                (ngModelChange)="onSubjectInput($event)"
+                placeholder="Objet du message"
+              />
+            </div>
           </div>
-        </div>
-      }
+        }
 
-      <div class="mail-editor-body-card">
-        <div class="mail-editor-toolbar">
-          <button-label-component type="mail" (click)="toggleMark('bold')"><strong>Gras</strong></button-label-component>
-          <button-label-component type="mail" (click)="toggleUnderline()"><u>Souligner</u></button-label-component>
-          <button-label-component type="mail" (click)="toggleMark('italic')"><em>Italique</em></button-label-component>
-          <button-label-component type="mail" (click)="toggleHighlight()">Surligner</button-label-component>
-          <label class="mail-editor-color">
-            <span>Surlignage</span>
-            <input
-              type="color"
-              [ngModel]="selectedHighlightColor"
-              (ngModelChange)="onHighlightColorChange($event)"
-            />
-          </label>
-          <label class="mail-editor-select">
-            <span>Police</span>
-            <select [ngModel]="selectedFontFamily" (ngModelChange)="onFontFamilyChange($event)">
-              @for (item of fontFamilies; track item.value) {
-                <option [value]="item.value">{{ item.label }}</option>
-              }
-            </select>
-          </label>
-          <label class="mail-editor-select">
-            <span>Taille</span>
-            <select [ngModel]="selectedFontSize" (ngModelChange)="onFontSizeChange($event)">
-              @for (size of fontSizes; track size) {
-                <option [value]="size">{{ size }}</option>
-              }
-            </select>
-          </label>
-          <label class="mail-editor-color">
-            <span>Couleur</span>
-            <input
-              type="color"
-              [ngModel]="selectedTextColor"
-              (ngModelChange)="onTextColorChange($event)"
-            />
-          </label>
-        </div>
-        <div class="mail-editor-body">
-          <div class="mail-editor-dropzone" (dragover)="onEditorDragOver($event)" (drop)="onEditorDrop($event)">
-            <tiptap-editor [editor]="editor"></tiptap-editor>
+        <div class="mail-editor-body-card">
+          <div class="mail-editor-toolbar">
+            <button-label-component type="mail" (click)="toggleMark('bold')"><strong>Gras</strong></button-label-component>
+            <button-label-component type="mail" (click)="toggleUnderline()"><u>Souligner</u></button-label-component>
+            <button-label-component type="mail" (click)="toggleMark('italic')"><em>Italique</em></button-label-component>
+            <button-label-component type="mail" (click)="toggleHighlight()">Surligner</button-label-component>
+            <label class="mail-editor-color">
+              <span>Surlignage</span>
+              <input
+                type="color"
+                [ngModel]="selectedHighlightColor"
+                (ngModelChange)="onHighlightColorChange($event)"
+              />
+            </label>
+            <label class="mail-editor-select">
+              <span>Police</span>
+              <select [ngModel]="selectedFontFamily" (ngModelChange)="onFontFamilyChange($event)">
+                @for (item of fontFamilies; track item.value) {
+                  <option [value]="item.value">{{ item.label }}</option>
+                }
+              </select>
+            </label>
+            <label class="mail-editor-select">
+              <span>Taille</span>
+              <select [ngModel]="selectedFontSize" (ngModelChange)="onFontSizeChange($event)">
+                @for (size of fontSizes; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </label>
+            <label class="mail-editor-color">
+              <span>Couleur</span>
+              <input
+                type="color"
+                [ngModel]="selectedTextColor"
+                (ngModelChange)="onTextColorChange($event)"
+              />
+            </label>
+          </div>
+          <div class="mail-editor-body">
+            <div class="mail-editor-dropzone" (dragover)="onEditorDragOver($event)" (drop)="onEditorDrop($event)">
+              <tiptap-editor [editor]="editor"></tiptap-editor>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    }
 
     @if (showSidePanel) {
       <div class="mail-editor-side">

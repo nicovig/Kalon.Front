@@ -265,9 +265,17 @@ export interface MailLogDetailsResponseApiModel {
   createdAt?: string;
 }
 
+export type SendingDocumentTypeApiModel =
+  | 'message'
+  | 'tax_receipt'
+  | 'membership_certificate'
+  | 'payment_attestation';
+
+export type SendingChannelApiModel = 'email' | 'print';
+
 export interface SendDocumentDtoApiModel {
-  documentType?: string | null;
-  channel?: string | null;
+  documentType?: SendingDocumentTypeApiModel | null;
+  channel?: SendingChannelApiModel | null;
   subject?: string | null;
   bodyHtml?: string | null;
   documentBodyHtml?: string | null;
