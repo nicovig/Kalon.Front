@@ -26,7 +26,10 @@ type AccountOrganizationInfo = {
   activitySector: string;
   audienceDescription: string;
 };
-type RemoveTarget = { id: string; type: 'text' | 'signature' | 'image'; label: string } | null;
+type RemoveTarget =
+  | { id: string; type: 'text' | 'signature'; label: string }
+  | { type: 'logo'; label: string }
+  | null;
 
 @Component({
   selector: 'account-page',
@@ -91,7 +94,7 @@ export class AccountPageComponent {
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
-  protected readonly images = this.store.images;
+  protected readonly logo = this.store.logo;
 
   protected readonly textLabel = signal('');
   protected readonly textContent = signal('');
@@ -101,11 +104,28 @@ export class AccountPageComponent {
   protected readonly signatureContent = signal('');
   protected readonly editingSignatureId = signal<string | null>(null);
 
-  protected readonly imageLabel = signal('');
   protected readonly imageDataUrl = signal('');
   protected readonly imageMimeType = signal('image/*');
-  protected readonly imageEditingId = signal<string | null>(null);
+  protected readonly imageChosenFileName = signal('');
+  protected readonly logoPreviewSrc = computed(() => this.imageDataUrl().trim() || this.store.logo()?.dataUrl || '');
+  protected readonly saveLogoDisabled = computed(() => {
+    const draft = this.imageDataUrl().trim();
+    if (!draft) return true;
+    const server = this.store.logo()?.dataUrl?.trim() ?? '';
+    if (!server) return false;
+    return draft === server && !this.imageChosenFileName().trim();
+  });
+  protected readonly imageFileHint = computed(() => {
+    const name = this.imageChosenFileName().trim();
+    if (name) return name;
+    const draft = this.imageDataUrl().trim();
+    const server = this.store.logo()?.dataUrl ?? '';
+    if (draft && server && draft === server) return 'Logo actuel';
+    return 'Aucun fichier choisi';
+  });
   protected readonly removeTarget = signal<RemoveTarget>(null);
+
+  private lastImageFileInput: HTMLInputElement | null = null;
 
   constructor() {
     this.store.ensureLoaded();
@@ -164,43 +184,54 @@ export class AccountPageComponent {
     this.signatureContent.set('');
   }
 
+  protected pickImageFile(input: HTMLInputElement): void {
+    input.click();
+  }
+
   protected async onImageFileChange(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement | null;
+    this.lastImageFileInput = input;
     const file = input?.files?.[0];
-    if (!file) return;
+    if (!file) {
+      this.imageChosenFileName.set('');
+      return;
+    }
     const dataUrl = await this.readAsDataUrl(file);
-    this.imageLabel.set(file.name.replace(/\.[^.]+$/, ''));
+    this.imageChosenFileName.set(file.name);
     this.imageDataUrl.set(dataUrl);
     this.imageMimeType.set(file.type || 'image/*');
-    this.imageEditingId.set(null);
   }
 
-  protected editImage(id: string): void {
-    const row = this.images().find((item) => item.id === id);
-    if (!row) return;
-    this.imageEditingId.set(row.id);
-    this.imageLabel.set(row.label);
-    this.imageDataUrl.set(row.dataUrl);
-    this.imageMimeType.set(this.mimeFromDataUrl(row.dataUrl));
+  protected saveLogo(): void {
+    const dataUrl = this.imageDataUrl().trim();
+    if (!dataUrl) return;
+    const fileName = this.imageChosenFileName().trim() || this.store.logo()?.fileName || 'logo.png';
+    this.store.upsertLogo(dataUrl, this.imageMimeType(), fileName).subscribe({
+      next: () => {
+        this.resetImageFileInputValue();
+        this.cancelImageEdit();
+        this.toast.show('Logo enregistré.', 'success');
+      },
+      error: () => {
+        this.toast.show("Impossible d'enregistrer le logo. Vérifiez le fichier ou votre connexion.", 'alert');
+      }
+    });
   }
 
-  protected saveImage(): void {
-    this.store.upsertImage(this.imageEditingId(), this.imageLabel(), this.imageDataUrl(), this.imageMimeType());
-    this.cancelImageEdit();
-    this.toast.show('Image enregistrée.', 'success');
-  }
-
-  protected requestRemoveImage(id: string): void {
-    const row = this.images().find((item) => item.id === id);
-    if (!row) return;
-    this.removeTarget.set({ id, type: 'image', label: row.label });
+  protected requestRemoveLogo(): void {
+    this.removeTarget.set({ type: 'logo', label: 'Logo' });
   }
 
   protected cancelImageEdit(): void {
-    this.imageEditingId.set(null);
-    this.imageLabel.set('');
+    this.resetImageFileInputValue();
+    this.imageChosenFileName.set('');
     this.imageDataUrl.set('');
     this.imageMimeType.set('image/*');
+  }
+
+  private resetImageFileInputValue(): void {
+    const el = this.lastImageFileInput;
+    if (el) el.value = '';
   }
 
   protected cancelRemove(): void {
@@ -210,16 +241,23 @@ export class AccountPageComponent {
   protected confirmRemove(): void {
     const target = this.removeTarget();
     if (!target) return;
-    if (target.type === 'image') {
-      this.store.removeImage(target.id);
-      if (this.imageEditingId() === target.id) this.cancelImageEdit();
-      this.toast.show('Image supprimée.', 'success');
-    } else {
-      this.store.removeTextBlock(target.id);
-      if (target.type === 'text' && this.editingTextId() === target.id) this.cancelTextEdit();
-      if (target.type === 'signature' && this.editingSignatureId() === target.id) this.cancelSignatureEdit();
-      this.toast.show(target.type === 'signature' ? 'Signature supprimée.' : 'Bloc texte supprimé.', 'success');
+    if (target.type === 'logo') {
+      this.store.removeLogo().subscribe({
+        next: () => {
+          this.cancelImageEdit();
+          this.toast.show('Logo supprimé.', 'success');
+          this.removeTarget.set(null);
+        },
+        error: () => {
+          this.toast.show('Impossible de supprimer le logo.', 'alert');
+        }
+      });
+      return;
     }
+    this.store.removeTextBlock(target.id);
+    if (target.type === 'text' && this.editingTextId() === target.id) this.cancelTextEdit();
+    if (target.type === 'signature' && this.editingSignatureId() === target.id) this.cancelSignatureEdit();
+    this.toast.show(target.type === 'signature' ? 'Signature supprimée.' : 'Bloc texte supprimé.', 'success');
     this.removeTarget.set(null);
   }
 

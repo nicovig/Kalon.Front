@@ -94,9 +94,7 @@ export const API_ENDPOINTS = {
       toUrl(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`)
   },
   organizationCustomContent: {
-    getLogo: () => toUrl('/api/OrganizationCustomContent/logo'),
-    createLogo: () => toUrl('/api/OrganizationCustomContent/logo'),
-    updateLogo: () => toUrl('/api/OrganizationCustomContent/logo')
+    logo: () => toUrl('/api/OrganizationCustomContent/logo')
   },
   organizationDocuments: {
     listGenerated: () => toUrl('/api/OrganizationDocuments/generated-documents'),

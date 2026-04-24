@@ -1,14 +1,17 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { EMPTY, forkJoin, Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { UserStore } from '../../core/auth/user.store';
+import { API_BASE_URL } from '../../core/config/api.config';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import {
   ContentBlockResponseApiModel,
   ContentBlockUpsertRequestApiModel,
   EmailTemplateResponseApiModel,
-  EmailTemplateUpsertRequestApiModel
+  EmailTemplateUpsertRequestApiModel,
+  OrganizationLogoResponseApiModel,
+  OrganizationLogoUpsertRequestApiModel
 } from '../../core/api/backend-api.model';
 
 export type MailTextBlockRole = 'signature' | 'text';
@@ -71,14 +74,18 @@ export class OrganizationCustomContentStore {
   private readonly userStore = inject(UserStore);
 
   private readonly textBlocksWrite = signal<MailTextBlock[]>([]);
-  private readonly imagesWrite = signal<MailImageAsset[]>([]);
+  private readonly logoWrite = signal<MailImageAsset | null>(null);
   private readonly documentsWrite = signal<MailDocumentAsset[]>([]);
   private readonly emailTemplatesWrite = signal<MailTemplate[]>([]);
   private readonly fiscalReceiptTemplatesWrite = signal<FiscalReceiptTemplate[]>([]);
   private readonly loadedWrite = signal(false);
 
   readonly textBlocks = this.textBlocksWrite.asReadonly();
-  readonly images = this.imagesWrite.asReadonly();
+  readonly logo = this.logoWrite.asReadonly();
+  readonly images = computed(() => {
+    const row = this.logoWrite();
+    return row ? [row] : [];
+  });
   readonly documents = this.documentsWrite.asReadonly();
   readonly emailTemplates = this.emailTemplatesWrite.asReadonly();
   readonly fiscalReceiptTemplates = this.fiscalReceiptTemplatesWrite.asReadonly();
@@ -98,12 +105,16 @@ export class OrganizationCustomContentStore {
     }
     forkJoin({
       blocks: this.http.get<ContentBlockResponseApiModel[]>(API_ENDPOINTS.contentBlock.list()),
-      templates: this.http.get<EmailTemplateResponseApiModel[]>(API_ENDPOINTS.emailTemplate.list())
+      templates: this.http.get<EmailTemplateResponseApiModel[]>(API_ENDPOINTS.emailTemplate.list()),
+      logo: this.http.get<OrganizationLogoResponseApiModel>(API_ENDPOINTS.organizationCustomContent.logo()).pipe(
+        catchError(() => of(null))
+      )
     })
       .pipe(
-        map(({ blocks, templates }) => {
+        map(({ blocks, templates, logo }) => {
           this.mapContentBlocks(blocks ?? []);
           this.mapTemplates(templates ?? []);
+          this.applyLogoResponse(logo);
           this.loadedWrite.set(true);
         }),
         catchError(() => {
@@ -140,33 +151,29 @@ export class OrganizationCustomContentStore {
     });
   }
 
-  addImage(label: string, fileName: string, dataUrl: string): void {
-    this.upsertImage(null, label || fileName, dataUrl, this.mimeFromDataUrl(dataUrl) ?? 'image/*');
-  }
-
-  upsertImage(id: string | null, label: string, dataUrl: string, mimeType: string = 'image/*'): void {
-    const l = label.trim();
-    if (!l || !dataUrl.trim() || !this.userStore.isAuthenticated()) return;
-    const payload: ContentBlockUpsertRequestApiModel = {
-      name: l,
-      kind: 'image',
-      content: dataUrl,
-      mimeType: mimeType || this.mimeFromDataUrl(dataUrl) || 'image/*',
-      usableInEmail: true,
-      usableInReceipt: true
+  upsertLogo(dataUrl: string, mimeType: string, fileName: string): Observable<OrganizationLogoResponseApiModel> {
+    const raw = dataUrl.trim();
+    if (!raw || !this.userStore.isAuthenticated()) return EMPTY;
+    const name = (fileName.trim() || 'logo.png').replace(/^.*[/\\]/, '') || 'logo.png';
+    const mime = (mimeType.trim() || this.mimeFromDataUrl(raw) || 'image/png').trim();
+    const payload: OrganizationLogoUpsertRequestApiModel = {
+      fileName: name,
+      mimeType: mime,
+      fileSizeBytes: this.dataUrlByteLength(raw),
+      storedPath: raw,
+      content: raw
     };
-    const req = id
-      ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id }), payload)
-      : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create(), payload);
-    req.subscribe({ next: () => this.loadAll(), error: () => undefined });
+    const url = API_ENDPOINTS.organizationCustomContent.logo();
+    const existingId = this.logoWrite()?.id;
+    const req = existingId
+      ? this.http.put<OrganizationLogoResponseApiModel>(url, payload)
+      : this.http.post<OrganizationLogoResponseApiModel>(url, payload);
+    return req.pipe(tap(() => this.loadAll()));
   }
 
-  removeImage(id: string): void {
-    if (!id || !this.userStore.isAuthenticated()) return;
-    this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
-      next: () => this.loadAll(),
-      error: () => undefined
-    });
+  removeLogo(): Observable<void> {
+    if (!this.userStore.isAuthenticated()) return EMPTY;
+    return this.http.delete<void>(API_ENDPOINTS.organizationCustomContent.logo()).pipe(tap(() => this.loadAll()));
   }
 
   addDocument(label: string, fileName: string, mimeType: string, dataUrl: string): void {
@@ -232,7 +239,6 @@ export class OrganizationCustomContentStore {
 
   private mapContentBlocks(items: ContentBlockResponseApiModel[]): void {
     const textBlocks: MailTextBlock[] = [];
-    const images: MailImageAsset[] = [];
     const documents: MailDocumentAsset[] = [];
     for (const item of items) {
       const id = String(item.id ?? '');
@@ -242,13 +248,6 @@ export class OrganizationCustomContentStore {
       const content = String(item.content ?? '');
       const addedAt = item.createdAt ? new Date(item.createdAt).getTime() : 0;
       if (kind === 'image') {
-        images.push({
-          id,
-          label,
-          fileName: label,
-          dataUrl: content,
-          addedAt
-        });
         continue;
       }
       if (kind === 'document') {
@@ -266,8 +265,53 @@ export class OrganizationCustomContentStore {
       textBlocks.push({ id, label, content, role, addedAt });
     }
     this.textBlocksWrite.set(textBlocks);
-    this.imagesWrite.set(images);
     this.documentsWrite.set(documents);
+  }
+
+  private applyLogoResponse(resp: OrganizationLogoResponseApiModel | null): void {
+    if (!resp?.id) {
+      this.logoWrite.set(null);
+      return;
+    }
+    const id = String(resp.id);
+    const fileName = String(resp.fileName ?? 'Logo').trim() || 'Logo';
+    const inline = String(resp.content ?? '').trim();
+    const sp = String(resp.storedPath ?? '').trim();
+    let dataUrl = '';
+    if (inline.startsWith('data:')) {
+      dataUrl = inline;
+    } else if (inline) {
+      dataUrl = inline;
+    } else if (sp.startsWith('data:')) {
+      dataUrl = sp;
+    } else if (sp) {
+      dataUrl = this.resolveAssetUrl(sp);
+    }
+    if (!dataUrl) {
+      this.logoWrite.set(null);
+      return;
+    }
+    this.logoWrite.set({
+      id,
+      label: fileName,
+      fileName,
+      dataUrl,
+      addedAt: resp.createdAt ? new Date(resp.createdAt).getTime() : 0
+    });
+  }
+
+  private resolveAssetUrl(path: string): string {
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const base = API_BASE_URL.replace(/\/$/, '');
+    return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
+  }
+
+  private dataUrlByteLength(dataUrl: string): number {
+    const comma = dataUrl.indexOf(',');
+    if (comma < 0) return 0;
+    const b64 = dataUrl.slice(comma + 1);
+    const pad = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+    return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
   }
 
   private mapTemplates(items: EmailTemplateResponseApiModel[]): void {

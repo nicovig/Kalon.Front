@@ -150,6 +150,7 @@ export interface OrganizationLogoUpsertRequestApiModel {
   storedPath?: string | null;
   mimeType?: string | null;
   fileSizeBytes?: number;
+  content?: string | null;
 }
 
 export interface OrganizationLogoResponseApiModel {
@@ -157,6 +158,7 @@ export interface OrganizationLogoResponseApiModel {
   organizationId?: string;
   fileName?: string | null;
   storedPath?: string | null;
+  content?: string | null;
   mimeType?: string | null;
   fileSizeBytes?: number;
   createdAt?: string;

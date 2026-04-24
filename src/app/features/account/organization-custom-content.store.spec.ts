@@ -31,6 +31,9 @@ describe('OrganizationCustomContentStore API', () => {
           useValue: {
             get: (url: string) => {
               getUrls.push(url);
+              if (url.includes('/api/OrganizationCustomContent/logo')) {
+                return of(null);
+              }
               return of([]);
             },
             post: (url: string) => {
@@ -54,9 +57,10 @@ describe('OrganizationCustomContentStore API', () => {
 
   it('loadAll appelle les listes sans userId', () => {
     store.loadAll();
-    expect(getUrls).toHaveLength(2);
+    expect(getUrls).toHaveLength(3);
     expect(getUrls[0]).toContain('/api/OrganizationCustomContent/content-blocks');
     expect(getUrls[1]).toContain('/api/EmailTemplate');
+    expect(getUrls[2]).toContain('/api/OrganizationCustomContent/logo');
     expect(getUrls.join('|')).not.toContain('userId=');
   });
 
@@ -71,13 +75,16 @@ describe('OrganizationCustomContentStore API', () => {
     expect(`${postUrls}|${putUrls}|${deleteUrls}`).not.toContain('userId=');
   });
 
-  it('upsert image sans userId', () => {
-    store.upsertImage(null, 'Logo', 'data:image/png;base64,abc', 'image/png');
-    store.upsertImage('img-1', 'Logo 2', 'data:image/png;base64,def', 'image/png');
-
-    expect(postUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks'))).toBe(true);
-    expect(putUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks/img-1'))).toBe(true);
+  it('upsert logo sans userId', () => {
+    store.upsertLogo('data:image/png;base64,abc', 'image/png', 'logo.png').subscribe();
+    expect(postUrls.some((u) => u.includes('/api/OrganizationCustomContent/logo'))).toBe(true);
     expect(`${postUrls}|${putUrls}`).not.toContain('userId=');
+  });
+
+  it('remove logo sans userId', () => {
+    store.removeLogo().subscribe();
+    expect(deleteUrls.some((u) => u.includes('/api/OrganizationCustomContent/logo'))).toBe(true);
+    expect(deleteUrls.join('|')).not.toContain('userId=');
   });
 
   it('templates email sans userId', () => {

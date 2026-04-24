@@ -184,41 +184,34 @@
   </section>
 
   <section class="account-card">
-    <h2 class="account-title">Images réutilisables</h2>
-    <p class="account-subtitle">Logo, visuels, bannières : centralisez vos images.</p>
+    <h2 class="account-title">Logo de l'association</h2>
+    <p class="account-subtitle">Un seul logo, réutilisable dans les mails et documents.</p>
     <div class="account-form-grid">
-      <label>
-        <span>Nom de l’image</span>
-        <input type="text" [ngModel]="imageLabel()" (ngModelChange)="imageLabel.set($event)" placeholder="Ex: Logo association" />
+      <label class="account-file-field account-form-grid-full">
+        <input
+          #imageFileInput
+          type="file"
+          class="account-file-input-hidden"
+          accept="image/*"
+          (change)="onImageFileChange($event)"
+        />
+        <div class="account-file-picker">
+          <button-label-component type="ghost" (click)="pickImageFile(imageFileInput)">Choisir le logo</button-label-component>
+          <span class="account-file-hint">{{ imageFileHint() }}</span>
+        </div>
       </label>
-      <label>
-        <span>Fichier image</span>
-        <input type="file" accept="image/*" (change)="onImageFileChange($event)" />
-      </label>
-      @if (imageDataUrl()) {
+      @if (logoPreviewSrc()) {
         <div class="account-image-preview account-form-grid-full">
-          <img [src]="imageDataUrl()" [alt]="imageLabel() || 'Aperçu image'" />
+          <img [src]="logoPreviewSrc()" [alt]="imageChosenFileName() || logo()?.fileName || 'Logo'" />
         </div>
       }
     </div>
     <div class="account-actions">
-      <button-label-component type="ghost" (click)="cancelImageEdit()">Réinitialiser</button-label-component>
-      <button-label-component type="primary" [disabled]="!imageLabel().trim() || !imageDataUrl().trim()" (click)="saveImage()">
-        {{ imageEditingId() ? 'Mettre à jour' : 'Ajouter l’image' }}
-      </button-label-component>
+      @if (logo()) {
+        <button-label-component type="ghost" (click)="requestRemoveLogo()">Supprimer le logo</button-label-component>
+      }
+      <button-label-component type="primary" [disabled]="saveLogoDisabled()" (click)="saveLogo()">Enregistrer le logo</button-label-component>
     </div>
-    @for (item of images(); track item.id) {
-    <div class="account-list account-list--images">
-        <div class="account-image-card">
-          <img [src]="item.dataUrl" [alt]="item.label" />
-          <div class="account-list-title">{{ item.label }}</div>
-          <div class="account-list-actions">
-            <button-label-component type="ghost" (click)="editImage(item.id)">Modifier</button-label-component>
-            <button-label-component type="ghost" (click)="requestRemoveImage(item.id)">Supprimer</button-label-component>
-          </div>
-        </div>
-      </div>
-    }
   </section>
 </div>
 
@@ -228,7 +221,7 @@
       <div class="app-popup-title">Confirmer la suppression</div>
       <p class="app-popup-sub">Cette action est définitive.</p>
     </div>
-    <p class="account-delete-text">Supprimer « {{ target.label }} » ?</p>
+    <p class="account-delete-text">Supprimer le logo ?</p>
     <div class="account-actions">
       <button-label-component type="ghost" (click)="cancelRemove()">Annuler</button-label-component>
       <button-label-component type="primary" (click)="confirmRemove()">Supprimer</button-label-component>

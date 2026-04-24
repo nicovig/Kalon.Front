@@ -9,21 +9,19 @@ import { ToastService } from '../../layout/toast/toast.service';
 describe('AccountPageComponent', () => {
   let component: AccountPageComponent;
   let upsertTextArgs: unknown[] = [];
-  let upsertImageArgs: unknown[] = [];
+  let upsertLogoArgs: unknown[] = [];
   let updateOrganizationArgs: unknown[] = [];
   let removedTextIds: string[] = [];
-  let removedImageIds: string[] = [];
+  let removeLogoCalls = 0;
   let textBlocksData: Array<{ id: string; label: string; content: string; role: string }> = [];
-  let imagesData: Array<{ id: string; label: string; fileName: string; dataUrl: string; addedAt: number }> = [];
 
   beforeEach(() => {
     upsertTextArgs = [];
-    upsertImageArgs = [];
+    upsertLogoArgs = [];
     updateOrganizationArgs = [];
     removedTextIds = [];
-    removedImageIds = [];
+    removeLogoCalls = 0;
     textBlocksData = [];
-    imagesData = [];
     TestBed.configureTestingModule({
       providers: [
         {
@@ -40,11 +38,17 @@ describe('AccountPageComponent', () => {
           useValue: {
             ensureLoaded: () => undefined,
             textBlocks: () => textBlocksData,
-            images: () => imagesData,
+            logo: () => null,
             upsertTextBlock: (...args: unknown[]) => upsertTextArgs.push(args),
             removeTextBlock: (id: string) => removedTextIds.push(id),
-            upsertImage: (...args: unknown[]) => upsertImageArgs.push(args),
-            removeImage: (id: string) => removedImageIds.push(id)
+            upsertLogo: (...args: unknown[]) => {
+              upsertLogoArgs.push(args);
+              return of({});
+            },
+            removeLogo: () => {
+              removeLogoCalls++;
+              return of(undefined);
+            }
           }
         },
         {
@@ -124,13 +128,13 @@ describe('AccountPageComponent', () => {
     expect(upsertTextArgs[0]).toEqual([null, 'Bloc', 'Contenu', 'text']);
   });
 
-  it('sauvegarde une image', () => {
+  it('sauvegarde le logo', () => {
     const cmp = component as any;
-    cmp.imageLabel.set('Logo');
+    cmp.imageChosenFileName.set('logo.png');
     cmp.imageDataUrl.set('data:image/png;base64,abc');
     cmp.imageMimeType.set('image/png');
-    cmp.saveImage();
-    expect(upsertImageArgs[0]).toEqual([null, 'Logo', 'data:image/png;base64,abc', 'image/png']);
+    cmp.saveLogo();
+    expect(upsertLogoArgs[0]).toEqual(['data:image/png;base64,abc', 'image/png', 'logo.png']);
   });
 
   it('demande confirmation avant suppression bloc texte', () => {
@@ -142,12 +146,11 @@ describe('AccountPageComponent', () => {
     expect(removedTextIds).toEqual(['t1']);
   });
 
-  it('demande confirmation avant suppression image', () => {
+  it('demande confirmation avant suppression logo', () => {
     const cmp = component as any;
-    imagesData = [{ id: 'i1', label: 'Logo', fileName: 'logo.png', dataUrl: 'data:image/png;base64,abc', addedAt: 1 }];
-    cmp.requestRemoveImage('i1');
-    expect(cmp.removeTarget()).toEqual({ id: 'i1', type: 'image', label: 'Logo' });
+    cmp.requestRemoveLogo();
+    expect(cmp.removeTarget()).toEqual({ type: 'logo', label: 'Logo' });
     cmp.confirmRemove();
-    expect(removedImageIds).toEqual(['i1']);
+    expect(removeLogoCalls).toBe(1);
   });
 });
