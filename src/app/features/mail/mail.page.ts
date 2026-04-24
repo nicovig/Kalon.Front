@@ -33,6 +33,7 @@ import { OrganizationCustomContentStore } from '../account/organization-custom-c
 import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
+import { parseAllowedSendTypesFromOrganization } from '../../core/organization-sending-preferences';
 import {
   MailEditorVariableTagApiModel,
   PrintDocumentResultDtoApiModel,
@@ -104,6 +105,8 @@ export class MailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
 
+  private readonly organizationSendTypeFilter = signal<ReadonlySet<string> | null>(null);
+
   protected readonly steps: StepTrailItem[] = [
     { key: 'choix_type', label: 'Type' },
     { key: 'choix_canal', label: 'Par quel moyen ?' },
@@ -148,12 +151,12 @@ export class MailPageComponent {
     const taxReceiptBadge = taxReceiptToSend > 0 ? String(taxReceiptToSend) : undefined;
     const taxReceiptHint = `${taxReceiptToSend} reçus fiscaux à éditer`;
 
-    return [
+    const base: ChoiceCardItem[] = [
       {
         key: 'message',
         icon: '💌',
         title: 'Relance ou message personnalisé',
-        hint: 'Envoyez une relance ou un message personnalisé à vos contacts.',
+        hint: 'Envoyez une relance ou un message personnalisé à vos contacts.'
       },
       {
         key: 'tax_receipt',
@@ -166,7 +169,7 @@ export class MailPageComponent {
         key: 'payment_attestation',
         icon: '📄',
         title: 'Attestation de cotisation',
-        hint: 'Envoyez une attestation de cotisation à vos contacts.',
+        hint: 'Envoyez une attestation de cotisation à vos contacts.'
       },
       {
         key: 'membership_certificate',
@@ -175,6 +178,11 @@ export class MailPageComponent {
         hint: 'Idéal pour les clubs sportifs et associations.'
       }
     ];
+    const filter = this.organizationSendTypeFilter();
+    if (!filter) {
+      return base;
+    }
+    return base.filter((item) => filter.has(item.key));
   });
 
   protected readonly statusOptions: FormSelectOption[] = [
@@ -238,6 +246,7 @@ export class MailPageComponent {
     const kind = this.kindFilter();
     const dept = this.departmentFilter();
     const availabilityMode = this.availabilityMode();
+    const taxReceiptPendingIds = this.dashboardNotificationStore.taxReceiptContactIds();
     const monthsMin = this.monthsSinceLastDonationMin();
     const totalMin = this.parseOptionalNumber(this.totalDonationMin());
     const totalMax = this.parseOptionalNumber(this.totalDonationMax());
@@ -249,11 +258,15 @@ export class MailPageComponent {
       if (status !== 'all' && computedStatus !== status) return false;
       if (kind !== 'all' && c.kind !== kind) return false;
       if (dept !== 'all' && this.departmentOf(c) !== dept) return false;
-      if (availabilityMode === 'with_postal_address' && !hasPostal) return false;
-      if (availabilityMode === 'without_postal_address' && hasPostal) return false;
-      if (availabilityMode === 'without_email' && hasEmail) return false;
-      if (availabilityMode === 'with_email' && !hasEmail) return false;
-      if (availabilityMode === 'without_postal_address_and_email' && (hasPostal || hasEmail)) return false;
+      if (availabilityMode === 'pending_tax_receipt') {
+        if (!taxReceiptPendingIds.has(c.id)) return false;
+      } else {
+        if (availabilityMode === 'with_postal_address' && !hasPostal) return false;
+        if (availabilityMode === 'without_postal_address' && hasPostal) return false;
+        if (availabilityMode === 'without_email' && hasEmail) return false;
+        if (availabilityMode === 'with_email' && !hasEmail) return false;
+        if (availabilityMode === 'without_postal_address_and_email' && (hasPostal || hasEmail)) return false;
+      }
       if (monthsMin > 0 && !this.matchesLastDonationMonths(c, monthsMin)) return false;
       const stats = this.contactContributionSummary(c);
       const totalDonation = this.parseNumberish(stats.totalAmount);
@@ -364,6 +377,12 @@ export class MailPageComponent {
     this.contactStore.loadContactsFromApi().subscribe({ error: () => undefined });
     this.donationStore.loadDonationsFromApi().subscribe({ error: () => undefined });
     this.customContentStore.ensureLoaded();
+    this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()).subscribe({
+      next: (res) => {
+        this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(res?.['sendingPreferences']));
+      },
+      error: () => this.organizationSendTypeFilter.set(null)
+    });
     this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
       const type = this.parseSendType(params.get('type'));
       const method = this.parseSendMethod(params.get('canal'));
@@ -394,12 +413,23 @@ export class MailPageComponent {
       }
       if (step === 'destinataires') {
         this.activeStepKey.set('destinataires');
+        if (type === 'tax_receipt' && this.dashboardNotificationStore.taxReceiptsToSend() > 0) {
+          this.availabilityMode.set('pending_tax_receipt');
+        }
       }
     });
   }
 
   protected chooseType(kind: SendType): void {
     this.selectedSendType.set(kind);
+    if (kind !== 'tax_receipt' && this.availabilityMode() === 'pending_tax_receipt') {
+      const method = this.selectedSendMethod();
+      if (method) {
+        this.applyDefaultAvailabilityForMethod(method);
+      } else {
+        this.availabilityMode.set('with_email');
+      }
+    }
   }
 
   protected chooseMethod(kind: SendMethod): void {
@@ -414,6 +444,9 @@ export class MailPageComponent {
 
   protected goToRecipientsStep(): void {
     if (!this.selectedSendMethod()) return;
+    if (this.selectedSendType() === 'tax_receipt' && this.dashboardNotificationStore.taxReceiptsToSend() > 0) {
+      this.availabilityMode.set('pending_tax_receipt');
+    }
     this.activeStepKey.set('destinataires');
   }
 
@@ -524,6 +557,15 @@ export class MailPageComponent {
     return this.editorVariableTagsWrite().filter((tag) =>
       tag.id === 'enterprise_name' ? hasCompanyRecipient : true
     );
+  });
+
+  private readonly clearSelectedSendTypeIfFilteredEffect = effect(() => {
+    const filter = this.organizationSendTypeFilter();
+    const t = this.selectedSendType();
+    if (filter == null || !t) return;
+    if (!filter.has(t)) {
+      this.selectedSendType.set(null);
+    }
   });
 
   private readonly syncSelectedSignatureBlockEffect = effect(() => {

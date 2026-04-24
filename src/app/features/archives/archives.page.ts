@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
 import { ToastService } from '../../layout/toast/toast.service';
 import { TableColumn, TableComponent } from '../../layout/table/table.component';
+import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
+import { FormDateComponent } from '../../layout/forms/date/form-date.component';
+import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 import { OrganizationDocumentsStore } from './organization-documents.store';
 import { MailLogDetailsResponseApiModel, MailLogListResponseApiModel } from '../../core/api/backend-api.model';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
@@ -21,9 +25,12 @@ type ArchiveTableRow = {
   entryType: 'mail';
   typeLabel: string;
   dateLabel: string;
+  dateKey: string;
   channelLabel: string;
+  channelKey: 'email' | 'print';
   recipientName: string;
   statusLabel: string;
+  statusNorm: string;
 };
 
 @Component({
@@ -32,7 +39,18 @@ type ArchiveTableRow = {
   templateUrl: './archives.page.html',
   styleUrls: ['./archives.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TopbarComponent, TableComponent, PopupShellComponent, ButtonLabelComponent, InlineLoaderComponent]
+  imports: [
+    CommonModule,
+    FormsModule,
+    TopbarComponent,
+    TableComponent,
+    PopupShellComponent,
+    ButtonLabelComponent,
+    InlineLoaderComponent,
+    FormSelectComponent,
+    FormDateComponent,
+    FormTextComponent
+  ]
 })
 export class ArchivesPageComponent {
   private readonly documentsStore = inject(OrganizationDocumentsStore);
@@ -45,6 +63,13 @@ export class ArchivesPageComponent {
   protected readonly confirmLoading = signal(false);
   protected readonly regenerateLoading = signal(false);
   protected readonly regenerateConfirmOpen = signal(false);
+  protected readonly filterType = signal<string>('all');
+  protected readonly filterDateFrom = signal<string>('');
+  protected readonly filterDateTo = signal<string>('');
+  protected readonly filterChannel = signal<string>('all');
+  protected readonly filterRecipient = signal<string>('');
+  protected readonly filterStatus = signal<string>('all');
+
   protected readonly mailLogs = computed(() =>
     this.documentsStore
       .mailLogs()
@@ -55,27 +80,110 @@ export class ArchivesPageComponent {
   protected readonly hasAny = computed(() => this.mailLogs().length > 0);
 
   protected readonly archiveRows = computed(() => {
-    return this.mailLogs().map((log) => ({
-      id: String(log.id ?? '').trim(),
-      entryType: 'mail',
-      typeLabel: this.sendTypeLabelFr(log.type),
-      dateLabel: this.formatDateReadable(log.date),
-      channelLabel: log.isEmail === true ? 'Email' : 'Courrier',
-      recipientName: this.recipientNameFromMailLog(log),
-      statusLabel: this.archiveStatusLabelFr(log.status)
-    }));
+    return this.mailLogs().map((log) => {
+      const statusNorm = String(log.status ?? '').trim().toLowerCase() || '_none';
+      return {
+        id: String(log.id ?? '').trim(),
+        entryType: 'mail' as const,
+        typeLabel: this.sendTypeLabelFr(log.type),
+        dateLabel: this.formatDateReadable(log.date),
+        dateKey: this.dateKeyFromIso(log.date),
+        channelLabel: log.isEmail === true ? 'Email' : 'Courrier',
+        channelKey: (log.isEmail === true ? 'email' : 'print') as 'email' | 'print',
+        recipientName: this.recipientNameFromMailLog(log),
+        statusLabel: this.archiveStatusLabelFr(log.status),
+        statusNorm
+      };
+    });
+  });
+
+  protected readonly maxForDateFrom = computed(() => this.filterDateTo().trim() || null);
+  protected readonly minForDateTo = computed(() => this.filterDateFrom().trim() || null);
+
+  protected readonly filteredArchiveRows = computed(() => {
+    const ft = this.filterType();
+    let from = this.filterDateFrom().trim();
+    let to = this.filterDateTo().trim();
+    if (from && to && from > to) {
+      const s = from;
+      from = to;
+      to = s;
+    }
+    const fc = this.filterChannel();
+    const fr = this.filterRecipient().trim().toLowerCase();
+    const fs = this.filterStatus();
+    return this.archiveRows().filter((row) => {
+      if (ft !== 'all' && row.typeLabel !== ft) return false;
+      if (from || to) {
+        if (!row.dateKey) return false;
+        if (from && row.dateKey < from) return false;
+        if (to && row.dateKey > to) return false;
+      }
+      if (fc !== 'all' && row.channelKey !== fc) return false;
+      if (fr && !row.recipientName.toLowerCase().includes(fr)) return false;
+      if (fs !== 'all' && row.statusNorm !== fs) return false;
+      return true;
+    });
+  });
+
+  protected readonly filterTypeOptions = computed<FormSelectOption[]>(() => {
+    const labels = [...new Set(this.archiveRows().map((r) => r.typeLabel))].sort((a, b) =>
+      a.localeCompare(b, 'fr')
+    );
+    return [{ value: 'all', label: 'Tous' }, ...labels.map((label) => ({ value: label, label }))];
+  });
+
+  protected readonly filterChannelOptions: FormSelectOption[] = [
+    { value: 'all', label: 'Tous' },
+    { value: 'email', label: 'Email' },
+    { value: 'print', label: 'Courrier' }
+  ];
+
+  protected readonly filterStatusOptions = computed<FormSelectOption[]>(() => {
+    const map = new Map<string, string>();
+    for (const row of this.archiveRows()) {
+      if (!map.has(row.statusNorm)) {
+        map.set(row.statusNorm, row.statusLabel);
+      }
+    }
+    const entries = [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+    return [{ value: 'all', label: 'Tous' }, ...entries.map(([value, label]) => ({ value, label }))];
   });
 
   protected readonly archiveColumns: TableColumn[] = [
-    { key: 'typeLabel', header: 'Type', searchable: true },
-    { key: 'dateLabel', header: 'Date', searchable: true },
-    { key: 'channelLabel', header: 'Envoyé en', searchable: true },
-    { key: 'recipientName', header: 'Envoyé à', searchable: true },
-    { key: 'statusLabel', header: 'Statut', searchable: true }
+    { key: 'typeLabel', header: 'Type' },
+    { key: 'dateLabel', header: 'Date' },
+    { key: 'channelLabel', header: 'Envoyé en' },
+    { key: 'recipientName', header: 'Envoyé à' },
+    { key: 'statusLabel', header: 'Statut' }
   ];
 
   constructor() {
     this.documentsStore.load();
+  }
+
+  protected onFilterTypeChange(value: string): void {
+    this.filterType.set(value ?? 'all');
+  }
+
+  protected onFilterDateFromChange(value: string): void {
+    this.filterDateFrom.set(String(value ?? '').trim());
+  }
+
+  protected onFilterDateToChange(value: string): void {
+    this.filterDateTo.set(String(value ?? '').trim());
+  }
+
+  protected onFilterChannelChange(value: string): void {
+    this.filterChannel.set(value ?? 'all');
+  }
+
+  protected onFilterRecipientChange(value: string): void {
+    this.filterRecipient.set(String(value ?? ''));
+  }
+
+  protected onFilterStatusChange(value: string): void {
+    this.filterStatus.set(value ?? 'all');
   }
 
   protected onArchiveRowClick(row: unknown): void {
@@ -317,6 +425,20 @@ export class ArchivesPageComponent {
     }
     const ts = new Date(value).getTime();
     return Number.isFinite(ts) ? ts : 0;
+  }
+
+  private dateKeyFromIso(iso?: string): string {
+    if (!iso) {
+      return '';
+    }
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) {
+      return '';
+    }
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   private downloadBlob(blob: Blob, filename: string): void {

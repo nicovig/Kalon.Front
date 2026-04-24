@@ -4683,7 +4683,7 @@
         },
         "additionalProperties": false
       },
-      "NotificationContactToRemindItem": {
+      "NotificationContactItem": {
         "type": "object",
         "properties": {
           "contactId": {
@@ -4703,13 +4703,16 @@
           "contactsToRemind": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/NotificationContactToRemindItem"
+              "$ref": "#/components/schemas/NotificationContactItem"
             },
             "nullable": true
           },
-          "taxReceiptsToSendCount": {
-            "type": "integer",
-            "format": "int32"
+          "contactsToSendTaxReceipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationContactItem"
+            },
+            "nullable": true
           },
           "physicalLettersToSendCount": {
             "type": "integer",
@@ -4822,6 +4825,13 @@
           },
           "audienceDescription": {
             "type": "string",
+            "nullable": true
+          },
+          "sendingPreferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           },
           "contacts": {
@@ -5104,6 +5114,13 @@
             "type": "string",
             "nullable": true
           },
+          "sendingPreferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "logo": {
             "$ref": "#/components/schemas/OrganizationLogoResponseDto"
           },
@@ -5212,6 +5229,13 @@
           },
           "audienceDescription": {
             "type": "string",
+            "nullable": true
+          },
+          "sendingPreferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           }
         },

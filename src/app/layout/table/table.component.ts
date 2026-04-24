@@ -60,6 +60,9 @@ export class TableComponent implements OnChanges {
   private pageSizeInitialized = false;
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['rows'] && !changes['rows'].firstChange) {
+      this.currentPage = 1;
+    }
     if (changes['initialPageSize'] || changes['pageSizeOptions']) {
       this.applyInitialPageSize();
     }

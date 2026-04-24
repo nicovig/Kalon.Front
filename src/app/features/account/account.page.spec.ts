@@ -99,10 +99,11 @@ describe('AccountPageComponent', () => {
     cmp.onOrganizationFieldChange('activitySector', 'Culture');
     cmp.onOrganizationFieldChange('audienceDescription', 'Familles');
 
-    await cmp.saveOrganizationInfo();
+    await cmp.saveAccountDetailsBlock();
 
     expect(updateOrganizationArgs).toHaveLength(1);
-    expect(updateOrganizationArgs[0]).toMatchObject({
+    const payload = updateOrganizationArgs[0] as Record<string, unknown>;
+    expect(payload).toMatchObject({
       name: 'Nouvelle Asso',
       email: 'nouveau@asso.test',
       senderEmail: 'nouveau@asso.test',
@@ -111,6 +112,8 @@ describe('AccountPageComponent', () => {
       activitySector: 'Culture',
       audienceDescription: 'Familles'
     });
+    expect(Array.isArray(payload['sendingPreferences'])).toBe(true);
+    expect((payload['sendingPreferences'] as string[]).length).toBeGreaterThan(0);
   });
 
   it('sauvegarde un bloc texte', () => {

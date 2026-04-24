@@ -28,7 +28,8 @@ export type MailAvailabilityMode =
   | 'without_postal_address'
   | 'without_email'
   | 'with_email'
-  | 'without_postal_address_and_email';
+  | 'without_postal_address_and_email'
+  | 'pending_tax_receipt';
 
 @Component({
   selector: 'mail-contact-selector',
@@ -70,6 +71,7 @@ export class MailContactSelectorComponent implements OnChanges {
   @Input() departmentFilter = 'all';
   @Input() departmentOptions: FormSelectOption[] = [];
   @Input() availabilityMode: MailAvailabilityMode = 'with_email';
+  @Input() showTaxReceiptPendingFilter = false;
   @Input() showAvailabilityHelp = false;
   @Input() monthsSinceLastDonationMin = 0;
   @Input() totalDonationMin = '';

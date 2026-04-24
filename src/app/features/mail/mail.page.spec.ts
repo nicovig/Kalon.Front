@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MailPageComponent } from './mail.page';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
@@ -13,6 +15,8 @@ import { OrganizationCustomContentStore } from '../account/organization-custom-c
 import { of as rxOf } from 'rxjs';
 
 describe('MailPageComponent filters', () => {
+  const taxReceiptContactIdsMock = signal<ReadonlySet<string>>(new Set());
+  const taxReceiptsToSendMock = signal(0);
   let contacts: IContact[];
   let donations: IDonation[];
   let component: MailPageComponent;
@@ -32,6 +36,8 @@ describe('MailPageComponent filters', () => {
   ];
 
   beforeEach(() => {
+    taxReceiptContactIdsMock.set(new Set());
+    taxReceiptsToSendMock.set(0);
     capturedSendPayload = null;
     capturedPostUrl = null;
     capturedGetUrls = [];
@@ -114,11 +120,27 @@ describe('MailPageComponent filters', () => {
           }
         },
         {
+          provide: DashboardNotificationStore,
+          useValue: {
+            contactsToRemind: signal(0).asReadonly(),
+            taxReceiptsToSend: taxReceiptsToSendMock.asReadonly(),
+            physicalLettersToSend: signal(0).asReadonly(),
+            taxReceiptContactIds: taxReceiptContactIdsMock.asReadonly(),
+            hasAnyPending: signal(false).asReadonly(),
+            refresh: () => undefined,
+            reset: () => undefined
+          }
+        },
+        {
           provide: HttpClient,
           useValue: {
             get: (url: string) => {
               capturedGetUrls.push(url);
-              const hasCompany = String(url).includes('hasCompanyRecipient=true');
+              const u = String(url);
+              if (u.includes('/api/Organization') && !u.includes('CustomContent')) {
+                return of({ sendingPreferences: null });
+              }
+              const hasCompany = u.includes('hasCompanyRecipient=true');
               return of(
                 hasCompany
                   ? [
@@ -255,6 +277,40 @@ describe('MailPageComponent filters', () => {
     cmp.onAvailabilityModeChange('without_postal_address_and_email');
 
     expect(idsOf(cmp.filteredContacts())).toEqual([]);
+  });
+
+  it('filtre sur les contacts en attente de recu fiscal selon le store', () => {
+    const cmp = component as any;
+    taxReceiptContactIdsMock.set(new Set(['c1', 'c4']));
+    taxReceiptsToSendMock.set(2);
+    cmp.chooseType('tax_receipt');
+    cmp.onAvailabilityModeChange('pending_tax_receipt');
+
+    expect(idsOf(cmp.filteredContacts()).sort()).toEqual(['c1', 'c4'].sort());
+  });
+
+  it('positionne le filtre recu fiscal a l etape destinataires quand la file d attente n est pas vide', () => {
+    const cmp = component as any;
+    taxReceiptsToSendMock.set(2);
+    taxReceiptContactIdsMock.set(new Set(['c1']));
+    cmp.chooseType('tax_receipt');
+    cmp.chooseMethod('email');
+    cmp.goToRecipientsStep();
+
+    expect(cmp.availabilityMode()).toBe('pending_tax_receipt');
+  });
+
+  it('retire le filtre recu fiscal si on change de type d envoi', () => {
+    const cmp = component as any;
+    taxReceiptsToSendMock.set(1);
+    cmp.chooseType('tax_receipt');
+    cmp.chooseMethod('email');
+    cmp.goToRecipientsStep();
+    expect(cmp.availabilityMode()).toBe('pending_tax_receipt');
+
+    cmp.chooseType('message');
+
+    expect(cmp.availabilityMode()).toBe('with_email');
   });
 
   it('applique par defaut le filtre avec email apres selection du canal email', () => {
@@ -517,8 +573,26 @@ describe('MailPageComponent filters', () => {
           }
         },
         {
+          provide: DashboardNotificationStore,
+          useValue: {
+            contactsToRemind: signal(0).asReadonly(),
+            taxReceiptsToSend: taxReceiptsToSendMock.asReadonly(),
+            physicalLettersToSend: signal(0).asReadonly(),
+            taxReceiptContactIds: taxReceiptContactIdsMock.asReadonly(),
+            hasAnyPending: signal(false).asReadonly(),
+            refresh: () => undefined,
+            reset: () => undefined
+          }
+        },
+        {
           provide: HttpClient,
           useValue: {
+            get: (url: string) => {
+              if (String(url).includes('/api/Organization') && !String(url).includes('CustomContent')) {
+                return of({ sendingPreferences: null });
+              }
+              return of([]);
+            },
             post: () => of({ successCount: 1, errorCount: 0, errors: [] })
           }
         }

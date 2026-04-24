@@ -11,6 +11,12 @@ import { ToastService } from '../../layout/toast/toast.service';
 import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
+import { ButtonCheckboxComponent } from '../../layout/button/checkbox/button-checkbox.component';
+import {
+  ALL_ORGANIZATION_SEND_TYPES,
+  parseAllowedSendTypesFromOrganization,
+  serializeAllowedSendTypes
+} from '../../core/organization-sending-preferences';
 
 type AccountOrganizationInfo = {
   associationName: string;
@@ -28,7 +34,15 @@ type RemoveTarget = { id: string; type: 'text' | 'signature' | 'image'; label: s
   templateUrl: './account.page.html',
   styleUrls: ['./account.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TopbarComponent, ButtonLabelComponent, ToastComponent, PopupShellComponent]
+  imports: [
+    CommonModule,
+    FormsModule,
+    TopbarComponent,
+    ButtonLabelComponent,
+    ToastComponent,
+    PopupShellComponent,
+    ButtonCheckboxComponent
+  ]
 })
 export class AccountPageComponent {
   private readonly userStore = inject(UserStore);
@@ -45,6 +59,35 @@ export class AccountPageComponent {
     audienceDescription: ''
   });
   private readonly organizationRaw = signal<Record<string, unknown> | null>(null);
+
+  protected readonly sendingPreferenceCards = [
+    {
+      key: 'message',
+      icon: '💌',
+      title: 'Relance ou message personnalisé',
+      hint: 'Envoyez une relance ou un message personnalisé à vos contacts.'
+    },
+    {
+      key: 'tax_receipt',
+      icon: '🧾',
+      title: 'Reçu fiscal',
+      hint: 'Édition et envoi des reçus fiscaux.'
+    },
+    {
+      key: 'payment_attestation',
+      icon: '📄',
+      title: 'Attestation de cotisation',
+      hint: 'Envoyez une attestation de cotisation à vos contacts.'
+    },
+    {
+      key: 'membership_certificate',
+      icon: '🏅',
+      title: "Certificat d'adhésion",
+      hint: 'Idéal pour les clubs sportifs et associations.'
+    }
+  ] as const;
+
+  protected readonly sendingPreferencesSelected = signal<ReadonlySet<string>>(new Set(ALL_ORGANIZATION_SEND_TYPES));
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
@@ -184,7 +227,40 @@ export class AccountPageComponent {
     this.organizationInfo.update((current) => ({ ...current, [key]: String(value ?? '') }));
   }
 
-  protected async saveOrganizationInfo(): Promise<void> {
+  protected sendingPreferenceChecked(key: string): boolean {
+    return this.sendingPreferencesSelected().has(key);
+  }
+
+  protected toggleSendingPreference(key: string): void {
+    this.sendingPreferencesSelected.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        if (next.size <= 1) {
+          return prev;
+        }
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  protected async saveAccountDetailsBlock(): Promise<void> {
+    await this.persistOrganizationUpdate(
+      'Informations de compte mises à jour.',
+      "Impossible de mettre à jour les informations de compte."
+    );
+  }
+
+  protected async saveSendingPreferencesBlock(): Promise<void> {
+    await this.persistOrganizationUpdate(
+      'Paramètres d’envoi enregistrés.',
+      "Impossible d'enregistrer les paramètres d'envoi."
+    );
+  }
+
+  private async persistOrganizationUpdate(successMessage: string, errorMessage: string): Promise<void> {
     const info = this.organizationInfo();
     const base = this.organizationRaw() ?? {};
     const foundedYearRaw = String(info.foundedYear ?? '').trim();
@@ -197,7 +273,8 @@ export class AccountPageComponent {
       description: info.description.trim() || null,
       foundedYear: Number.isFinite(parsedFoundedYear) ? parsedFoundedYear : null,
       activitySector: info.activitySector.trim() || null,
-      audienceDescription: info.audienceDescription.trim() || null
+      audienceDescription: info.audienceDescription.trim() || null,
+      sendingPreferences: serializeAllowedSendTypes(this.sendingPreferencesSelected())
     };
     try {
       const response = await firstValueFrom(this.http.put<Record<string, unknown>>(API_ENDPOINTS.organization.update(), payload));
@@ -210,9 +287,12 @@ export class AccountPageComponent {
         activitySector: String(response?.['activitySector'] ?? payload['activitySector'] ?? '').trim(),
         audienceDescription: String(response?.['audienceDescription'] ?? payload['audienceDescription'] ?? '').trim()
       });
-      this.toast.show('Informations de compte mises à jour.', 'success');
+      this.sendingPreferencesSelected.set(
+        parseAllowedSendTypesFromOrganization(response?.['sendingPreferences'] ?? payload['sendingPreferences'])
+      );
+      this.toast.show(successMessage, 'success');
     } catch {
-      this.toast.show("Impossible de mettre à jour les informations de compte.", 'alert');
+      this.toast.show(errorMessage, 'alert');
     }
   }
 
@@ -234,6 +314,7 @@ export class AccountPageComponent {
         activitySector,
         audienceDescription
       });
+      this.sendingPreferencesSelected.set(parseAllowedSendTypesFromOrganization(response?.['sendingPreferences']));
     } catch {
     }
   }
@@ -258,5 +339,6 @@ export class AccountPageComponent {
     const m = String(dataUrl ?? '').match(/^data:([^;,]+)[;,]/i);
     return m?.[1] || 'image/*';
   }
+
 }
 

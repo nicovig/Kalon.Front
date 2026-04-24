@@ -66,9 +66,40 @@
       <button-label-component
         type="primary"
         [disabled]="!organizationInfo().associationName.trim()"
-        (click)="saveOrganizationInfo()"
+        (click)="saveAccountDetailsBlock()"
       >
         Enregistrer les informations
+      </button-label-component>
+    </div>
+  </section>
+
+  <section class="account-card">
+    <h2 class="account-title">Paramètres d’envoi</h2>
+    <p class="account-subtitle">
+      Choisissez les cartes proposées dans le tunnel « Envois » (première étape). Au moins un type doit rester coché.
+    </p>
+    <div class="account-send-type-grid" role="group" aria-label="Types d’envoi disponibles">
+      @for (card of sendingPreferenceCards; track card.key) {
+        <button
+          type="button"
+          class="account-send-type-card"
+          [class.account-send-type-card--on]="sendingPreferenceChecked(card.key)"
+          (click)="toggleSendingPreference(card.key)"
+        >
+          <div class="account-send-type-card-head">
+            <button-checkbox [checked]="sendingPreferenceChecked(card.key)" />
+            <span class="account-send-type-icon" aria-hidden="true">{{ card.icon }}</span>
+          </div>
+          <div class="account-send-type-body">
+            <span class="account-send-type-title">{{ card.title }}</span>
+            <span class="account-send-type-hint">{{ card.hint }}</span>
+          </div>
+        </button>
+      }
+    </div>
+    <div class="account-actions">
+      <button-label-component type="primary" (click)="saveSendingPreferencesBlock()">
+        Enregistrer les paramètres d’envoi
       </button-label-component>
     </div>
   </section>
@@ -92,8 +123,8 @@
         {{ editingTextId() ? 'Mettre à jour' : 'Créer le bloc' }}
       </button-label-component>
     </div>
+    @for (item of textBlocks(); track item.id) {
     <div class="account-list">
-      @for (item of textBlocks(); track item.id) {
         <div class="account-list-row">
           <div class="account-list-main">
             <div class="account-list-title">{{ item.label }}</div>
@@ -104,8 +135,8 @@
             <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
           </div>
         </div>
-      }
-    </div>
+      </div>
+    }
   </section>
 
   <section class="account-card">
@@ -136,8 +167,8 @@
         {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
       </button-label-component>
     </div>
+    @for (item of signatureBlocks(); track item.id) {
     <div class="account-list">
-      @for (item of signatureBlocks(); track item.id) {
         <div class="account-list-row">
           <div class="account-list-main">
             <div class="account-list-title">{{ item.label }}</div>
@@ -148,8 +179,8 @@
             <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
           </div>
         </div>
-      }
-    </div>
+      </div>
+    }
   </section>
 
   <section class="account-card">
@@ -176,8 +207,8 @@
         {{ imageEditingId() ? 'Mettre à jour' : 'Ajouter l’image' }}
       </button-label-component>
     </div>
+    @for (item of images(); track item.id) {
     <div class="account-list account-list--images">
-      @for (item of images(); track item.id) {
         <div class="account-image-card">
           <img [src]="item.dataUrl" [alt]="item.label" />
           <div class="account-list-title">{{ item.label }}</div>
@@ -186,8 +217,8 @@
             <button-label-component type="ghost" (click)="requestRemoveImage(item.id)">Supprimer</button-label-component>
           </div>
         </div>
-      }
-    </div>
+      </div>
+    }
   </section>
 </div>
 

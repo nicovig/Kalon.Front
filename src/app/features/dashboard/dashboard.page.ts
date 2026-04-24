@@ -161,7 +161,6 @@ export class DashboardPageComponent {
 
   constructor() {
     this.organizationDocumentsStore.load();
-    this.dashboardNotificationStore.refresh();
     this.loadDashboardData();
   }
 

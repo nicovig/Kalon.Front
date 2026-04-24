@@ -49,13 +49,67 @@
       </ul>
     </div>
   } @else {
+    <div class="archives-filters">
+      <form-select-component
+        class="archives-filter"
+        label="Type"
+        [options]="filterTypeOptions()"
+        [ngModel]="filterType()"
+        (ngModelChange)="onFilterTypeChange($event)"
+      />
+      <div class="archives-filter archives-filter--field archives-filter--date-range">
+        <span class="archives-filter-label">Dates</span>
+        <div class="archives-date-range">
+          <form-date-component
+            id="archives-filter-date-from"
+            name="archives-filter-date-from"
+            [ngModel]="filterDateFrom()"
+            [max]="maxForDateFrom()"
+            [ariaLabel]="'Date de début'"
+            (ngModelChange)="onFilterDateFromChange($event)"
+          />
+          <span class="archives-date-sep" aria-hidden="true">—</span>
+          <form-date-component
+            id="archives-filter-date-to"
+            name="archives-filter-date-to"
+            [ngModel]="filterDateTo()"
+            [min]="minForDateTo()"
+            [ariaLabel]="'Date de fin'"
+            (ngModelChange)="onFilterDateToChange($event)"
+          />
+        </div>
+      </div>
+      <form-select-component
+        class="archives-filter"
+        label="Envoyé en"
+        [options]="filterChannelOptions"
+        [ngModel]="filterChannel()"
+        (ngModelChange)="onFilterChannelChange($event)"
+      />
+      <div class="archives-filter archives-filter--field archives-filter--recipient">
+        <span class="archives-filter-label">Envoyé à</span>
+        <form-text-component
+          [placeholder]="'Nom, prénom…'"
+          [icon]="null"
+          [width]="'100%'"
+          [ngModel]="filterRecipient()"
+          (ngModelChange)="onFilterRecipientChange($event)"
+        />
+      </div>
+      <form-select-component
+        class="archives-filter"
+        label="Statut"
+        [options]="filterStatusOptions()"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="onFilterStatusChange($event)"
+      />
+    </div>
     <table-component
-      [rows]="archiveRows()"
+      [rows]="filteredArchiveRows()"
       [columns]="archiveColumns"
-      [searchWidth]="'100%'"
       [pageSizeOptions]="[25, 50, 100]"
       [initialPageSize]="25"
-      [showSearch]="true"
+      [showSearch]="false"
       [clickableRows]="true"
       (rowClick)="onArchiveRowClick($event)"
     ></table-component>

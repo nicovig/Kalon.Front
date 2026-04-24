@@ -128,11 +128,14 @@ export interface ContactStatusSettingsSummaryApiModel {
   inactiveAfterMonths?: number;
 }
 
+export type OrganizationSendingPreferencesApiModel = string[] | null;
+
 export interface OrganizationApiModel {
   id?: string;
   name?: string | null;
   fiscalStatus?: string | null;
   senderName?: string | null;
+  sendingPreferences?: OrganizationSendingPreferencesApiModel;
 }
 
 export interface OrganizationLoginResponseApiModel {
@@ -312,13 +315,13 @@ export type SendPrintResponseApiModel = Blob | PrintDocumentResultDtoApiModel;
 
 export type ConfirmMailedResponseApiModel = void;
 
-export interface NotificationContactToRemindItemApiModel {
-  id?: string;
+export interface NotificationContactItemApiModel {
+  contactId?: string;
   displayName?: string | null;
 }
 
 export interface NotificationDashboardResponseApiModel {
-  contactsToRemind?: NotificationContactToRemindItemApiModel[] | null;
-  taxReceiptsToSendCount?: number;
+  contactsToRemind?: NotificationContactItemApiModel[] | null;
+  contactsToSendTaxReceipts?: NotificationContactItemApiModel[] | null;
   physicalLettersToSendCount?: number;
 }

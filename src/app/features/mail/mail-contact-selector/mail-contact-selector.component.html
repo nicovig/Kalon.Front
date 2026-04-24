@@ -15,107 +15,138 @@
       />
     </div>
 
-     <div class="filters-grid">
-      @if (statusOptions.length > 0) {
-        <form-select-component
-          class="filter-select"
-          label="Statut"
-          [ngModel]="statusFilter"
-          [options]="statusOptions"
-          (ngModelChange)="statusFilterChange.emit($event)"
-        />
-      }
-      @if (kindOptions.length > 0) {
-        <form-select-component
-          class="filter-select"
-          label="Type"
-          [ngModel]="kindFilter"
-          [options]="kindOptions"
-          (ngModelChange)="kindFilterChange.emit($event)"
-        />
-      }
-      @if (departmentOptions.length > 0) {
-        <form-select-component
-          class="filter-select"
-          label="Département"
-          [ngModel]="departmentFilter"
-          [options]="departmentOptions"
-          (ngModelChange)="departmentFilterChange.emit($event)"
-        />
-      }
-      <div class="filter-card">
-        <div class="advanced-filter-label">Disponibilité</div>
-        <div class="availability-options">
-          <button-radio
-            [control]="availabilityModeControl"
-            [name]="'availability-mode'"
-            [value]="'with_postal_address'"
-            (click)="onSelectAvailabilityMode('with_postal_address')"
-          >
-            Avec adresse postale
-          </button-radio>
-          <button-radio
-            [control]="availabilityModeControl"
-            [name]="'availability-mode'"
-            [value]="'without_postal_address'"
-            (click)="onSelectAvailabilityMode('without_postal_address')"
-          >
-            Sans adresse postale
-          </button-radio>
-          <button-radio
-            [control]="availabilityModeControl"
-            [name]="'availability-mode'"
-            [value]="'without_email'"
-            (click)="onSelectAvailabilityMode('without_email')"
-          >
-            Sans email
-          </button-radio>
-          <button-radio
-            [control]="availabilityModeControl"
-            [name]="'availability-mode'"
-            [value]="'with_email'"
-            (click)="onSelectAvailabilityMode('with_email')"
-          >
-            Avec email
-          </button-radio>
-          <button-radio
-            [control]="availabilityModeControl"
-            [name]="'availability-mode'"
-            [value]="'without_postal_address_and_email'"
-            (click)="onSelectAvailabilityMode('without_postal_address_and_email')"
-          >
-            Sans adresse postale ni email
-          </button-radio>
+    <div class="filters-panel">
+      <div class="filters-row filters-row--selects">
+        @if (statusOptions.length > 0) {
+          <form-select-component
+            class="filter-select"
+            label="Statut"
+            [ngModel]="statusFilter"
+            [options]="statusOptions"
+            (ngModelChange)="statusFilterChange.emit($event)"
+          />
+        }
+        @if (kindOptions.length > 0) {
+          <form-select-component
+            class="filter-select"
+            label="Type"
+            [ngModel]="kindFilter"
+            [options]="kindOptions"
+            (ngModelChange)="kindFilterChange.emit($event)"
+          />
+        }
+        @if (departmentOptions.length > 0) {
+          <form-select-component
+            class="filter-select"
+            label="Département"
+            [ngModel]="departmentFilter"
+            [options]="departmentOptions"
+            (ngModelChange)="departmentFilterChange.emit($event)"
+          />
+        }
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-label">Contributions</div>
+        <div class="filters-row filters-row--contributions">
+          <div class="contrib-block">
+            <div class="filter-field-label">Total des contributions (€)</div>
+            <div class="number-grid number-grid--tight">
+              <form-number-component
+                [value]="totalDonationMin"
+                [placeholder]="'Min'"
+                (valueChange)="totalDonationMinChange.emit($event)"
+              />
+              <form-number-component
+                [value]="totalDonationMax"
+                [placeholder]="'Max'"
+                (valueChange)="totalDonationMaxChange.emit($event)"
+              />
+            </div>
+          </div>
+          <div class="contrib-block">
+            <div class="filter-field-label">Nombre de contributions minimales</div>
+            <form-number-component
+              [value]="donationCountMin"
+              [placeholder]="'Ex: 2'"
+              [min]="0"
+              (valueChange)="donationCountMinChange.emit($event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-label">Sélection</div>
+        <div class="availability-grid">
+          <div class="avail-cell">
+            <button-radio
+              [control]="availabilityModeControl"
+              [name]="'availability-mode'"
+              [value]="'with_postal_address'"
+              (click)="onSelectAvailabilityMode('with_postal_address')"
+            >
+              Avec adresse postale
+            </button-radio>
+          </div>
+          <div class="avail-cell">
+            <button-radio
+              [control]="availabilityModeControl"
+              [name]="'availability-mode'"
+              [value]="'without_postal_address'"
+              (click)="onSelectAvailabilityMode('without_postal_address')"
+            >
+              Sans adresse postale
+            </button-radio>
+          </div>
+          <div class="avail-cell">
+            <button-radio
+              [control]="availabilityModeControl"
+              [name]="'availability-mode'"
+              [value]="'with_email'"
+              (click)="onSelectAvailabilityMode('with_email')"
+            >
+              Avec email
+            </button-radio>
+          </div>
+          <div class="avail-cell">
+            <button-radio
+              [control]="availabilityModeControl"
+              [name]="'availability-mode'"
+              [value]="'without_email'"
+              (click)="onSelectAvailabilityMode('without_email')"
+            >
+              Sans email
+            </button-radio>
+          </div>
+          <div class="avail-cell" [class.avail-cell--wide]="!showTaxReceiptPendingFilter">
+            <button-radio
+              [control]="availabilityModeControl"
+              [name]="'availability-mode'"
+              [value]="'without_postal_address_and_email'"
+              (click)="onSelectAvailabilityMode('without_postal_address_and_email')"
+            >
+              Sans adresse postale ni email
+            </button-radio>
+          </div>
+          @if (showTaxReceiptPendingFilter) {
+            <div class="avail-cell">
+              <button-radio
+                [control]="availabilityModeControl"
+                [name]="'availability-mode'"
+                [value]="'pending_tax_receipt'"
+                (click)="onSelectAvailabilityMode('pending_tax_receipt')"
+              >
+                Reçu fiscal à envoyer
+              </button-radio>
+            </div>
+          }
         </div>
         @if (showAvailabilityHelp) {
           <div class="availability-help">
             Adresse postale complète requise : rue, code postal et ville.
           </div>
         }
-      </div>
-      <div class="filter-card">
-        <div class="advanced-filter-label">Total des contributions (€)</div>
-        <div class="number-grid">
-          <form-number-component
-            [value]="totalDonationMin"
-            [placeholder]="'Min'"
-            (valueChange)="totalDonationMinChange.emit($event)"
-          />
-          <form-number-component
-            [value]="totalDonationMax"
-            [placeholder]="'Max'"
-            (valueChange)="totalDonationMaxChange.emit($event)"
-          />
-        </div>
-      </div>
-      <div class="filter-card">
-        <div class="advanced-filter-label">Nombre de contributions minimales</div>
-        <form-number-component
-          [value]="donationCountMin"
-          [placeholder]="'Ex: 2'"
-          [min]="0"
-          (valueChange)="donationCountMinChange.emit($event)"
-        />
       </div>
     </div>
 
