@@ -109,8 +109,8 @@
             {{ confirmLoading() ? 'Confirmation...' : "Confirmer l'envoi courrier" }}
           </button-label-component>
         } @else if (canRegenerateSelectedMailLog()) {
-          <button-label-component type="primary" (click)="openRegenerateConfirm()">
-            Régénérer le document
+          <button-label-component type="primary" [disabled]="regenerateLoading() || regenerateConfirmOpen()" (click)="openRegenerateConfirm()">
+            {{ regenerateLoading() ? 'Régénération...' : 'Régénérer le document' }}
           </button-label-component>
         }
         <button-label-component type="ghost" (click)="closeMailLogDetails()">Fermer</button-label-component>
@@ -124,12 +124,15 @@
     <div popup-header>
       <div class="app-popup-title">Confirmer la régénération</div>
       <p class="app-popup-sub">Voulez-vous régénérer le document lié à ce log ?</p>
+      @if (regenerateLoading()) {
+        <inline-loader label="Régénération en cours..." />
+      }
     </div>
     <div class="archives-detail-actions">
-      <button-label-component type="primary" (click)="confirmRegenerateFromLog()">
-        Oui, régénérer
+      <button-label-component type="primary" [disabled]="regenerateLoading()" (click)="confirmRegenerateFromLog()">
+        {{ regenerateLoading() ? 'Régénération...' : 'Oui, régénérer' }}
       </button-label-component>
-      <button-label-component type="ghost" (click)="closeRegenerateConfirm()">Annuler</button-label-component>
+      <button-label-component type="ghost" [disabled]="regenerateLoading()" (click)="closeRegenerateConfirm()">Annuler</button-label-component>
     </div>
   </app-popup-shell>
 }

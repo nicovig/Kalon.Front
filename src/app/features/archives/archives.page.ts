@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
+import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
 import { ToastService } from '../../layout/toast/toast.service';
 import { TableColumn, TableComponent } from '../../layout/table/table.component';
 import { OrganizationDocumentsStore } from './organization-documents.store';
 import { MailLogDetailsResponseApiModel, MailLogListResponseApiModel } from '../../core/api/backend-api.model';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 type SendType =
   | 'tax_receipt'
@@ -30,16 +32,18 @@ type ArchiveTableRow = {
   templateUrl: './archives.page.html',
   styleUrls: ['./archives.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TopbarComponent, TableComponent, PopupShellComponent, ButtonLabelComponent]
+  imports: [CommonModule, TopbarComponent, TableComponent, PopupShellComponent, ButtonLabelComponent, InlineLoaderComponent]
 })
 export class ArchivesPageComponent {
   private readonly documentsStore = inject(OrganizationDocumentsStore);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly toast = inject(ToastService);
   protected readonly selectedMailLogId = signal<string | null>(null);
   protected readonly selectedMailLogDetails = signal<MailLogDetailsResponseApiModel | null>(null);
   protected readonly detailsLoading = signal(false);
   protected readonly detailsError = signal<string | null>(null);
   protected readonly confirmLoading = signal(false);
+  protected readonly regenerateLoading = signal(false);
   protected readonly regenerateConfirmOpen = signal(false);
   protected readonly mailLogs = computed(() =>
     this.documentsStore
@@ -92,6 +96,7 @@ export class ArchivesPageComponent {
     this.detailsLoading.set(false);
     this.detailsError.set(null);
     this.confirmLoading.set(false);
+    this.regenerateLoading.set(false);
     this.regenerateConfirmOpen.set(false);
   }
 
@@ -141,6 +146,7 @@ export class ArchivesPageComponent {
         status: 'mailed',
         mailedAt: new Date().toISOString()
       });
+      this.dashboardNotificationStore.refresh();
       this.toast.show('Courrier marqué comme expédié.', 'success');
     });
   }
@@ -156,12 +162,29 @@ export class ArchivesPageComponent {
 
   protected confirmRegenerateFromLog(): void {
     const details = this.selectedMailLogDetails();
-    if (!details?.id) {
+    const generatedDocumentId = String(details?.generatedDocumentId ?? '').trim();
+    if (!generatedDocumentId) {
+      this.toast.show('Document source introuvable pour la régénération.', 'alert');
       this.regenerateConfirmOpen.set(false);
       return;
     }
-    this.toast.show("La régénération sera branchée sur l'endpoint backend dédié.", 'info');
-    this.regenerateConfirmOpen.set(false);
+    if (this.regenerateLoading()) return;
+    this.regenerateLoading.set(true);
+    this.documentsStore.regenerateGeneratedDocument(generatedDocumentId).subscribe((blob) => {
+      this.regenerateLoading.set(false);
+      this.regenerateConfirmOpen.set(false);
+      if (!blob || blob.size === 0) {
+        this.toast.show('La régénération du document a échoué.', 'alert');
+        return;
+      }
+      const order = String(details?.generatedDocumentOrderNumber ?? '').trim();
+      const filename = order
+        ? `document-regenerated-${order}.pdf`
+        : `document-regenerated-${generatedDocumentId}.pdf`;
+      this.downloadBlob(blob, filename);
+      this.dashboardNotificationStore.refresh();
+      this.toast.show('Document régénéré avec succès.', 'success');
+    });
   }
 
   protected getStatusLabel(status: string): string {
@@ -294,5 +317,14 @@ export class ArchivesPageComponent {
     }
     const ts = new Date(value).getTime();
     return Number.isFinite(ts) ? ts : 0;
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

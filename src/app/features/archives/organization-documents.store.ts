@@ -92,6 +92,14 @@ export class OrganizationDocumentsStore {
       );
   }
 
+  regenerateGeneratedDocument(generatedDocumentId: string): Observable<Blob | null> {
+    const id = String(generatedDocumentId ?? '').trim();
+    if (!id) return of(null);
+    return this.http
+      .post(API_ENDPOINTS.organizationDocuments.regenerateGeneratedById({ id }), null, { responseType: 'blob' })
+      .pipe(catchError(() => of(null)));
+  }
+
   private tsOf(value?: string): number {
     if (!value) return 0;
     const t = new Date(value).getTime();

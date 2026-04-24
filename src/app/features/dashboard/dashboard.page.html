@@ -30,14 +30,6 @@
     [icon]="'💶'"
   ></dashboard-card-component>
   <dashboard-card-component
-    [type]="'yellow'"
-    [value]="kpiToRemind()"
-    [label]="'À relancer'"
-    chip="warn"
-    [helper]="'Statut « à relancer »'"
-    [icon]="'⏳'"
-  ></dashboard-card-component>
-  <dashboard-card-component
     [type]="'mint'"
     [value]="kpiGeneratedDocumentsCount()"
     [label]="'Documents générés'"
@@ -46,8 +38,8 @@
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'violet'"
-    [value]="paperToConfirmTotal()"
-    [label]="'Courriers à confirmer'"
+    [value]="physicalLettersToSend()"
+    [label]="'Lettres physiques à envoyer'"
     chip="warn"
     [helper]="'Imprimés, en attente de validation manuelle'"
     [icon]="'✉️'"
@@ -97,7 +89,7 @@
       </div>
     </card> -->
 
-    <card title="En priorité" subtitle="Profils au statut « à relancer »" paddingClass="advanced">
+    <card title="À relancer" subtitle="{{priorityRelanceContacts().length}} profils" paddingClass="advanced">
       <button-label-component
         card-header-extra
         type="primary"

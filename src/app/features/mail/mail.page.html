@@ -11,7 +11,7 @@
         Choisissez le type d’envoi, puis nous vous guiderons sur le canal, les destinataires, le modèle et l’aperçu.
       </p>
       <choice-cards
-        [options]="typeOptions"
+        [options]="typeOptions()"
         [selectedKey]="selectedSendType()"
         ariaLabel="Type d'envoi"
         (optionSelected)="chooseType($any($event))"

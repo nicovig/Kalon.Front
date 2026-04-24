@@ -311,3 +311,14 @@ export interface PrintDocumentResultDtoApiModel {
 export type SendPrintResponseApiModel = Blob | PrintDocumentResultDtoApiModel;
 
 export type ConfirmMailedResponseApiModel = void;
+
+export interface NotificationContactToRemindItemApiModel {
+  id?: string;
+  displayName?: string | null;
+}
+
+export interface NotificationDashboardResponseApiModel {
+  contactsToRemind?: NotificationContactToRemindItemApiModel[] | null;
+  taxReceiptsToSendCount?: number;
+  physicalLettersToSendCount?: number;
+}

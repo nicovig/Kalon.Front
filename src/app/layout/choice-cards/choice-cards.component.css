@@ -57,6 +57,12 @@
   color: var(--ink);
 }
 
+.iob-type-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .iob-type-blurb {
   margin: 8px 0 0;
   font-size: 0.88rem;
@@ -70,5 +76,21 @@
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--ink-70);
+}
+
+.iob-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yellow) 82%, #fff 18%);
+  color: color-mix(in srgb, var(--ink) 78%, #000 22%);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--yellow) 38%, transparent);
 }
 

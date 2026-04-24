@@ -56,6 +56,7 @@ import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select
 import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { contactDisplayName } from '../../core/models/contact.model';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 @Component({
   selector: 'import-page',
@@ -83,6 +84,7 @@ export class ImportPageComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly donationStore = inject(DonationStoreService);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -472,6 +474,7 @@ export class ImportPageComponent implements OnInit {
 
     if (importedCount > 0) {
       this.toast.show(`${importedCount} ligne(s) corrigée(s) importée(s).`, 'success', 3500);
+      this.dashboardNotificationStore.refresh();
     }
 
     const next = this.ignoredAfterSuccess;
@@ -977,6 +980,7 @@ export class ImportPageComponent implements OnInit {
       'success',
       5000
     );
+    this.dashboardNotificationStore.refresh();
     this.openIgnoredLinesPopup(
       ignored,
       () => this.openDonationsImportPrompt()
@@ -1055,6 +1059,7 @@ export class ImportPageComponent implements OnInit {
       'success',
       5000
     );
+    this.dashboardNotificationStore.refresh();
     this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/profils']));
   }
 
@@ -1155,6 +1160,7 @@ export class ImportPageComponent implements OnInit {
       'success',
       5500
     );
+    this.dashboardNotificationStore.refresh();
     this.openIgnoredLinesPopup(
       ignored,
       () => void this.router.navigate(['/profils'])

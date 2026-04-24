@@ -41,6 +41,7 @@ import {
   SendPrintResponseApiModel
 } from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
 type SendType = 'tax_receipt' | 'payment_attestation' | 'membership_certificate' | 'message';
@@ -98,6 +99,7 @@ export class MailPageComponent {
   private readonly donationStore = inject(DonationStoreService);
   private readonly customContentStore = inject(OrganizationCustomContentStore);
   private readonly userStore = inject(UserStore);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly iaAgent = inject(IaAgentCore);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
@@ -141,32 +143,39 @@ export class MailPageComponent {
       hint: 'L\'adresse postale est requise'
     }
   ];
-  protected readonly typeOptions: ChoiceCardItem[] = [
-    {
-      key: 'message',
-      icon: '💌',
-      title: 'Relance ou message personnalisé',
-      hint: 'Envoyez une relance ou un message personnalisé à vos contacts.',
-    },
-    {
-      key: 'tax_receipt',
-      icon: '🧾',
-      title: 'Reçu fiscal',
-      hint: 'Envoyez un reçu fiscal à vos contacts.',
-    },
-    {
-      key: 'payment_attestation',
-      icon: '📄',
-      title: 'Attestation de cotisation',
-      hint: 'Envoyez une attestation de cotisation à vos contacts.',
-    },
-    {
-      key: 'membership_certificate',
-      icon: '🏅',
-      title: "Certificat d'adhésion",
-      hint: 'Idéal pour les clubs sportifs et associations.'
-    }
-  ];
+  protected readonly typeOptions = computed<ChoiceCardItem[]>(() => {
+    const taxReceiptToSend = this.dashboardNotificationStore.taxReceiptsToSend();
+    const taxReceiptBadge = taxReceiptToSend > 0 ? String(taxReceiptToSend) : undefined;
+    const taxReceiptHint = `${taxReceiptToSend} reçus fiscaux à éditer`;
+
+    return [
+      {
+        key: 'message',
+        icon: '💌',
+        title: 'Relance ou message personnalisé',
+        hint: 'Envoyez une relance ou un message personnalisé à vos contacts.',
+      },
+      {
+        key: 'tax_receipt',
+        icon: '🧾',
+        title: 'Reçus fiscal',
+        hint: taxReceiptHint,
+        badge: taxReceiptBadge
+      },
+      {
+        key: 'payment_attestation',
+        icon: '📄',
+        title: 'Attestation de cotisation',
+        hint: 'Envoyez une attestation de cotisation à vos contacts.',
+      },
+      {
+        key: 'membership_certificate',
+        icon: '🏅',
+        title: "Certificat d'adhésion",
+        hint: 'Idéal pour les clubs sportifs et associations.'
+      }
+    ];
+  });
 
   protected readonly statusOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les statuts' },
@@ -865,6 +874,7 @@ export class MailPageComponent {
           'success'
         );
       }
+      this.dashboardNotificationStore.refresh();
     } catch {
       this.toast.show(channel === 'print' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
     } finally {

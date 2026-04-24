@@ -9,7 +9,12 @@
       @if (opt.icon) {
         <span class="iob-type-icon" aria-hidden="true">{{ opt.icon }}</span>
       }
-      <h3 class="iob-type-title">{{ opt.title }}</h3>
+      <div class="iob-type-title-row">
+        <h3 class="iob-type-title">{{ opt.title }}</h3>
+        @if (opt.badge) {
+          <span class="iob-type-badge">{{ opt.badge }}</span>
+        }
+      </div>
       @if (opt.blurb) {
         <p class="iob-type-blurb">{{ opt.blurb }}</p>
       }

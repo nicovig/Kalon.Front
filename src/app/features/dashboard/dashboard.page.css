@@ -10,7 +10,7 @@ import-banner-component {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   padding: 17px 0;
 }
@@ -193,10 +193,6 @@ import-banner-component {
 }
 
 @media (max-width: 1366px) {
-  .kpi-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
   .content-grid {
     grid-template-columns: 1fr 300px;
   }

@@ -102,9 +102,14 @@ export const API_ENDPOINTS = {
     listGenerated: () => toUrl('/api/OrganizationDocuments/generated-documents'),
     getGeneratedById: ({ id, light }: { id: string; light?: boolean }) =>
       toUrl(withQuery(`/api/OrganizationDocuments/generated-documents/${encodeURIComponent(id)}`, { light })),
+    regenerateGeneratedById: ({ id }: { id: string }) =>
+      toUrl(`/api/OrganizationDocuments/generated-documents/${encodeURIComponent(id)}/regenerate`),
     listMailLogs: () => toUrl('/api/OrganizationDocuments/mail-logs'),
     getMailLogById: ({ id, light }: { id: string; light?: boolean }) =>
       toUrl(withQuery(`/api/OrganizationDocuments/mail-logs/${encodeURIComponent(id)}`, { light }))
+  },
+  notification: {
+    dashboard: () => toUrl('/api/Notification/dashboard')
   },
   mailLog: {
     list: () => toUrl('/api/OrganizationDocuments/mail-logs')

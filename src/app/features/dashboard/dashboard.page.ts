@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { TableComponent, TableColumn } from '../../layout/table/table.component';
 import { DashboardCardComponent } from './dashboard-card/dashboard-card.component';
 import { ToastComponent } from '../../layout/toast/toast.component';
@@ -19,10 +18,9 @@ import { ImportBannerComponent } from '../import/components/import-banner/import
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { DonationPaymentMethod } from '../../core/models/donation.model';
-import { API_ENDPOINTS } from '../../core/api/api.endpoints';
-import { MailLogApiModel } from '../../core/api/backend-api.model';
 import { RouterLink } from '@angular/router';
 import { OrganizationDocumentsStore } from '../archives/organization-documents.store';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 @Component({
   selector: 'dashboard-page',
@@ -46,11 +44,11 @@ import { OrganizationDocumentsStore } from '../archives/organization-documents.s
 })
 export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
-  private readonly http = inject(HttpClient);
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly organizationDocumentsStore = inject(OrganizationDocumentsStore);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly toast = inject(ToastService);
   protected readonly loadingData = signal(false);
 
@@ -93,20 +91,15 @@ export class DashboardPageComponent {
   });
 
   protected readonly kpiToRemind = computed(
-    () =>
-      this.contactStore
-        .contacts()
-        .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length.toString()
+    () => this.dashboardNotificationStore.contactsToRemind().toString()
   );
 
   protected readonly kpiGeneratedDocumentsCount = computed(
     () => this.organizationDocumentsStore.generatedDocuments().length.toString()
   );
 
-  protected readonly mailLogsPrintedPending = signal(0);
-
-  protected readonly paperToConfirmTotal = computed(
-    () => (this.mailLogsPrintedPending() + this.organizationDocumentsStore.pendingPaperConfirmationsCount()).toString()
+  protected readonly physicalLettersToSend = computed(
+    () => this.dashboardNotificationStore.physicalLettersToSend().toString()
   );
 
   protected readonly contactCount = computed(() => this.contactStore.contacts().length);
@@ -168,6 +161,7 @@ export class DashboardPageComponent {
 
   constructor() {
     this.organizationDocumentsStore.load();
+    this.dashboardNotificationStore.refresh();
     this.loadDashboardData();
   }
 
@@ -180,8 +174,7 @@ export class DashboardPageComponent {
     this.loadingData.set(true);
     forkJoin([
       this.contactStore.loadContactsFromApi(),
-      this.donationStore.loadDonationsFromApi(),
-      this.loadMailLogsPrintedPending()
+      this.donationStore.loadDonationsFromApi()
     ]).subscribe({
       next: () => this.loadingData.set(false),
       error: () => {
@@ -189,40 +182,6 @@ export class DashboardPageComponent {
         this.toast.show('Impossible de charger les donnees du dashboard.', 'alert');
       }
     });
-  }
-
-  private loadMailLogsPrintedPending() {
-    if (!this.authService.isAuthenticated()) {
-      return of(undefined);
-    }
-    const url = API_ENDPOINTS.mailLog.list();
-    return this.http.get<unknown>(url).pipe(
-      map((payload) =>
-        this.extractMailLogs(payload).filter(
-          (r) => String(r.status ?? '').toLowerCase() === 'printed'
-        ).length
-      ),
-      tap((n) => this.mailLogsPrintedPending.set(n)),
-      map(() => undefined),
-      catchError(() => {
-        this.mailLogsPrintedPending.set(0);
-        return of(undefined);
-      })
-    );
-  }
-
-  private extractMailLogs(payload: unknown): MailLogApiModel[] {
-    if (Array.isArray(payload)) {
-      return payload as MailLogApiModel[];
-    }
-    if (payload && typeof payload === 'object') {
-      const o = payload as Record<string, unknown>;
-      const list = o['items'] ?? o['mailLogs'] ?? o['data'];
-      if (Array.isArray(list)) {
-        return list as MailLogApiModel[];
-      }
-    }
-    return [];
   }
 
   private contributionTypeLabel(contact: IContact | undefined): string {

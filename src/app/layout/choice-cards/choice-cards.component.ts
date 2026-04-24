@@ -7,6 +7,7 @@ export type ChoiceCardItem = {
   title: string;
   blurb?: string;
   hint?: string;
+  badge?: string;
 };
 
 @Component({

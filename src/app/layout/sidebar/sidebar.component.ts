@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 @Component({
   selector: 'sidebar',
@@ -14,6 +15,7 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly router = inject(Router);
 
   protected logoutMenuOpen = false;
@@ -42,7 +44,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   @Input() collapsed = false;
   @Output() toggle = new EventEmitter<void>();
 
-  protected readonly kpiToRemind = computed(() => 0);
+  protected readonly taxReceiptToSend = computed(
+    () => this.dashboardNotificationStore.taxReceiptsToSend()
+  );
 
   onAssoCardClick(event: MouseEvent): void {
     event.preventDefault();

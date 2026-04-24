@@ -1636,6 +1636,75 @@
         }
       }
     },
+    "/api/Notification/dashboard": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDashboardResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDashboardResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDashboardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Organization": {
       "get": {
         "tags": [
@@ -1647,17 +1716,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               }
             }
@@ -1692,17 +1761,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Organization"
+                "$ref": "#/components/schemas/OrganizationUpdateRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Organization"
+                "$ref": "#/components/schemas/OrganizationUpdateRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Organization"
+                "$ref": "#/components/schemas/OrganizationUpdateRequestDto"
               }
             }
           }
@@ -1713,17 +1782,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Organization"
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
                 }
               }
             }
@@ -1780,17 +1849,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactStatusSettings"
+                "$ref": "#/components/schemas/OrganizationStatusSettingsUpsertRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactStatusSettings"
+                "$ref": "#/components/schemas/OrganizationStatusSettingsUpsertRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactStatusSettings"
+                "$ref": "#/components/schemas/OrganizationStatusSettingsUpsertRequestDto"
               }
             }
           }
@@ -1801,17 +1870,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactStatusSettings"
+                  "$ref": "#/components/schemas/ContactStatusSettingsResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactStatusSettings"
+                  "$ref": "#/components/schemas/ContactStatusSettingsResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactStatusSettings"
+                  "$ref": "#/components/schemas/ContactStatusSettingsResponseDto"
                 }
               }
             }
@@ -2678,6 +2747,89 @@
         }
       }
     },
+    "/api/OrganizationDocuments/generated-documents/{id}/regenerate": {
+      "post": {
+        "tags": [
+          "OrganizationDocuments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/OrganizationDocuments/mail-logs": {
       "get": {
         "tags": [
@@ -3497,6 +3649,37 @@
           },
           "organization": {
             "$ref": "#/components/schemas/Organization"
+          },
+          "newDurationDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toRemindAfterMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveAfterMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContactStatusSettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
           },
           "newDurationDays": {
             "type": "integer",
@@ -4500,6 +4683,41 @@
         },
         "additionalProperties": false
       },
+      "NotificationContactToRemindItem": {
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "contactsToRemind": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationContactToRemindItem"
+            },
+            "nullable": true
+          },
+          "taxReceiptsToSendCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "physicalLettersToSendCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "Organization": {
         "required": [
           "defaultReceiptFrequency",
@@ -4746,6 +4964,41 @@
         },
         "additionalProperties": false
       },
+      "OrganizationLogoResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "storedPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileSizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "OrganizationLogoUpsertRequest": {
         "type": "object",
         "properties": {
@@ -4764,6 +5017,202 @@
           "fileSizeBytes": {
             "type": "integer",
             "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrganizationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "rna": {
+            "type": "string",
+            "nullable": true
+          },
+          "siret": {
+            "type": "string",
+            "nullable": true
+          },
+          "fiscalStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultReceiptFrequency": {
+            "$ref": "#/components/schemas/ReceiptFrequency"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "senderEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "foundedYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "activitySector": {
+            "type": "string",
+            "nullable": true
+          },
+          "audienceDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "$ref": "#/components/schemas/OrganizationLogoResponseDto"
+          },
+          "contactStatusSettings": {
+            "$ref": "#/components/schemas/ContactStatusSettingsResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrganizationStatusSettingsUpsertRequestDto": {
+        "type": "object",
+        "properties": {
+          "newDurationDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toRemindAfterMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveAfterMonths": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrganizationUpdateRequestDto": {
+        "required": [
+          "defaultReceiptFrequency",
+          "email",
+          "name",
+          "rna",
+          "siret"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "minLength": 1,
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "rna": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "siret": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fiscalStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultReceiptFrequency": {
+            "$ref": "#/components/schemas/ReceiptFrequency"
+          },
+          "senderEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "foundedYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "activitySector": {
+            "type": "string",
+            "nullable": true
+          },
+          "audienceDescription": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
