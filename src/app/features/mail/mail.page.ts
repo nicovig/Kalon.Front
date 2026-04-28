@@ -30,11 +30,12 @@ import { ContactStatus, IContact, contactDisplayName } from '../../core/models/c
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { DonationStoreService } from '../donation/donation.store';
 import { OrganizationCustomContentStore } from '../account/organization-custom-content.store';
-import { IaAgentCore, ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
+import { ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
 import { FormTextareaComponent } from '../../layout/forms/textarea/form-textarea.component';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { parseAllowedSendTypesFromOrganization } from '../../core/organization-sending-preferences';
 import {
+  AiMailRequestDtoApiModel,
   MailEditorVariableTagApiModel,
   PrintDocumentResultDtoApiModel,
   SendDocumentDtoApiModel,
@@ -43,6 +44,7 @@ import {
 } from '../../core/api/backend-api.model';
 import { UserStore } from '../../core/auth/user.store';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
+import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
 
 type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
 type SendType = 'tax_receipt' | 'payment_attestation' | 'membership_certificate' | 'message';
@@ -101,7 +103,7 @@ export class MailPageComponent {
   private readonly customContentStore = inject(OrganizationCustomContentStore);
   private readonly userStore = inject(UserStore);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
-  private readonly iaAgent = inject(IaAgentCore);
+  private readonly aiMailStore = inject(AiMailStore);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
 
@@ -261,6 +263,7 @@ export class MailPageComponent {
       if (availabilityMode === 'pending_tax_receipt') {
         if (!taxReceiptPendingIds.has(c.id)) return false;
       } else {
+        if (availabilityMode === 'birthday_today' && !this.isBirthdayToday(c)) return false;
         if (availabilityMode === 'with_postal_address' && !hasPostal) return false;
         if (availabilityMode === 'without_postal_address' && hasPostal) return false;
         if (availabilityMode === 'without_email' && hasEmail) return false;
@@ -333,6 +336,7 @@ export class MailPageComponent {
       return {
         id: c.id,
         title: contactDisplayName(c),
+        birthdayToday: this.isBirthdayToday(c),
         subtitle: this.contactSubtitle(c),
         avatarText: this.initials(c),
         badgeText: this.statusLabel(status),
@@ -487,26 +491,32 @@ export class MailPageComponent {
   protected readonly selectedEditorImageId = signal<string | null>(null);
 
   protected readonly aiToneCards: Array<{ key: ReminderTemplateTone; icon: string; label: string }> = [
-    { key: 'douce', icon: '😌', label: 'Relance douce' },
-    { key: 'fidelisation', icon: '🤝', label: 'Fidélisation' },
-    { key: 'remerciement', icon: '🙏', label: 'Remerciement' },
-    { key: 'urgence', icon: '🚨', label: 'Urgence' },
-    { key: 'saisonnier', icon: '🎄', label: 'Saisonnier' },
-    { key: 'adhesion_renewal', icon: '♻️', label: "Renouvellement d'adhésion" }
+    { key: 'chill_reminder', icon: '😌', label: 'Relance douce' },
+    { key: 'fidelity_reminder', icon: '🤝', label: 'Fidélisation' },
+    { key: 'thank_you_reminder', icon: '🙏', label: 'Remerciement' },
+    { key: 'urgency_reminder', icon: '🚨', label: 'Urgence' },
+    { key: 'seasonal_reminder', icon: '🎄', label: 'Saisonnier' },
+    { key: 'adhesion_renewal_reminder', icon: '♻️', label: "Renouvellement d'adhésion" },
+    { key: 'anniversary_reminder', icon: '🎉', label: 'Anniversaire de contribution' },
+    { key: 'birthday_reminder', icon: '🎂', label: 'Anniversaire du profil' },
+    { key: 'other', icon: '✍️', label: 'Autre' }
   ];
   protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
-    douce: "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons…",
-    fidelisation: "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
-    remerciement: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
-    urgence: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",
-    saisonnier: 'Exemple : contexte de la période et prochaines actions à soutenir…',
-    adhesion_renewal: "Exemple : nouvelle saison, bénéfices pour les membres, renouvellement d'adhésion…"
+    chill_reminder: "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons…",
+    fidelity_reminder: "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
+    thank_you_reminder: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
+    urgency_reminder: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",
+    seasonal_reminder: 'Exemple : contexte de la période et prochaines actions à soutenir…',
+    adhesion_renewal_reminder: "Exemple : nouvelle saison, bénéfices pour les membres, renouvellement d'adhésion…",
+    anniversary_reminder: "Exemple : célébrer l'anniversaire de soutien et proposer un nouveau geste…",
+    birthday_reminder: "Exemple : message d'anniversaire chaleureux avec proposition de soutien…",
+    other: 'Décrivez librement le contexte et le ton souhaité pour votre message…'
   };
 
   protected readonly selectedSignatureBlockId = signal<string | null>(null);
   protected readonly selectedEmailTemplateId = signal<string | null>(null);
 
-  protected readonly selectedAiTone = signal<ReminderTemplateTone>('douce');
+  protected readonly selectedAiTone = signal<ReminderTemplateTone>('chill_reminder');
   protected readonly iaPrompt = signal('');
   protected readonly templateChoiceSource = signal<TemplateChoiceSource>(null);
   protected readonly iaGenerationState = signal<'idle' | 'loading' | 'done'>('idle');
@@ -628,24 +638,31 @@ export class MailPageComponent {
 
   protected async generateAiText(): Promise<void> {
     const tone = this.selectedAiTone();
+    const userContext = this.iaPrompt().trim();
     const signatureText = this.getSelectedSignatureContent().trim();
     const signatureHtml = signatureText ? `<p>${signatureText}</p>` : `<p>L'équipe de {{nom_association}}</p>`;
 
     this.iaGenerationState.set('loading');
     try {
-      const response = await firstValueFrom(this.iaAgent.generateReminderTemplate({ tone }));
-      const body = response.body.includes('{{signature_footer}}')
-        ? response.body.replace('{{signature_footer}}', signatureHtml)
-        : response.body + signatureHtml;
+      const payload: AiMailRequestDtoApiModel = {
+        userContext,
+        emailType: tone
+      };
+      const response = await firstValueFrom(this.aiMailStore.generateMail(payload));
+      const responseBody = String(response.bodyHtml ?? '').trim();
+      const body = responseBody.includes('{{signature_footer}}')
+        ? responseBody.replace('{{signature_footer}}', signatureHtml)
+        : `${responseBody}${signatureHtml}`;
       const method = this.selectedSendMethod();
 
-      this.generatedSubject.set(response.subject);
+      this.generatedSubject.set(String(response.subject ?? '').trim());
       this.generatedBody.set(method === 'print' ? body : body);
       this.templateChoiceSource.set('ia');
       this.iaGenerationState.set('done');
       this.toast.show('Texte généré.', 'success');
     } catch {
       this.iaGenerationState.set('idle');
+      this.toast.show('La génération IA a échoué.', 'alert');
     }
   }
 
@@ -1131,6 +1148,17 @@ export class MailPageComponent {
 
   private hasEmailChannel(c: IContact): boolean {
     return Boolean(c.email?.trim() || c.enterprise?.contactEmail?.trim());
+  }
+
+  private isBirthdayToday(c: IContact): boolean {
+    if (!c.birthDate || Number.isNaN(c.birthDate.getTime())) {
+      return false;
+    }
+    const now = new Date();
+    return (
+      c.birthDate.getDate() === now.getDate() &&
+      c.birthDate.getMonth() === now.getMonth()
+    );
   }
 
   protected selectedSendTypeLabel(): string {

@@ -18,6 +18,9 @@ function toUrl(path: string): string {
 }
 
 export const API_ENDPOINTS = {
+  aiMail: {
+    generateMail: () => toUrl('/api/AIMail/generate-mail')
+  },
   auth: {
     login: () => toUrl('/api/Auth/login')
   },

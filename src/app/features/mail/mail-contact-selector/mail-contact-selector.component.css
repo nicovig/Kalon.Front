@@ -379,6 +379,10 @@
   font-family: var(--font-title);
   color: var(--ink);
 }
+
+.d-birthday {
+  font-size: 13px;
+}
 .d-meta {
   font-size: 11.5px;
   color: var(--ink-70);

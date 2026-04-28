@@ -3,6 +3,16 @@ export interface ApiMessageResponse {
   detail?: string | null;
 }
 
+export interface AiMailRequestDtoApiModel {
+  userContext?: string | null;
+  emailType?: string | null;
+}
+
+export interface AiMailResultDtoApiModel {
+  subject?: string | null;
+  bodyHtml?: string | null;
+}
+
 export interface ContactApiAddress {
   street?: string | null;
   postalCode?: string | null;

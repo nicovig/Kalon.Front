@@ -357,7 +357,7 @@ describe('MailPageComponent filters', () => {
     const cmp = component as any;
 
     cmp.onSelectSignatureBlock('sb1');
-    cmp.selectAiTone('douce');
+    cmp.selectAiTone('chill_reminder');
 
     await cmp.generateAiText();
 

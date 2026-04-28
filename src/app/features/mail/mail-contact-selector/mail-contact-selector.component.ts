@@ -13,6 +13,7 @@ import { FormNumberComponent } from '../../../layout/forms/number/form-number.co
 export type MailSelectorItem = {
   id: string;
   title: string;
+  birthdayToday?: boolean;
   subtitle?: string;
   avatarText?: string;
   avatarClass?: string;
@@ -29,6 +30,7 @@ export type MailAvailabilityMode =
   | 'without_email'
   | 'with_email'
   | 'without_postal_address_and_email'
+  | 'birthday_today'
   | 'pending_tax_receipt';
 
 @Component({
