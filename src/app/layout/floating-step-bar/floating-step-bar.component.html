@@ -1,0 +1,8 @@
+<div class="floating-step-bar">
+  @if (!hidePrev) {
+    <button-label-component type="ghost" (click)="prev.emit()">{{ prevLabel }}</button-label-component>
+  }
+  <div class="floating-step-bar-center">{{ centerText }}</div>
+  <button-label-component type="primary" [disabled]="disableNext" (click)="next.emit()">{{ nextLabel }}</button-label-component>
+</div>
+

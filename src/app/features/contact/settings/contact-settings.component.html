@@ -66,8 +66,12 @@
     </div>
 
     <div class="ds-actions">
-      <button-label-component type="ghost" (click)="resetDefaults()">Valeurs par défaut</button-label-component>
-      <button-label-component type="primary" (click)="save()">Enregistrer</button-label-component>
+      <button-label-component type="ghost" [disabled]="loading()" (click)="resetDefaults()">
+        Valeurs par défaut
+      </button-label-component>
+      <button-label-component type="primary" [disabled]="loading()" (click)="save()">
+        {{ loading() ? 'Enregistrement...' : 'Enregistrer' }}
+      </button-label-component>
     </div>
   </app-popup-shell>
 }

@@ -1,5 +1,5 @@
 import { NewContactInput } from '../../contact/contact.store';
-import { IContact } from '../../../core/models/contact.model';
+import { EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
 import { ImportFieldKey } from './model/import-field.model';
 import { collectImportFieldBag } from './import-map-preview';
 import { parseDateFromCell } from './import-parse-cells';
@@ -78,6 +78,20 @@ function parseOptionalPreferredFrequency(
   return undefined;
 }
 
+function parseSupportKind(value: string): EnterpriseSupportKind {
+  const n = normalizeCell(value);
+  if (/\b(mecenat|patronage)\b/.test(n)) {
+    return 'patronage';
+  }
+  if (/\b(sponsoring|sponsor)\b/.test(n)) {
+    return 'sponsoring';
+  }
+  if (/\b(don|donation)\b/.test(n)) {
+    return 'donation';
+  }
+  return 'other';
+}
+
 export function mapRowToNewContactInput(
   row: string[],
   bindings: ImportFieldKey[],
@@ -103,6 +117,8 @@ export function mapRowToNewContactInput(
 
   const enterpriseName = (bag.enterpriseName ?? '').trim();
   const siret = (bag.siret ?? '').trim();
+  const legalForm = (bag.legalForm ?? '').trim().toUpperCase();
+  const supportKind = parseSupportKind((bag.supportKind ?? '').trim());
   const contactFirstname = (bag.contactFirstname ?? '').trim();
   const contactLastname = (bag.contactLastname ?? '').trim();
 
@@ -141,7 +157,8 @@ export function mapRowToNewContactInput(
       enterprise: {
         name: enterpriseName,
         siret,
-        fiscalStatus: 'general_interest_66',
+        legalForm,
+        supportKind,
         address: {
           street,
           postalCode,

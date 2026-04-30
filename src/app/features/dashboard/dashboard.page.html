@@ -1,5 +1,5 @@
 <toast-component position="center-third"></toast-component>
-<empty-contacts-welcome />
+<empty-contacts-welcome [loading]="loadingData()" />
 <topbar
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
@@ -8,6 +8,11 @@
 </topbar>
 
 <import-banner />
+@if (loadingData()) {
+  <div class="dashboard-loader">
+    <inline-loader label="Chargement des profils et des dons..."></inline-loader>
+  </div>
+}
 
 <div class="kpi-grid">
   <dashboard-card-component
@@ -19,25 +24,25 @@
   ></dashboard-card-component>
   <dashboard-card-component
     [type]="'pink'"
-    [value]="kpiYearDonationsTotal()"
-    [label]="'Dons cette année'"
+    [value]="kpiYearDonationsTotal() + ' €'"
+    [label]="'En contributions cette année'"
     [helper]="'Total enregistré depuis le 1er janvier'"
     [icon]="'💶'"
   ></dashboard-card-component>
   <dashboard-card-component
-    [type]="'yellow'"
-    [value]="kpiToRemind()"
-    [label]="'À relancer'"
-    chip="warn"
-    [helper]="'Statut « à relancer »'"
-    [icon]="'⏳'"
+    [type]="'mint'"
+    [value]="kpiGeneratedDocumentsCount()"
+    [label]="'Documents générés'"
+    [helper]="'Visibles dans Archives 📂'"
+    [icon]="'🧾'"
   ></dashboard-card-component>
   <dashboard-card-component
-    [type]="'mint'"
-    [value]="kpiReceipts"
-    [label]="'Reçus générés'"
-    [helper]="'Bientôt disponible'"
-    [icon]="'🧾'"
+    [type]="'violet'"
+    [value]="physicalLettersToSend()"
+    [label]="'Lettres physiques à envoyer'"
+    chip="warn"
+    [helper]="'Imprimés, en attente de validation manuelle'"
+    [icon]="'✉️'"
   ></dashboard-card-component>
 </div>
 
@@ -45,8 +50,8 @@
 <div class="content-grid">
   <!-- TABLE -->
   <card
-    title="Derniers dons"
-    [subtitle]="latestDonationsComputed().length + ' derniers dons enregistrés'"
+    title="Dernières contributions"
+    [subtitle]="latestDonationsComputed().length + ' dernières contributions enregistrées'"
   >
     <table-component
       [rows]="latestDonationsComputed()"
@@ -58,7 +63,7 @@
   </card>
 
   <div class="right">
-    <card variant="bare">
+    <!-- <card variant="bare">
       <div class="quota-card">
         <div class="quota-top">
           <span class="quota-ttl">Mon plan</span>
@@ -82,13 +87,17 @@
         </div>
         <button-label-component type="upgrade">⭐ Passer au Premium</button-label-component>
       </div>
-    </card>
+    </card> -->
 
-    <card
-      title="À relancer en priorité"
-    subtitle="Profils au statut « à relancer »"
-      paddingClass="advanced"
-    >
+    <card title="À relancer" subtitle="{{priorityRelanceContacts().length}} profils" paddingClass="advanced">
+      <button-label-component
+        card-header-extra
+        type="primary"
+        routerLink="/envois"
+        [queryParams]="priorityRelanceQueryParams()"
+      >
+        Relancer
+      </button-label-component>
       @if (priorityRelanceContacts().length === 0) {
       <p class="relance-empty">Aucun profil à relancer pour le moment.</p>
       } @else {
@@ -99,9 +108,9 @@
               <div class="r-name">{{ contactLabel(c) }}</div>
               <div class="r-since">
                 @if (c.lastDonation) {
-                  Dernier don il y a {{ monthsSinceLastDonation(c) }} mois
+                  Dernière contribution il y a {{ monthsSinceLastDonation(c) }} mois
                 } @else {
-                  Aucun don enregistré
+                  Aucune contribution enregistrée
                 }
               </div>
             </div>

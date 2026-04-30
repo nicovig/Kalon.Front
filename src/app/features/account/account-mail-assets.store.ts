@@ -1,10 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 
+export type MailTextBlockRole = 'signature' | 'text';
+
 export type MailTextBlock = {
   id: string;
   label: string;
   content: string;
   addedAt: number;
+  role: MailTextBlockRole;
 };
 
 export type MailImageAsset = {
@@ -43,58 +46,9 @@ type StoredMailAssets = {
   fiscalReceiptTemplates: FiscalReceiptTemplate[];
 };
 
-const DEFAULT_TEXT_BLOCKS: MailTextBlock[] = [
-  { id: 'team', label: "L'équipe de l'association", content: "L'équipe de {{nom_association}}", addedAt: 0 },
-  { id: 'president', label: 'Présidence', content: 'Le président / la présidente de {{nom_association}}', addedAt: 0 },
-  {
-    id: 'address',
-    label: 'Adresse de l’association',
-    content: '{{nom_association}} · 12 rue des Associations · 75000 Paris',
-    addedAt: 0
-  }
-];
 
-const DEFAULT_RECEIPT_REQUIRED_MENTIONS = [
-  "Identité de l'association bénéficiaire",
-  'Coordonnées du donateur',
-  'Date et nature du don',
-  'Montant du don (ou valorisation)',
-  'Référence fiscale / article applicable'
-];
 
-const DEFAULT_FISCAL_RECEIPT_TEMPLATES: FiscalReceiptTemplate[] = [
-  {
-    id: 'receipt-sobre',
-    label: 'Sobre',
-    body:
-      "Nous certifions que {{prenom}} {{nom}} a effectué un don de {{montant_don}} le {{date_don}} au profit de {{nom_association}}.",
-    footer: "L'équipe de {{nom_association}}",
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  },
-  {
-    id: 'receipt-detaille',
-    label: 'Détaillé',
-    body:
-      'Ce reçu fiscal atteste la réception du don de {{montant_don}} réalisé le {{date_don}} par {{prenom}} {{nom}}. ' +
-      "{{nom_association}} confirme l'éligibilité fiscale de ce versement selon la réglementation en vigueur.",
-    footer: 'Le bureau de {{nom_association}}',
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  },
-  {
-    id: 'receipt-personnalise',
-    label: 'Personnalisé',
-    body:
-      'Reçu fiscal personnalisé pour {{prenom}} {{nom}}. Don de {{montant_don}} enregistré le {{date_don}} pour {{nom_association}}.',
-    footer: "Le trésorier / la trésorière de {{nom_association}}",
-    requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
-    system: true,
-    addedAt: 0
-  }
-];
+const DEFAULT_RECEIPT_REQUIRED_MENTIONS: string[] = [];
 
 @Injectable({ providedIn: 'root' })
 export class AccountMailAssetsStore {
@@ -108,15 +62,20 @@ export class AccountMailAssetsStore {
   readonly documents = this.documentsWrite.asReadonly();
   readonly fiscalReceiptTemplates = this.fiscalReceiptTemplatesWrite.asReadonly();
 
-  upsertTextBlock(id: string | null, label: string, content: string): void {
+  upsertTextBlock(id: string | null, label: string, content: string, role: MailTextBlockRole = 'text'): void {
     const l = label.trim();
     const c = content.trim();
     if (!l || !c) return;
     const list = this.textBlocksWrite();
     if (id) {
-      this.textBlocksWrite.set(list.map((b) => (b.id === id ? { ...b, label: l, content: c } : b)));
+      this.textBlocksWrite.set(
+        list.map((b) => (b.id === id ? { ...b, label: l, content: c, role } : b))
+      );
     } else {
-      this.textBlocksWrite.set([{ id: this.newId('txt'), label: l, content: c, addedAt: Date.now() }, ...list]);
+      this.textBlocksWrite.set([
+        { id: this.newId('txt'), label: l, content: c, addedAt: Date.now(), role },
+        ...list
+      ]);
     }
     this.persist();
   }
@@ -211,23 +170,36 @@ export class AccountMailAssetsStore {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         return {
-          textBlocks: DEFAULT_TEXT_BLOCKS,
+          textBlocks: [],
           images: [],
           documents: [],
-          fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+          fiscalReceiptTemplates: []
         };
       }
       const parsed = JSON.parse(raw) as Partial<StoredMailAssets>;
       return {
         textBlocks:
           Array.isArray(parsed.textBlocks) && parsed.textBlocks.length
-            ? parsed.textBlocks.map((b: any) => ({
-                id: String(b?.id ?? this.newId('txt')),
-                label: String(b?.label ?? '').trim(),
-                content: String(b?.content ?? '').trim(),
-                addedAt: typeof b?.addedAt === 'number' ? b.addedAt : 0
-              }))
-            : DEFAULT_TEXT_BLOCKS,
+            ? parsed.textBlocks.map((b: any) => {
+                const id = String(b?.id ?? this.newId('txt'));
+                const roleRaw = b?.role;
+                const role: MailTextBlockRole =
+                  roleRaw === 'signature'
+                    ? 'signature'
+                    : roleRaw === 'text'
+                      ? 'text'
+                      : id === 'team' || id === 'president'
+                        ? 'signature'
+                        : 'text';
+                return {
+                  id,
+                  label: String(b?.label ?? '').trim(),
+                  content: String(b?.content ?? '').trim(),
+                  addedAt: typeof b?.addedAt === 'number' ? b.addedAt : 0,
+                  role
+                };
+              })
+            : [],
         images: Array.isArray(parsed.images) ? (parsed.images as any[]).map((i) => ({
           id: String(i?.id ?? this.newId('img')),
           label: String(i?.label ?? '').trim(),
@@ -255,18 +227,18 @@ export class AccountMailAssetsStore {
                 requiredMentions:
                   Array.isArray(tpl?.requiredMentions) && tpl.requiredMentions.length
                     ? tpl.requiredMentions.map((m: unknown) => String(m))
-                    : DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+                    : [],
                 system: Boolean(tpl?.system),
                 addedAt: typeof tpl?.addedAt === 'number' ? tpl.addedAt : 0
               }))
-            : DEFAULT_FISCAL_RECEIPT_TEMPLATES
+            : []
       };
     } catch {
       return {
-        textBlocks: DEFAULT_TEXT_BLOCKS,
+        textBlocks: [],
         images: [],
         documents: [],
-        fiscalReceiptTemplates: DEFAULT_FISCAL_RECEIPT_TEMPLATES
+        fiscalReceiptTemplates: []
       };
     }
   }
@@ -275,4 +247,3 @@ export class AccountMailAssetsStore {
     return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }
-

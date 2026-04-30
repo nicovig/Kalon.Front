@@ -58,9 +58,14 @@
         @if (submitted && form.invalid) {
           <div class="add-donation-error" role="alert">Indiquez un montant valide et une date.</div>
         }
+        @if (saving) {
+          <inline-loader label="Enregistrement du don..."></inline-loader>
+        }
         <div class="add-donation-actions">
           <button-label-component type="ghost" htmlType="button" (click)="onDismiss()">Plus tard</button-label-component>
-          <button-label-component type="primary" htmlType="submit">Enregistrer ce don</button-label-component>
+          <button-label-component type="primary" htmlType="submit" [disabled]="saving">
+            Enregistrer ce don
+          </button-label-component>
         </div>
       </form>
     }

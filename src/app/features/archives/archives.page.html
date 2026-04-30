@@ -1,26 +1,192 @@
-<topbar title="Archives" subtitle="Historique des envois de reçus fiscaux"></topbar>
+<topbar
+  title="Archives"
+  subtitle="Mails, attestations, reçus fiscaux et suivi des envois papier : tout votre historique au même endroit."
+></topbar>
 
-<section class="archives-wrap">
-  @if (!receiptArchives().length) {
-    <div class="archives-empty">Aucun reçu archivé pour le moment.</div>
-  } @else {
-    <div class="archives-table">
-      <div class="archives-head">
-        <span>Date d'envoi</span>
-        <span>Profil</span>
-        <span>Type</span>
-        <span>Canal</span>
-        <span>Modèle</span>
+<section class="archives-wrap" [class.archives-wrap--table]="hasAny()">
+  @if (!hasAny()) {
+    <div class="archives-empty-panel">
+      <div class="archives-empty-illus" aria-hidden="true">
+        <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="archIllA" x1="40" y1="20" x2="170" y2="140" gradientUnits="userSpaceOnUse">
+              <stop stop-color="var(--violet-lt)" />
+              <stop offset="1" stop-color="#fff" />
+            </linearGradient>
+            <linearGradient id="archIllB" x1="100" y1="0" x2="100" y2="160" gradientUnits="userSpaceOnUse">
+              <stop stop-color="var(--violet-md)" stop-opacity="0.35" />
+              <stop offset="1" stop-color="var(--violet)" stop-opacity="0.9" />
+            </linearGradient>
+          </defs>
+          <rect x="24" y="36" width="152" height="104" rx="12" fill="url(#archIllA)" stroke="var(--violet-md)" stroke-width="1.5" />
+          <path
+            d="M24 52h152v6c0 4-3 8-7 10l-58 32a12 12 0 01-11 0L31 68c-4-2-7-6-7-10v-6z"
+            fill="url(#archIllB)"
+            opacity="0.85"
+          />
+          <rect x="56" y="88" width="88" height="40" rx="6" fill="#fff" stroke="var(--violet-md)" stroke-width="1.25" />
+          <path d="M68 100h64M68 108h44M68 116h52" stroke="var(--violet-md)" stroke-width="2" stroke-linecap="round" opacity="0.45" />
+          <circle cx="156" cy="44" r="18" fill="#fff" stroke="var(--violet)" stroke-width="2" />
+          <path
+            d="M148 44l6 6 12-14"
+            stroke="var(--violet)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </div>
-      @for (item of receiptArchives(); track item.id) {
-        <div class="archives-row">
-          <span>{{ formatDate(item.sentAt) }}</span>
-          <span>{{ item.contactName }}</span>
-          <span>{{ kindLabel(item.documentKind) }}</span>
-          <span>{{ channelLabel(item.channel) }}</span>
-          <span>{{ item.templateTitle }}</span>
-        </div>
-      }
+      <h2 class="archives-empty-title">Vos documents envoyés apparaîtront ici</h2>
+      <p class="archives-empty-lead">
+        Cet espace rassemble l’historique de vos envois : vous pourrez consulter les pièces envoyées et confirmer les
+        démarches réalisées (y compris le courrier papier).
+      </p>
+      <ul class="archives-empty-chips">
+        <li><span class="archives-chip">Mails &amp; relances</span></li>
+        <li><span class="archives-chip">Attestations</span></li>
+        <li><span class="archives-chip">Reçus fiscaux</span></li>
+        <li><span class="archives-chip">Courrier validé</span></li>
+      </ul>
     </div>
+  } @else {
+    <div class="archives-filters">
+      <form-select-component
+        class="archives-filter"
+        label="Type"
+        [options]="filterTypeOptions()"
+        [ngModel]="filterType()"
+        (ngModelChange)="onFilterTypeChange($event)"
+      />
+      <div class="archives-filter archives-filter--field archives-filter--date-range">
+        <span class="archives-filter-label">Dates</span>
+        <div class="archives-date-range">
+          <form-date-component
+            id="archives-filter-date-from"
+            name="archives-filter-date-from"
+            [ngModel]="filterDateFrom()"
+            [max]="maxForDateFrom()"
+            [ariaLabel]="'Date de début'"
+            (ngModelChange)="onFilterDateFromChange($event)"
+          />
+          <span class="archives-date-sep" aria-hidden="true">—</span>
+          <form-date-component
+            id="archives-filter-date-to"
+            name="archives-filter-date-to"
+            [ngModel]="filterDateTo()"
+            [min]="minForDateTo()"
+            [ariaLabel]="'Date de fin'"
+            (ngModelChange)="onFilterDateToChange($event)"
+          />
+        </div>
+      </div>
+      <form-select-component
+        class="archives-filter"
+        label="Envoyé en"
+        [options]="filterChannelOptions"
+        [ngModel]="filterChannel()"
+        (ngModelChange)="onFilterChannelChange($event)"
+      />
+      <div class="archives-filter archives-filter--field archives-filter--recipient">
+        <span class="archives-filter-label">Envoyé à</span>
+        <form-text-component
+          [placeholder]="'Nom, prénom…'"
+          [icon]="null"
+          [width]="'100%'"
+          [ngModel]="filterRecipient()"
+          (ngModelChange)="onFilterRecipientChange($event)"
+        />
+      </div>
+      <form-select-component
+        class="archives-filter"
+        label="Statut"
+        [options]="filterStatusOptions()"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="onFilterStatusChange($event)"
+      />
+    </div>
+    <table-component
+      [rows]="filteredArchiveRows()"
+      [columns]="archiveColumns"
+      [pageSizeOptions]="[25, 50, 100]"
+      [initialPageSize]="25"
+      [showSearch]="false"
+      [clickableRows]="true"
+      (rowClick)="onArchiveRowClick($event)"
+    ></table-component>
   }
 </section>
+
+@if (selectedMailLogId()) {
+  <app-popup-shell [maxWidth]="'min(820px, calc(100% - 32px))'" (dismiss)="closeMailLogDetails()">
+    <div popup-header>
+      <div class="app-popup-title">Détail de l'envoi</div>
+      @if (selectedMailLogDetails(); as d) {
+        <p class="app-popup-sub archives-popup-sub">
+          <span class="archives-popup-pill archives-popup-pill--status">
+            Statut : {{ getStatusLabel(d?.status ?? '') }}
+          </span>
+          <span class="archives-popup-pill archives-popup-pill--channel">
+            Canal : {{ d.isEmail === false ? 'Courrier' : 'Email' }}
+          </span>
+        </p>
+      } @else {
+        <p class="app-popup-sub">Chargement du détail…</p>
+      }
+    </div>
+
+    @if (detailsLoading()) {
+      <div class="archives-detail-loading">Chargement en cours…</div>
+    } @else if (detailsError(); as err) {
+      <div class="archives-detail-error">{{ err }}</div>
+    } @else if (selectedMailLogDetails(); as detail) {
+      <div class="archives-detail-grid">
+        <div class="archives-detail-item"><strong>Contact</strong><span>{{ detail.contactDisplayName || detail.contactId || 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item">
+          <strong>{{ detail.isEmail === false ? 'Adresse postale' : 'Email contact' }}</strong>
+          <span>{{ detailContactCoordinateLabel(detail) }}</span>
+        </div>
+        @if (detail.isEmail !== false) {
+          <div class="archives-detail-item"><strong>Email cible</strong><span>{{ detail.sentToEmail || 'Non renseigné' }}</span></div>
+        }
+        <div class="archives-detail-item"><strong>Type document</strong><span>{{ detailDocumentTypeLabel(detail.generatedDocumentType) }}</span></div>
+        @if (detail.generatedDocumentId) {
+          <div class="archives-detail-item"><strong>N° document</strong><span>{{ detail.generatedDocumentOrderNumber || 'Non renseigné' }}</span></div>
+        }
+        <div class="archives-detail-item"><strong>Imprimé le</strong><span>{{ detail.printedAt ? (detail.printedAt | date: 'dd/MM/yyyy HH:mm' : undefined : 'fr-FR') : 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item"><strong>Expédié le</strong><span>{{ detail.mailedAt ? (detail.mailedAt | date: 'dd/MM/yyyy HH:mm' : undefined : 'fr-FR') : 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item archives-detail-item--full"><strong>Objet</strong><span>{{ detail.subject || 'Non renseigné' }}</span></div>
+        <div class="archives-detail-item archives-detail-item--full"><strong>Erreur</strong><span>{{ detail.errorMessage || 'Aucune' }}</span></div>
+      </div>
+      <div class="archives-detail-actions">
+        @if (canConfirmSelectedMailLog()) {
+          <button-label-component type="primary" [disabled]="confirmLoading()" (click)="confirmSelectedMailLog()">
+            {{ confirmLoading() ? 'Confirmation...' : "Confirmer l'envoi courrier" }}
+          </button-label-component>
+        } @else if (canRegenerateSelectedMailLog()) {
+          <button-label-component type="primary" [disabled]="regenerateLoading() || regenerateConfirmOpen()" (click)="openRegenerateConfirm()">
+            {{ regenerateLoading() ? 'Régénération...' : 'Régénérer le document' }}
+          </button-label-component>
+        }
+        <button-label-component type="ghost" (click)="closeMailLogDetails()">Fermer</button-label-component>
+      </div>
+    }
+  </app-popup-shell>
+}
+
+@if (regenerateConfirmOpen()) {
+  <app-popup-shell [maxWidth]="'min(560px, calc(100% - 32px))'" (dismiss)="closeRegenerateConfirm()">
+    <div popup-header>
+      <div class="app-popup-title">Confirmer la régénération</div>
+      <p class="app-popup-sub">Voulez-vous régénérer le document lié à ce log ?</p>
+      @if (regenerateLoading()) {
+        <inline-loader label="Régénération en cours..." />
+      }
+    </div>
+    <div class="archives-detail-actions">
+      <button-label-component type="primary" [disabled]="regenerateLoading()" (click)="confirmRegenerateFromLog()">
+        {{ regenerateLoading() ? 'Régénération...' : 'Oui, régénérer' }}
+      </button-label-component>
+      <button-label-component type="ghost" [disabled]="regenerateLoading()" (click)="closeRegenerateConfirm()">Annuler</button-label-component>
+    </div>
+  </app-popup-shell>
+}

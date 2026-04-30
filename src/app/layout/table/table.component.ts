@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonLabelComponent } from '../button/button-label/button-label.component';
@@ -12,6 +12,14 @@ export interface TableColumn {
   type?: 'text' | 'number' | 'date' | 'badge' | 'contactKind';
   searchable?: boolean;
   align?: 'left' | 'right' | 'center';
+}
+
+export interface TableRowAction {
+  id: string;
+  label: string;
+  type?: 'ghost' | 'primary' | 'page' | 'mail';
+  visible?: (row: unknown) => boolean;
+  disabled?: (row: unknown) => boolean;
 }
 
 @Component({
@@ -31,24 +39,34 @@ export interface TableColumn {
   styleUrls: ['./table.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TableComponent {
+export class TableComponent implements OnChanges {
   @Input() rows: any[] = [];
   @Input() columns: TableColumn[] = [];
-  @Input() pageSizeOptions: number[] = [25, 50, 100];
-  @Input() initialPageSize = 25;
+  @Input() pageSizeOptions: number[] = [5, 10, 25, 50, 100];
+  @Input() initialPageSize: number = 5;
   @Input() showSearch = true;
+  @Input() searchWidth: string = '260px';
   @Input() clickableRows = false;
-  @Input() showRowActions = false;
-  @Input() rowActionEditLabel = '✏️';
-  @Input() rowActionDonationsLabel = '💰';
+  @Input() selectedRowId: string | null = null;
+  @Input() selectedRowKey = 'id';
+  @Input() rowActions: TableRowAction[] = [];
 
   @Output() rowClick = new EventEmitter<unknown>();
-  @Output() rowEdit = new EventEmitter<unknown>();
-  @Output() rowViewDonations = new EventEmitter<unknown>();
+  @Output() rowAction = new EventEmitter<{ actionId: string; row: unknown }>();
 
   searchTerm = '';
   currentPage = 1;
-  pageSize = this.initialPageSize;
+  pageSize = 5;
+  private pageSizeInitialized = false;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['rows'] && !changes['rows'].firstChange) {
+      this.currentPage = 1;
+    }
+    if (changes['initialPageSize'] || changes['pageSizeOptions']) {
+      this.applyInitialPageSize();
+    }
+  }
 
   private get searchableColumns(): TableColumn[] {
     return this.columns.filter((c) => c.searchable);
@@ -132,6 +150,7 @@ export class TableComponent {
     }
     this.pageSize = next;
     this.currentPage = 1;
+    this.pageSizeInitialized = true;
   }
 
   goToPage(page: number): void {
@@ -160,17 +179,54 @@ export class TableComponent {
     this.rowClick.emit(row);
   }
 
-  onEditClick(row: unknown, event: Event): void {
+  onRowActionClick(action: TableRowAction, row: unknown, event: Event): void {
     event.stopPropagation();
-    this.rowEdit.emit(row);
+    if (!action?.id) return;
+    this.rowAction.emit({ actionId: action.id, row });
   }
 
-  onViewDonationsClick(row: unknown, event: Event): void {
-    event.stopPropagation();
-    this.rowViewDonations.emit(row);
+  getVisibleRowActions(row: unknown): TableRowAction[] {
+    return this.rowActions.filter((action) => {
+      if (!action.visible) return true;
+      try {
+        return action.visible(row);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  isRowActionDisabled(action: TableRowAction, row: unknown): boolean {
+    if (!action.disabled) return false;
+    try {
+      return action.disabled(row);
+    } catch {
+      return false;
+    }
+  }
+
+  isSelectedRow(row: unknown): boolean {
+    if (!this.selectedRowId || !row || typeof row !== 'object') {
+      return false;
+    }
+    const value = (row as Record<string, unknown>)[this.selectedRowKey];
+    return String(value ?? '') === this.selectedRowId;
   }
 
   get columnCount(): number {
-    return this.columns.length + (this.showRowActions ? 1 : 0);
+    return this.columns.length + (this.rowActions.length > 0 ? 1 : 0);
+  }
+
+  private applyInitialPageSize(): void {
+    if (this.pageSizeInitialized) {
+      return;
+    }
+    const hasOptions = Array.isArray(this.pageSizeOptions) && this.pageSizeOptions.length > 0;
+    const requested = Number(this.initialPageSize);
+    if (hasOptions && this.pageSizeOptions.includes(requested)) {
+      this.pageSize = requested;
+      return;
+    }
+    this.pageSize = hasOptions ? this.pageSizeOptions[0] : 5;
   }
 }

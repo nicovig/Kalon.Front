@@ -6,7 +6,7 @@ import { IContact } from '../../core/models/contact.model';
   standalone: true
 })
 export class ContactStatusLabelPipe implements PipeTransform {
-  transform(status: IContact['statut']): string {
+  transform(status: IContact['status']): string {
     switch (status) {
       case 'active':
         return 'Actif';

@@ -1,6 +1,6 @@
 <topbar
-  [title]="'Financements et statistiques'"
-  [subtitle]="'Vue 360 des financements par type et statut de profils, sur la période de votre choix'"
+  [title]="'Analyse des contributions'"
+  [subtitle]="'Vue 360 des contributions par type et statut de profils, sur la période de votre choix'"
 ></topbar>
 
 <div class="st-shell">
@@ -44,9 +44,9 @@
   >
     <div class="st-filters">
       <div class="st-filter st-filter--search">
-        <span class="st-label">Recherche</span>
+        <span class="st-label">Nom ou email</span>
         <form-text-component
-          [placeholder]="'Nom ou email du profil'"
+          [placeholder]="'Rechercher'"
           [icon]="'🔍'"
           [value]="searchTerm()"
           [width]="'100%'"

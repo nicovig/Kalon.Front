@@ -1,10 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { TableComponent, TableColumn } from '../../layout/table/table.component';
 import { DashboardCardComponent } from './dashboard-card/dashboard-card.component';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
+import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
+import { ToastService } from '../../layout/toast/toast.service';
+import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactStoreService } from '../contact/contact.store';
@@ -14,6 +18,9 @@ import { ImportBannerComponent } from '../import/components/import-banner/import
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { DonationPaymentMethod } from '../../core/models/donation.model';
+import { RouterLink } from '@angular/router';
+import { OrganizationDocumentsStore } from '../archives/organization-documents.store';
+import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 
 @Component({
   selector: 'dashboard-page',
@@ -22,38 +29,56 @@ import { DonationPaymentMethod } from '../../core/models/donation.model';
   styleUrls: ['./dashboard.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ButtonLabelComponent,
     TableComponent,
     DashboardCardComponent,
     ToastComponent,
     TopbarComponent,
     CardComponent,
+    InlineLoaderComponent,
+    ButtonLabelComponent,
     ContactCreateLauncherComponent,
     EmptyContactsWelcomeComponent,
-    ImportBannerComponent
+    ImportBannerComponent,
+    RouterLink
   ]
 })
 export class DashboardPageComponent {
-
   private readonly authService = inject(AuthService);
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly organizationDocumentsStore = inject(OrganizationDocumentsStore);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
+  private readonly toast = inject(ToastService);
+  protected readonly loadingData = signal(false);
 
   protected readonly currentUser = this.authService.currentUser;
 
-  protected readonly latestDonationsComputed = computed(() =>
-    this.donationStore.donations().map((d) => ({
-      ...d,
-      paymentMethodLabel: this.paymentMethodLabel(d.paymentMethod)
-    }))
-  );
+  private readonly contactById = computed(() => {
+    const map = new Map<string, IContact>();
+    for (const c of this.contactStore.contacts()) {
+      map.set(c.id, c);
+    }
+    return map;
+  });
+
+  protected readonly latestDonationsComputed = computed(() => {
+    const map = this.contactById();
+    return this.donationStore
+      .donations()
+      .map((d) => ({
+        ...d,
+        paymentMethodLabel: this.paymentMethodLabel(d.paymentMethod),
+        contributionTypeLabel: this.contributionTypeLabel(map.get(d.contactId))
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  });
 
   protected readonly kpiActiveContacts = computed(
     () =>
       this.contactStore
         .contacts()
-        .filter((c) => this.contactSettings.statusOf(c) === 'active').length
+        .filter((c) => this.contactSettings.statusOf(c) === 'active').length.toString()
   );
 
   protected readonly kpiYearDonationsTotal = computed(() => {
@@ -61,17 +86,21 @@ export class DashboardPageComponent {
     return this.donationStore
       .donations()
       .filter((d) => d.date.getFullYear() === y)
-      .reduce((sum, d) => sum + d.amount, 0);
+      .reduce((sum, d) => sum + d.amount, 0)
+      .toFixed(2);
   });
 
   protected readonly kpiToRemind = computed(
-    () =>
-      this.contactStore
-        .contacts()
-        .filter((d) => this.contactSettings.statusOf(d) === 'to_remind').length
+    () => this.dashboardNotificationStore.contactsToRemind().toString()
   );
 
-  protected readonly kpiReceipts = 0;
+  protected readonly kpiGeneratedDocumentsCount = computed(
+    () => this.organizationDocumentsStore.generatedDocuments().length.toString()
+  );
+
+  protected readonly physicalLettersToSend = computed(
+    () => this.dashboardNotificationStore.physicalLettersToSend().toString()
+  );
 
   protected readonly contactCount = computed(() => this.contactStore.contacts().length);
 
@@ -90,12 +119,22 @@ export class DashboardPageComponent {
   protected readonly priorityRelanceContacts = computed(() =>
     this.contactStore
       .contacts()
-      .filter((c) => this.contactSettings.statusOf(c) === 'to_remind')
-      .sort(
-        (a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0)
-      )
+      .filter((c) => this.contactSettings.statusOf(c) === 'to_remind' && !!c.lastDonation)
+      .sort((a, b) => (a.lastDonation?.getTime() ?? 0) - (b.lastDonation?.getTime() ?? 0))
       .slice(0, 5)
   );
+
+  protected readonly priorityRelanceQueryParams = computed(() => {
+    const ids = this.priorityRelanceContacts()
+      .map((c) => c.id)
+      .join(',');
+    return {
+      type: 'message',
+      canal: 'email',
+      step: 'modele',
+      ...(ids ? { contactIds: ids } : {})
+    };
+  });
 
   protected contactLabel(c: IContact): string {
     return contactDisplayName(c);
@@ -115,9 +154,50 @@ export class DashboardPageComponent {
   protected readonly latestDonationsColumns: TableColumn[] = [
     { key: 'date', header: 'Date', type: 'date', searchable: true },
     { key: 'contactDisplayName', header: 'Profil', searchable: true },
+    { key: 'contributionTypeLabel', header: 'Type', type: 'text', searchable: true },
     { key: 'paymentMethodLabel', header: 'Moyen de paiement', type: 'text', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right', searchable: true }
   ];
+
+  constructor() {
+    this.organizationDocumentsStore.load();
+    this.loadDashboardData();
+  }
+
+  protected reloadDashboardData(): void {
+    this.loadDashboardData();
+  }
+
+  private loadDashboardData(): void {
+    if (!this.authService.isAuthenticated()) return;
+    this.loadingData.set(true);
+    forkJoin([
+      this.contactStore.loadContactsFromApi(),
+      this.donationStore.loadDonationsFromApi()
+    ]).subscribe({
+      next: () => this.loadingData.set(false),
+      error: () => {
+        this.loadingData.set(false);
+        this.toast.show('Impossible de charger les donnees du dashboard.', 'alert');
+      }
+    });
+  }
+
+  private contributionTypeLabel(contact: IContact | undefined): string {
+    if (!contact) {
+      return '—';
+    }
+    switch (contact.kind) {
+      case 'company':
+        return 'Mécène';
+      case 'member':
+        return 'Cotisation';
+      case 'donor':
+      case 'helper':
+      default:
+        return 'Donateur';
+    }
+  }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {
     if (!paymentMethod) return '—';
@@ -136,5 +216,4 @@ export class DashboardPageComponent {
       }
     }
   }
-
 }

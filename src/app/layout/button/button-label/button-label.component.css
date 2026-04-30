@@ -251,7 +251,7 @@
 
 .btn-ia-gen {
   width: 100%;
-  background: var(--pink);
+  background: var(--violet);
   color: white;
   border: none;
   border-radius: var(--r-sm);
@@ -270,7 +270,7 @@
 }
 
 .btn-ia-gen:hover {
-  background: var(--pink-dk);
+  background: var(--violet-md);
 }
 
 .btn-toolbar {

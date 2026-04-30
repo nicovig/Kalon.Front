@@ -33,7 +33,7 @@ export const routes: Routes = [
           import('./features/map/map.routes').then((m) => m.MAP_ROUTES)
       },
       {
-        path: 'statistics',
+        path: 'analyse',
         loadChildren: () =>
           import('./features/statistics/statistics.routes').then((m) => m.STATISTICS_ROUTES)
       },
@@ -48,14 +48,9 @@ export const routes: Routes = [
           import('./features/archives/archives.routes').then((m) => m.ARCHIVES_ROUTES)
       },
       {
-        path: 'relances',
+        path: 'envois',
         loadChildren: () =>
-          import('./features/reminder/reminder.routes').then((m) => m.REMINDER_ROUTES)
-      },
-      {
-        path: 'recus',
-        loadChildren: () =>
-          import('./features/receipt/receipt.routes').then((m) => m.RECEIPT_ROUTES)
+          import('./features/mail/mail.routes').then((m) => m.MAIL_ROUTES)
       },
       {
         path: 'recherche',
@@ -63,7 +58,7 @@ export const routes: Routes = [
           import('./features/search/search.routes').then((m) => m.SEARCH_ROUTES)
       },
       {
-        path: 'account',
+        path: 'parametres',
         loadChildren: () =>
           import('./features/account/account.routes').then((m) => m.ACCOUNT_ROUTES)
       }

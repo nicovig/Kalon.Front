@@ -1,65 +1,46 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, delay, map, of, throwError } from 'rxjs';
-import { API_BASE_URL, AUTH_MOCK_ENABLED } from '../config/api.config';
+import { Observable, catchError, delay, map, of, throwError } from 'rxjs';
+import { AUTH_MOCK_ENABLED } from '../config/api.config';
 import { LoginResponseBody } from './auth-api.model';
-
-const AUTH_KEY = 'kalon.auth';
-
-export type AssociationPlan = 'free' | 'basic' | 'premium';
-
-export interface AuthUser {
-  id?: number;
-  firstname: string;
-  lastname: string;
-  email: string;
-  associationName: string;
-  plan: AssociationPlan;
-}
-
-interface StoredSession {
-  token: string;
-  user: AuthUser;
-}
+import { AssociationPlan, AuthUser } from './auth-user.model';
+import { UserStore } from './user.store';
+import { API_ENDPOINTS } from '../api/api.endpoints';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly initial = this.readFromStorage();
-  private readonly currentUserSubject = new BehaviorSubject<AuthUser | null>(this.initial.user);
-  private tokenValue: string | null = this.initial.token;
+  private readonly userStore = inject(UserStore);
 
-  readonly currentUser$ = this.currentUserSubject.asObservable();
+  readonly currentUser$ = this.userStore.currentUser$;
 
   get currentUser(): AuthUser | null {
-    return this.currentUserSubject.value;
+    return this.userStore.currentUser;
   }
 
   getToken(): string | null {
-    return this.tokenValue;
+    return this.userStore.token;
   }
 
   get currentPlan(): AssociationPlan {
-    return this.currentUser?.plan ?? 'free';
+    return this.userStore.currentPlan;
   }
 
   isAuthenticated(): boolean {
-    return this.currentUser !== null && !!this.tokenValue;
+    return this.userStore.isAuthenticated();
   }
 
   login(email: string, password: string): Observable<AuthUser> {
     if (AUTH_MOCK_ENABLED) {
       return this.mockLogin(email, password);
     }
-    const url = `${API_BASE_URL.replace(/\/$/, '')}/api/auth/login`;
+    const url = API_ENDPOINTS.auth.login();
     return this.http.post<LoginResponseBody>(url, { email: email.trim(), password }).pipe(
       map((body) => {
-        const user = this.mapApiUserToAuthUser(body.user);
-        this.persistSession(body.token, user);
-        this.tokenValue = body.token;
-        this.currentUserSubject.next(user);
+        const user = this.mapApiUserToAuthUser(body.user, body.meran ?? null);
+        this.userStore.setSession(body.token, user);
         return user;
       }),
       catchError((err) =>
@@ -69,21 +50,22 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(AUTH_KEY);
-    this.tokenValue = null;
-    this.currentUserSubject.next(null);
+    this.userStore.clearSession();
   }
 
   private mapApiUserToAuthUser(
-    u: LoginResponseBody['user']
+    u: LoginResponseBody['user'],
+    meran: LoginResponseBody['meran']
   ): AuthUser {
     return {
       id: u.id,
+      organizationId: u.organization?.id,
+      role: u.role ?? null,
       firstname: u.firstname ?? '',
       lastname: u.lastname ?? '',
       email: u.email ?? '',
-      associationName: u.associationName ?? '',
-      plan: this.normalizePlan(u.plan)
+      associationName: u.organization?.name ?? '',
+      plan: this.normalizePlan(meran?.plan ?? '')
     };
   }
 
@@ -95,11 +77,6 @@ export class AuthService {
     return 'free';
   }
 
-  private persistSession(token: string, user: AuthUser): void {
-    const payload: StoredSession = { token, user };
-    localStorage.setItem(AUTH_KEY, JSON.stringify(payload));
-  }
-
   private mockLogin(email: string, password: string): Observable<AuthUser> {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = String(password ?? '').trim();
@@ -107,7 +84,9 @@ export class AuthService {
       return throwError(() => ({ status: 401, error: { message: 'Invalid credentials.' } }));
     }
     const user: AuthUser = {
-      id: 1,
+      id: '11111111-1111-1111-1111-111111111111',
+      organizationId: '22222222-2222-2222-2222-222222222222',
+      role: 'admin',
       firstname: 'Marie',
       lastname: 'Dupont',
       email: normalizedEmail,
@@ -115,33 +94,7 @@ export class AuthService {
       plan: 'basic'
     };
     const token = `mock-${Date.now()}`;
-    this.persistSession(token, user);
-    this.tokenValue = token;
-    this.currentUserSubject.next(user);
+    this.userStore.setSession(token, user);
     return of(user).pipe(delay(300));
-  }
-
-  private readFromStorage(): { user: AuthUser | null; token: string | null } {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as StoredSession | AuthUser | null;
-        if (parsed && typeof parsed === 'object' && 'token' in parsed && 'user' in parsed) {
-          const s = parsed as StoredSession;
-          if (s.token && s.user) {
-            return { user: s.user, token: s.token };
-          }
-        }
-      } catch {
-        localStorage.removeItem(AUTH_KEY);
-      }
-    }
-
-    const legacy = localStorage.getItem('kalon.currentUser');
-    if (legacy) {
-      localStorage.removeItem('kalon.currentUser');
-    }
-
-    return { user: null, token: null };
   }
 }

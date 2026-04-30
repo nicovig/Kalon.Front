@@ -1,0 +1,27 @@
+<div class="iob-type-grid" role="list" [attr.aria-label]="ariaLabel()">
+  @for (opt of options(); track opt.key) {
+    <button
+      type="button"
+      class="iob-type-card"
+      [class.iob-type-card--active]="selectedKey() === opt.key"
+      (click)="onSelect(opt.key)"
+    >
+      @if (opt.icon) {
+        <span class="iob-type-icon" aria-hidden="true">{{ opt.icon }}</span>
+      }
+      <div class="iob-type-title-row">
+        <h3 class="iob-type-title">{{ opt.title }}</h3>
+        @if (opt.badge) {
+          <span class="iob-type-badge">{{ opt.badge }}</span>
+        }
+      </div>
+      @if (opt.blurb) {
+        <p class="iob-type-blurb">{{ opt.blurb }}</p>
+      }
+      @if (opt.hint) {
+        <p class="iob-type-hint">{{ opt.hint }}</p>
+      }
+    </button>
+  }
+</div>
+

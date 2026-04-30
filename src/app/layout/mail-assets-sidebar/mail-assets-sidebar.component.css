@@ -1,0 +1,126 @@
+.mas {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 12px 16px;
+  border-radius: 14px;
+  background: var(--ink-10, #f3f3f5);
+  border: 1px solid var(--ink-10, #e8e8ec);
+  max-height: min(72vh, 640px);
+  overflow: auto;
+}
+
+.mas-create {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: white;
+  border: 2px dashed var(--violet-md, #9b8cff);
+  color: var(--violet, #6b5cff);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.mas-create:hover {
+  background: #faf9ff;
+  border-color: var(--violet, #6b5cff);
+}
+
+.mas-create-plus {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mas-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mas-h {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--ink-70, #555);
+}
+
+.mas-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-30, #999);
+  line-height: 1.4;
+}
+
+.mas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mas-list--thumb {
+  gap: 8px;
+}
+
+.mas-chip {
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ink-10, #e8e8ec);
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #222);
+  cursor: pointer;
+  line-height: 1.35;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.mas-chip:hover {
+  border-color: var(--violet-md, #9b8cff);
+  background: #faf9ff;
+}
+
+.mas-chip--doc {
+  font-size: 11px;
+}
+
+.mas-thumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--ink-10, #e8e8ec);
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s;
+}
+
+.mas-thumb:hover {
+  border-color: var(--violet-md, #9b8cff);
+}
+
+.mas-thumb img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.mas-thumb-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink, #222);
+  line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+}

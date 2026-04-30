@@ -3,7 +3,7 @@
     <form-text-component
       placeholder="Rechercher"
       icon="🔍"
-      width="260px"
+      [width]="searchWidth"
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange($event)"
     ></form-text-component>
@@ -15,13 +15,14 @@
         <th *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
           {{ col.header }}
         </th>
-        <th *ngIf="showRowActions" class="tbl-th-actions">Actions</th>
+        <th *ngIf="rowActions.length > 0" class="tbl-th-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
       <tr
         *ngFor="let row of pagedRows; let rowIndex = index"
         [class.tbl-row-clickable]="clickableRows"
+        [class.tbl-row-selected]="isSelectedRow(row)"
         (click)="onDataRowClick(row)"
       >
         <td *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
@@ -68,13 +69,15 @@
             }
           }
         </td>
-        <td *ngIf="showRowActions" class="tbl-actions" (click)="$event.stopPropagation()">
-          <button-label-component type="ghost" (click)="onEditClick(row, $event)">{{
-            rowActionEditLabel
-          }}</button-label-component>
-          <button-label-component type="ghost" (click)="onViewDonationsClick(row, $event)">{{
-            rowActionDonationsLabel
-          }}</button-label-component>
+        <td *ngIf="rowActions.length > 0" class="tbl-actions" (click)="$event.stopPropagation()">
+          <button-label-component
+            *ngFor="let action of getVisibleRowActions(row)"
+            [type]="action.type || 'ghost'"
+            [disabled]="isRowActionDisabled(action, row)"
+            (click)="onRowActionClick(action, row, $event)"
+          >
+            {{ action.label }}
+          </button-label-component>
         </td>
       </tr>
       <tr *ngIf="totalRows === 0">

@@ -11,7 +11,8 @@
   top: 0;
   bottom: 0;
   z-index: 100;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Mode tablette : uniquement les icônes */
@@ -94,6 +95,13 @@ body.sidebar-compact .asso-card {
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+}
+
+@media (max-height: 760px) {
+  .sidebar {
+    padding-top: 16px;
+    padding-bottom: 12px;
   }
 }
 

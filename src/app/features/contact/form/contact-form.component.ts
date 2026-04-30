@@ -13,7 +13,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { ContactKind, EnterpriseFiscalStatus, IContact } from '../../../core/models/contact.model';
+import { ContactKind, EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
 import { ButtonCheckboxComponent } from '../../../layout/button/checkbox/button-checkbox.component';
@@ -56,7 +56,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     phone: [''],
     jobTitle: [''],
     birthDate: [''],
-    gender: ['other'],
+    gender: [''],
     preferredFrequencySendingReceipt: ['instantly'],
     out: [false],
     address: this.fb.group({
@@ -138,9 +138,9 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       phone: d.phone ?? '',
       jobTitle: d.jobTitle ?? '',
       birthDate: d.birthDate ? this.dateToInputValue(d.birthDate) : '',
-      gender: d.gender ?? 'other',
+      gender: d.gender ?? '',
       preferredFrequencySendingReceipt: d.preferredFrequencySendingReceipt ?? 'instantly',
-      out: d.statut === 'out'
+      out: d.status === 'out'
     });
     if (!isCompany) {
       this.form.patchValue({
@@ -159,7 +159,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
         enterprise: {
           name: e.name,
           siret: e.siret,
-          fiscalStatus: e.fiscalStatus,
+          legalForm: e.legalForm,
+          supportKind: e.supportKind,
           contactFirstname: e.contactFirstname ?? '',
           contactLastname: e.contactLastname ?? '',
           contactEmail: e.contactEmail ?? '',
@@ -193,7 +194,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       phone?: string;
       jobTitle: string;
       birthDate: string;
-      gender: 'male' | 'female' | 'other';
+      gender: 'male' | 'female' | 'other' | '';
       preferredFrequencySendingReceipt: IContact['preferredFrequencySendingReceipt'];
       out: boolean;
       address: {
@@ -205,7 +206,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       enterprise: {
         name: string;
         siret: string;
-        fiscalStatus: string;
+        legalForm: string;
+        supportKind: EnterpriseSupportKind;
         contactFirstname: string;
         contactLastname: string;
         contactEmail: string;
@@ -262,7 +264,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       enterprise: {
         name: en.name.trim(),
         siret: en.siret.trim(),
-        fiscalStatus: en.fiscalStatus as EnterpriseFiscalStatus,
+        legalForm: en.legalForm,
+        supportKind: en.supportKind,
         address: {
           street: en.address.street.trim(),
           postalCode: en.address.postalCode.trim(),
@@ -431,4 +434,5 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     }
     return new Date(y, m - 1, d);
   }
+
 }

@@ -2,6 +2,12 @@ import-banner-component {
   margin-bottom: 22px;
 }
 
+.dashboard-loader {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 16px;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -9,11 +15,24 @@ import-banner-component {
   padding: 17px 0;
 }
 
+@media (max-width: 1320px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ══ CONTENT GRID ══ */
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 336px;
   gap: 18px;
+  min-width: 0;
 }
 
 /* ══ RIGHT COL ══ */
@@ -21,6 +40,7 @@ import-banner-component {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 /* ══ QUOTA CARD ══ */
@@ -171,3 +191,16 @@ import-banner-component {
   color: var(--ink-70);
   margin-left: auto;
 }
+
+@media (max-width: 1366px) {
+  .content-grid {
+    grid-template-columns: 1fr 300px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

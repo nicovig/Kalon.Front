@@ -4,6 +4,7 @@ import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { AuthService } from './core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { DashboardNotificationStore } from './core/notification/dashboard-notification.store';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { Subscription } from 'rxjs';
 })
 export class App implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly sub = new Subscription();
 
@@ -25,6 +27,11 @@ export class App implements OnInit, OnDestroy {
     this.sub.add(
       this.authService.currentUser$.subscribe(() => {
         this.sidebarVisible = this.authService.isAuthenticated();
+        if (this.authService.isAuthenticated()) {
+          this.dashboardNotificationStore.refresh();
+        } else {
+          this.dashboardNotificationStore.reset();
+        }
         this.cdRef.markForCheck();
       })
     );

@@ -7,5 +7,12 @@
     <div class="app-popup-title">Modifier le profil</div>
     <p class="app-popup-sub">Mettez à jour la fiche : coordonnées, adresse ou personne morale.</p>
   </div>
-  <contact-form [editContact]="contact()" (contactUpdate)="onUpdate($event)" />
+  @if (loadingDetails()) {
+    <inline-loader label="Chargement du profil..."></inline-loader>
+  } @else {
+    <contact-form [editContact]="editableContact()" (contactUpdate)="onUpdate($event)" />
+  }
+  @if (updating) {
+    <inline-loader label="Mise a jour du profil..."></inline-loader>
+  }
 </app-popup-shell>

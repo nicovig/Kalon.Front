@@ -5,6 +5,7 @@ import { ImportBannerComponent } from '../../import-banner/import-banner.compone
 import { InlineLoaderComponent } from '../../../../../layout/inline-loader/inline-loader.component';
 import { ButtonLabelComponent } from '../../../../../layout/button/button-label/button-label.component';
 import { ImportStepTrailComponent } from '../../import-step-trail/import-step-trail.component';
+import { ChoiceCardItem, ChoiceCardsComponent } from '../../../../../layout/choice-cards/choice-cards.component';
 
 export type ImportOnboardingStep = 'type' | 'file';
 
@@ -14,6 +15,7 @@ export type ImportOnboardingStep = 'type' | 'file';
   imports: [
     CommonModule,
     ImportStepTrailComponent,
+    ChoiceCardsComponent,
     ImportBannerComponent,
     InlineLoaderComponent,
     ButtonLabelComponent
@@ -35,7 +37,13 @@ export class ImportOnboardingWizardComponent {
 
   readonly fileSelected = output<File>();
 
-  protected readonly options = IMPORT_MODE_OPTIONS;
+  protected readonly options: ChoiceCardItem[] = IMPORT_MODE_OPTIONS.map((opt) => ({
+    key: opt.mode,
+    icon: opt.mode === 'contacts' ? '👤' : opt.mode === 'donations' ? '💶' : '🔗',
+    title: opt.label,
+    blurb: opt.blurb,
+    hint: opt.hint
+  }));
 
   protected goToFileStep(): void {
     this.stepChange.emit('file');

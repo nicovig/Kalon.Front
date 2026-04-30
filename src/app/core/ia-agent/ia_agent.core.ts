@@ -2,7 +2,16 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-export type ReminderTemplateTone = 'douce' | 'fidelisation' | 'remerciement' | 'urgence' | 'saisonnier' | 'adhesion_renewal';
+export type ReminderTemplateTone =
+  | 'chill_reminder'
+  | 'fidelity_reminder'
+  | 'thank_you_reminder'
+  | 'urgency_reminder'
+  | 'seasonal_reminder'
+  | 'adhesion_renewal_reminder'
+  | 'anniversary_reminder'
+  | 'birthday_reminder'
+  | 'other';
 
 export interface ReminderTemplateRequest {
   tone: ReminderTemplateTone;
@@ -18,7 +27,7 @@ export interface ReminderTemplateResponse {
 })
 export class IaAgentCore {
   private readonly templates: Record<ReminderTemplateTone, ReminderTemplateResponse> = {
-    douce: {
+    chill_reminder: {
       subject: 'Vous nous manquez, {{prenom}} 💛',
       body: `<p>Bonjour {{prenom}},</p>
 <p>J'espère que vous allez bien. Voilà {{mois_depuis_don}} mois que nous n'avons pas eu de vos nouvelles, et je voulais prendre le temps de vous écrire personnellement.</p>
@@ -27,7 +36,7 @@ export class IaAgentCore {
 <p>Avec toute notre gratitude,</p>
 {{signature_footer}}`
     },
-    fidelisation: {
+    fidelity_reminder: {
       subject: 'Merci pour votre fidélité, {{prenom}} ✨',
       body: `<p>Bonjour {{prenom}},</p>
 <p>Vous faites partie de nos profils les plus fidèles, et nous tenions à vous le dire.</p>
@@ -36,16 +45,16 @@ export class IaAgentCore {
 <p>Merci, du fond du cœur.</p>
 {{signature_footer}}`
     },
-    remerciement: {
+    thank_you_reminder: {
       subject: 'Merci pour votre soutien, {{prenom}} 🙏',
       body: `<p>Bonjour {{prenom}},</p>
-<p>Un grand merci pour votre dernier don de {{dernier_don_montant}} €.</p>
+<p>Un grand merci pour votre dernière contribution de {{dernier_don_montant}} €.</p>
 <p>Votre geste nous permet de continuer nos actions au service des familles accompagnées.</p>
 <p>Nous sommes heureux de vous compter parmi nos soutiens.</p>
 <p>Avec reconnaissance,</p>
 {{signature_footer}}`
     },
-    urgence: {
+    urgency_reminder: {
       subject: 'Votre aide est precieuse aujourd hui, {{prenom}}',
       body: `<p>Bonjour {{prenom}},</p>
 <p>Nous traversons une periode importante et nous avons besoin de soutien rapidement.</p>
@@ -54,7 +63,7 @@ export class IaAgentCore {
 <p>Merci pour votre presence a nos cotes.</p>
 {{signature_footer}}`
     },
-    saisonnier: {
+    seasonal_reminder: {
       subject: 'En cette periode, pensons ensemble a notre cause 🎄',
       body: `<p>Bonjour {{prenom}},</p>
 <p>La fin d'annee est un moment fort pour notre association et pour les personnes que nous accompagnons.</p>
@@ -63,7 +72,7 @@ export class IaAgentCore {
 <p>Merci pour votre confiance.</p>
 {{signature_footer}}`
     },
-    adhesion_renewal: {
+    adhesion_renewal_reminder: {
       subject: 'Renouvelez votre adhésion, {{prenom}} 💛',
       body: `<p>Bonjour {{prenom}},</p>
 <p>Comme membre de {{nom_association}}, votre engagement compte pour la vie de notre association.</p>
@@ -71,11 +80,36 @@ export class IaAgentCore {
 <p>Si vous pouvez, renouvelez votre soutien afin de continuer à avancer ensemble et à porter nos projets au quotidien.</p>
 <p>Nous vous remercions par avance pour votre participation.</p>
 {{signature_footer}}`
+    },
+    anniversary_reminder: {
+      subject: 'Déjà un an ensemble, merci {{prenom}} ✨',
+      body: `<p>Bonjour {{prenom}},</p>
+<p>Cela fait un an que vous soutenez {{nom_association}}, et nous voulions vous remercier sincèrement.</p>
+<p>Votre fidélité nous aide à maintenir des actions concrètes sur le terrain.</p>
+<p>Si vous le souhaitez, vous pouvez prolonger ce bel engagement avec un nouveau don.</p>
+<p>Merci d'être à nos côtés.</p>
+{{signature_footer}}`
+    },
+    birthday_reminder: {
+      subject: 'Joyeux anniversaire {{prenom}} 🎂',
+      body: `<p>Bonjour {{prenom}},</p>
+<p>Toute l'équipe de {{nom_association}} vous souhaite un très joyeux anniversaire.</p>
+<p>Si vous souhaitez marquer cette journée d'un geste solidaire, votre soutien serait précieux.</p>
+<p>Nous vous remercions pour votre générosité et votre confiance.</p>
+{{signature_footer}}`
+    },
+    other: {
+      subject: 'Un message de {{nom_association}}',
+      body: `<p>Bonjour {{prenom}},</p>
+<p>Nous souhaitions vous partager un message important concernant nos actions actuelles.</p>
+<p>Votre soutien, quel qu'il soit, contribue directement à nos projets.</p>
+<p>Merci pour votre attention et votre engagement.</p>
+{{signature_footer}}`
     }
   };
 
   generateReminderTemplate(request: ReminderTemplateRequest): Observable<ReminderTemplateResponse> {
-    const response = this.templates[request.tone] ?? this.templates.douce;
+    const response = this.templates[request.tone] ?? this.templates.chill_reminder;
     return of(response).pipe(delay(1800));
   }
 }

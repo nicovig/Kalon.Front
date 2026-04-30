@@ -1,5 +1,14 @@
+ .tbl-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
 }
 
@@ -39,6 +48,16 @@ tbody tr.tbl-row-clickable {
 tbody tr.tbl-row-clickable:hover {
   background: var(--pink-lt);
   box-shadow: inset 4px 0 0 var(--pink);
+}
+
+tbody tr.tbl-row-selected {
+  background: rgba(122, 92, 255, 0.08);
+  box-shadow: inset 4px 0 0 var(--violet);
+}
+
+tbody tr.tbl-row-selected:hover {
+  background: rgba(122, 92, 255, 0.12);
+  box-shadow: inset 4px 0 0 var(--violet);
 }
 
 tbody td {
@@ -180,6 +199,32 @@ tbody tr:has(.tbl-actions):focus-within .tbl-actions {
   font-size: 12.5px;
   color: var(--ink-70);
   font-family: var(--font-body);
+}
+
+@media (max-width: 1366px) {
+  table {
+    min-width: 620px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tbl-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .tbl-foot-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 760px) {
+  table {
+    min-width: 560px;
+  }
 }
 
 .pages {
