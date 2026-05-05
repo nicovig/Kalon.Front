@@ -64,6 +64,22 @@ export interface ContactApiModel {
   donationCount?: number;
 }
 
+export interface ContactCreateRequestApiModel {
+  kind?: string | null;
+  firstname?: string | null;
+  lastname?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  jobTitle?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
+  notes?: string | null;
+  department?: string | null;
+  preferredFrequencySendingReceipt?: string | null;
+  address?: ContactApiAddress | null;
+  enterprise?: ContactApiEnterprise | null;
+}
+
 export interface GeneratedDocumentSummaryApiModel {
   id?: string;
   documentType?: string | null;
