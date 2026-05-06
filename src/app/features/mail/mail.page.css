@@ -35,6 +35,14 @@
   line-height: 1.45;
 }
 
+.mail-type-loading {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  color: var(--ink-70);
+}
+
 .mail-actions {
   display: flex;
   justify-content: center;

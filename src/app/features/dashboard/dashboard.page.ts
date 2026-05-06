@@ -12,9 +12,7 @@ import { ButtonLabelComponent } from '../../layout/button/button-label/button-la
 import { AuthService } from '../../core/auth/auth.service';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactStoreService } from '../contact/contact.store';
-import { ContactCreateLauncherComponent } from '../contact/contact-create-launcher.component';
 import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome/empty-contacts-welcome.component';
-import { ImportBannerComponent } from '../import/components/import-banner/import-banner.component';
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { DonationPaymentMethod } from '../../core/models/donation.model';
@@ -36,9 +34,7 @@ import { DashboardNotificationStore } from '../../core/notification/dashboard-no
     CardComponent,
     InlineLoaderComponent,
     ButtonLabelComponent,
-    ContactCreateLauncherComponent,
     EmptyContactsWelcomeComponent,
-    ImportBannerComponent,
     RouterLink
   ]
 })

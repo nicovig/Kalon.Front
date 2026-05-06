@@ -11,14 +11,76 @@
     </div>
   </topbar>
 
-  <import-banner />
+  <import-banner title="Déposez votre fichier contenant les profils à ajouter ici" />
 
   <section class="contact-list-wrap">
+    <div class="contact-filters">
+      <div class="contact-filter contact-filter--field contact-filter--recipient">
+        <span class="contact-filter-label">Nom + prénom</span>
+        <form-text-component
+          [placeholder]="'Nom ou prénom'"
+          [icon]="null"
+          [width]="'100%'"
+          [ngModel]="filterName()"
+          (ngModelChange)="onFilterNameChange($event)"
+        />
+      </div>
+      <form-select-component
+        class="contact-filter"
+        label="Type"
+        [options]="kindFilterOptions"
+        [ngModel]="filterKind()"
+        (ngModelChange)="onFilterKindChange($event)"
+      />
+      <div class="contact-filter contact-filter--field contact-filter--recipient">
+        <span class="contact-filter-label">Email</span>
+        <form-text-component
+          [placeholder]="'Email'"
+          [icon]="null"
+          [width]="'100%'"
+          [ngModel]="filterEmail()"
+          (ngModelChange)="onFilterEmailChange($event)"
+        />
+      </div>
+      <div class="contact-filter contact-filter--field contact-filter--recipient">
+        <span class="contact-filter-label">Téléphone</span>
+        <form-text-component
+          [placeholder]="'Téléphone'"
+          [icon]="null"
+          [width]="'100%'"
+          [ngModel]="filterPhone()"
+          (ngModelChange)="onFilterPhoneChange($event)"
+        />
+      </div>
+      <form-select-component
+        class="contact-filter"
+        label="Statut"
+        [options]="statusFilterOptions"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="onFilterStatusChange($event)"
+      />
+      <div class="contact-filter contact-filter--field contact-filter--range">
+        <span class="contact-filter-label">Total dons</span>
+        <div class="contact-range">
+          <form-number-component
+            [placeholder]="'Min'"
+            [value]="filterTotalDonationMin()"
+            (valueChange)="onFilterTotalDonationMinChange($event)"
+          />
+          <span class="contact-range-sep">—</span>
+          <form-number-component
+            [placeholder]="'Max'"
+            [value]="filterTotalDonationMax()"
+            (valueChange)="onFilterTotalDonationMaxChange($event)"
+          />
+        </div>
+      </div>
+    </div>
     <table-component
       [rows]="contactsComputed()"
       [columns]="contactColumns"
       [rowActions]="contactRowActions"
-      [searchWidth]="'100%'"
+      [showSearch]="false"
       [pageSizeOptions]="[25, 50, 100]"
       [initialPageSize]="25"
       (rowAction)="onContactRowAction($event)"

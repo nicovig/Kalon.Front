@@ -24,6 +24,26 @@ thead th {
   font-family: var(--font-body);
 }
 
+.tbl-th-label {
+  vertical-align: middle;
+}
+
+.tbl-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tbl-sort-indicator {
+  display: inline-block;
+  margin-left: 6px;
+  opacity: 0.4;
+  font-size: 12px;
+}
+
+.tbl-sort-indicator--active {
+  opacity: 1;
+}
+
 .tbl-head {
   padding-left: 15px;
   padding-bottom: 20px;

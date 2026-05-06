@@ -12,6 +12,7 @@ export interface TableColumn {
   type?: 'text' | 'number' | 'date' | 'badge' | 'contactKind';
   searchable?: boolean;
   align?: 'left' | 'right' | 'center';
+  sortable?: boolean;
 }
 
 export interface TableRowAction {
@@ -50,6 +51,7 @@ export class TableComponent implements OnChanges {
   @Input() selectedRowId: string | null = null;
   @Input() selectedRowKey = 'id';
   @Input() rowActions: TableRowAction[] = [];
+  @Input() sortable = true;
 
   @Output() rowClick = new EventEmitter<unknown>();
   @Output() rowAction = new EventEmitter<{ actionId: string; row: unknown }>();
@@ -57,6 +59,8 @@ export class TableComponent implements OnChanges {
   searchTerm = '';
   currentPage = 1;
   pageSize = 5;
+  sortKey: string | null = null;
+  sortDirection: 'asc' | 'desc' = 'asc';
   private pageSizeInitialized = false;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -65,6 +69,9 @@ export class TableComponent implements OnChanges {
     }
     if (changes['initialPageSize'] || changes['pageSizeOptions']) {
       this.applyInitialPageSize();
+    }
+    if (changes['columns'] && this.sortKey && !this.columns.some((c) => c.key === this.sortKey)) {
+      this.sortKey = null;
     }
   }
 
@@ -108,7 +115,7 @@ export class TableComponent implements OnChanges {
   }
 
   get totalRows(): number {
-    return this.filteredRows.length;
+    return this.sortedRows.length;
   }
 
   get pageCount(): number {
@@ -117,7 +124,20 @@ export class TableComponent implements OnChanges {
 
   get pagedRows(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredRows.slice(start, start + this.pageSize);
+    return this.sortedRows.slice(start, start + this.pageSize);
+  }
+
+  get sortedRows(): any[] {
+    const key = this.sortKey;
+    if (!key) return this.filteredRows;
+    const column = this.columns.find((c) => c.key === key);
+    if (!column) return this.filteredRows;
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    return [...this.filteredRows].sort((a, b) => {
+      const av = this.getCellValue(a, column);
+      const bv = this.getCellValue(b, column);
+      return this.compareCellValues(av, bv, column.type) * direction;
+    });
   }
 
   get startIndexLabel(): number {
@@ -141,6 +161,28 @@ export class TableComponent implements OnChanges {
   onSearchChange(value: string): void {
     this.searchTerm = value ?? '';
     this.currentPage = 1;
+  }
+
+  isColumnSortable(col: TableColumn): boolean {
+    if (!this.sortable) return false;
+    return col.sortable !== false;
+  }
+
+  onColumnHeaderClick(col: TableColumn): void {
+    if (!this.isColumnSortable(col)) return;
+    if (this.sortKey === col.key) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortKey = col.key;
+      this.sortDirection = 'asc';
+    }
+    this.currentPage = 1;
+  }
+
+  sortIconFor(col: TableColumn): string {
+    if (!this.isColumnSortable(col)) return '';
+    if (this.sortKey !== col.key) return '↕';
+    return this.sortDirection === 'asc' ? '↑' : '↓';
   }
 
   onPageSizeChange(value: string): void {
@@ -228,5 +270,24 @@ export class TableComponent implements OnChanges {
       return;
     }
     this.pageSize = hasOptions ? this.pageSizeOptions[0] : 5;
+  }
+
+  private compareCellValues(a: unknown, b: unknown, type: TableColumn['type']): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (type === 'number') {
+      const an = Number(a);
+      const bn = Number(b);
+      if (Number.isFinite(an) && Number.isFinite(bn)) return an - bn;
+    }
+    if (type === 'date') {
+      const at = new Date(String(a)).getTime();
+      const bt = new Date(String(b)).getTime();
+      if (Number.isFinite(at) && Number.isFinite(bt)) return at - bt;
+    }
+    const as = String(a).toLocaleLowerCase('fr');
+    const bs = String(b).toLocaleLowerCase('fr');
+    return as.localeCompare(bs, 'fr', { numeric: true, sensitivity: 'base' });
   }
 }

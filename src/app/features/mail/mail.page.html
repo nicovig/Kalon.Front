@@ -10,17 +10,21 @@
       <p class="mail-type-lead">
         Choisissez le type d’envoi, puis nous vous guiderons sur le canal, les destinataires, le modèle et l’aperçu.
       </p>
-      <choice-cards
-        [options]="typeOptions()"
-        [selectedKey]="selectedSendType()"
-        ariaLabel="Type d'envoi"
-        (optionSelected)="chooseType($any($event))"
-      ></choice-cards>
+      @if (sendTypeOptionsLoaded()) {
+        <choice-cards
+          [options]="typeOptions()"
+          [selectedKey]="selectedSendType()"
+          ariaLabel="Type d'envoi"
+          (optionSelected)="chooseType($any($event))"
+        ></choice-cards>
+      } @else {
+        <div class="mail-type-loading">Chargement des types d'envoi…</div>
+      }
 
       <div class="mail-actions">
         <button-label-component
           type="primary"
-          [disabled]="!selectedSendType()"
+          [disabled]="!sendTypeOptionsLoaded() || !selectedSendType()"
           (click)="goToMethodStep()"
         >
           Continuer

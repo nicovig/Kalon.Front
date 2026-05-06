@@ -12,6 +12,7 @@
   margin-left: 248px;
   width: calc(100vw - 248px);
   max-width: calc(100vw - 248px);
+  padding-right: 22px;
 }
 
 @media (max-width: 1366px) {

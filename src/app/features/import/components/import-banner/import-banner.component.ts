@@ -29,6 +29,7 @@ export class ImportBannerComponent {
   private readonly router = inject(Router);
 
   @Input() navigate = true;
+  @Input() title = 'Déposez votre fichier ici : profils, financements, ou les deux';
 
   @Input() variant: 'default' | 'xxl' = 'default';
 
