@@ -1226,7 +1226,7 @@ export class MailPageComponent {
     const department = this.departmentOf(c);
     if (department) pieces.push(`Département ${department}`);
     pieces.push(`${summary.count} contribution${summary.count > 1 ? 's' : ''}`);
-    pieces.push(`${this.formatAmount(summary.totalAmount)} cumulés`);
+    pieces.push(`${this.formatAmount(summary.totalAmount)}€ cumulés`);
     return pieces.join(' · ');
   }
 
