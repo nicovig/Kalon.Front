@@ -12,8 +12,18 @@
   <table>
     <thead>
       <tr>
-        <th *ngFor="let col of columns" [class.align-right]="col.align === 'right'">
-          {{ col.header }}
+        <th
+          *ngFor="let col of columns"
+          [class.align-right]="col.align === 'right'"
+          [class.tbl-th-sortable]="isColumnSortable(col)"
+          (click)="onColumnHeaderClick(col)"
+        >
+          <span class="tbl-th-label">{{ col.header }}</span>
+          @if (isColumnSortable(col)) {
+            <span class="tbl-sort-indicator" [class.tbl-sort-indicator--active]="sortKey === col.key">
+              {{ sortIconFor(col) }}
+            </span>
+          }
         </th>
         <th *ngIf="rowActions.length > 0" class="tbl-th-actions">Actions</th>
       </tr>

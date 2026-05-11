@@ -4,10 +4,8 @@
   [title]="'Bonjour, ' + currentUser?.firstname + ' 👋'"
   [subtitle]="'Voici ce qu\'il se passe sur votre association aujourd\'hui'"
 >
-<contact-create-launcher></contact-create-launcher>
 </topbar>
 
-<import-banner />
 @if (loadingData()) {
   <div class="dashboard-loader">
     <inline-loader label="Chargement des profils et des dons..."></inline-loader>

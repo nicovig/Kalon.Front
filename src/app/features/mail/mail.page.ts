@@ -108,6 +108,7 @@ export class MailPageComponent {
   private readonly toast = inject(ToastService);
 
   private readonly organizationSendTypeFilter = signal<ReadonlySet<string> | null>(null);
+  protected readonly sendTypeOptionsLoaded = signal(false);
 
   protected readonly steps: StepTrailItem[] = [
     { key: 'choix_type', label: 'Type' },
@@ -384,8 +385,12 @@ export class MailPageComponent {
     this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()).subscribe({
       next: (res) => {
         this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(res?.['sendingPreferences']));
+        this.sendTypeOptionsLoaded.set(true);
       },
-      error: () => this.organizationSendTypeFilter.set(null)
+      error: () => {
+        this.organizationSendTypeFilter.set(null);
+        this.sendTypeOptionsLoaded.set(true);
+      }
     });
     this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
       const type = this.parseSendType(params.get('type'));

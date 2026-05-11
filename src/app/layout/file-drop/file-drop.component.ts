@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
 })
 export class FileDropComponent {
   @Input() inline = false;
+  @Input() title = 'Déposez votre fichier ici : profils, financements, ou les deux';
 
   @ViewChild('fileInput') protected fileInput?: ElementRef<HTMLInputElement>;
 

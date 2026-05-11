@@ -5,7 +5,7 @@ import { ContactKind, IContact, IContactAddress, IContactEnterprise } from '../.
 import { ContactSettingsStore } from './settings/contact-settings.store';
 import { UserStore } from '../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
-import { ContactApiAddress, ContactApiEnterprise, ContactApiModel } from '../../core/api/backend-api.model';
+import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel } from '../../core/api/backend-api.model';
 
 export interface NewContactInputIndividual {
   kind: 'donor' | 'member' | 'helper';
@@ -289,7 +289,7 @@ export class ContactStoreService {
       return of(contact);
     }
     const url = API_ENDPOINTS.contact.create();
-    return this.http.post<ContactApiModel>(url, this.toContactUpsertBody(contact)).pipe(
+    return this.http.post<ContactApiModel>(url, this.toContactCreateBody(contact)).pipe(
       map((payload) => this.mapApiContact(payload, 'details')),
       tap((created) => {
         this.contactsSignal.update((list) => [
@@ -305,13 +305,13 @@ export class ContactStoreService {
       return of(contact);
     }
     const url = API_ENDPOINTS.contact.update({ id: contact.id });
-    return this.http.put<ContactApiModel>(url, this.toContactUpsertBody(contact)).pipe(
+    return this.http.put<ContactApiModel>(url, this.toContactCreateBody(contact)).pipe(
       map((payload) => this.mapApiContact(payload, 'details')),
       tap((updated) => this.upsertContact(updated))
     );
   }
 
-  private toContactUpsertBody(contact: IContact): Record<string, unknown> {
+  private toContactCreateBody(contact: IContact): ContactCreateRequestApiModel {
     const address =
       contact.kind !== 'company' && contact.address
         ? {
@@ -340,7 +340,6 @@ export class ContactStoreService {
       : null;
     return {
       kind: contact.kind,
-      status: contact.status,
       firstname: contact.firstname ?? null,
       lastname: contact.lastname ?? null,
       email: contact.email ?? null,
