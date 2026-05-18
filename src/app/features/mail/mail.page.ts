@@ -152,7 +152,7 @@ export class MailPageComponent {
   protected readonly typeOptions = computed<ChoiceCardItem[]>(() => {
     const taxReceiptToSend = this.dashboardNotificationStore.taxReceiptsToSend();
     const taxReceiptBadge = taxReceiptToSend > 0 ? String(taxReceiptToSend) : undefined;
-    const taxReceiptHint = `${taxReceiptToSend} reçus fiscaux à éditer`;
+    const taxReceiptHint = taxReceiptToSend > 0 ? (taxReceiptToSend > 1 ? `${taxReceiptToSend} reçus fiscaux à éditer` : '1 reçu fiscal à éditer') : 'Envoyez un reçu fiscal à vos contacts.';
 
     const base: ChoiceCardItem[] = [
       {
