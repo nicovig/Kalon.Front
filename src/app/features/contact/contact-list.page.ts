@@ -135,7 +135,7 @@ export class ContactListPageComponent {
     { key: 'email', header: 'Email', searchable: true, sortable: true },
     { key: 'phone', header: 'Téléphone', searchable: true, sortable: true },
     { key: 'status', header: 'Statut', type: 'badge', sortable: true },
-    { key: 'totalDonation', header: 'Total dons', type: 'number', align: 'right', sortable: true }
+    { key: 'totalDonation', header: 'Total contributions', type: 'number', align: 'right', sortable: true }
   ];
   protected readonly contactRowActions: TableRowAction[] = [
     { id: 'edit', label: '✏️', type: 'ghost' },
