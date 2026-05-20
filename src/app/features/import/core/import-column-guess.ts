@@ -188,17 +188,15 @@ export function guessMappingForHeaders(headers: string[]): ImportFieldKey[] {
   const used = new Set<ImportFieldKey>();
   used.add('skip');
   const out = [...raw];
-  for (let pass = 0; pass < 2; pass++) {
-    for (let i = 0; i < out.length; i++) {
-      const f = out[i];
-      if (f === 'skip') {
-        continue;
-      }
-      if (used.has(f)) {
-        out[i] = 'skip';
-      } else {
-        used.add(f);
-      }
+  for (let i = 0; i < out.length; i++) {
+    const f = out[i];
+    if (f === 'skip') {
+      continue;
+    }
+    if (used.has(f)) {
+      out[i] = 'skip';
+    } else {
+      used.add(f);
     }
   }
   return out;
