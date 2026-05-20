@@ -97,4 +97,15 @@ describe('OrganizationCustomContentStore API', () => {
     expect(deleteUrls.some((u) => u.includes('/api/EmailTemplate/tpl-1'))).toBe(true);
     expect(`${postUrls}|${putUrls}|${deleteUrls}`).not.toContain('userId=');
   });
+
+  it('upsert et remove modeles email courrier sans userId', () => {
+    store.upsertEmailTemplate(null, 'Relance', 'Objet', '<p>Bonjour</p>').subscribe();
+    store.upsertEmailTemplate('tpl-mail-1', 'Relance', 'Objet', '<p>Bonjour</p>').subscribe();
+    store.removeEmailTemplate('tpl-mail-1').subscribe();
+
+    expect(postUrls.some((u) => u.includes('/api/EmailTemplate'))).toBe(true);
+    expect(putUrls.some((u) => u.includes('/api/EmailTemplate/tpl-mail-1'))).toBe(true);
+    expect(deleteUrls.some((u) => u.includes('/api/EmailTemplate/tpl-mail-1'))).toBe(true);
+    expect(`${postUrls}|${putUrls}|${deleteUrls}`).not.toContain('userId=');
+  });
 });

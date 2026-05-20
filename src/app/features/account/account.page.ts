@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
@@ -12,6 +12,13 @@ import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import { ButtonCheckboxComponent } from '../../layout/button/checkbox/button-checkbox.component';
+import {
+  MailEditorComponent,
+  MailEditorImageAsset,
+  MailEditorSnippet,
+  MailEditorVariableTag
+} from '../../layout/mail-editor/mail-editor.component';
+import { MailEditorVariableTagApiModel } from '../../core/api/backend-api.model';
 import {
   ALL_ORGANIZATION_SEND_TYPES,
   parseAllowedSendTypesFromOrganization,
@@ -27,7 +34,7 @@ type AccountOrganizationInfo = {
   audienceDescription: string;
 };
 type RemoveTarget =
-  | { id: string; type: 'text' | 'signature'; label: string }
+  | { id: string; type: 'text' | 'signature' | 'emailTemplate'; label: string }
   | { type: 'logo'; label: string }
   | null;
 
@@ -44,7 +51,8 @@ type RemoveTarget =
     ButtonLabelComponent,
     ToastComponent,
     PopupShellComponent,
-    ButtonCheckboxComponent
+    ButtonCheckboxComponent,
+    MailEditorComponent
   ]
 })
 export class AccountPageComponent {
@@ -94,7 +102,27 @@ export class AccountPageComponent {
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
+  protected readonly emailTemplates = this.store.emailTemplates;
   protected readonly logo = this.store.logo;
+
+  protected readonly editorTextBlocks = computed<MailEditorSnippet[]>(() =>
+    this.store.textBlocks().map((block) => ({
+      id: block.id,
+      label: block.label,
+      text: block.content
+    }))
+  );
+  protected readonly editorImages = computed<MailEditorImageAsset[]>(() =>
+    this.store.images().map((image) => ({
+      id: image.id,
+      label: image.label,
+      dataUrl: image.dataUrl
+    }))
+  );
+  protected readonly selectedEditorTextBlockId = signal<string | null>(null);
+  protected readonly selectedEditorImageId = signal<string | null>(null);
+  private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
+  protected readonly editorVariableTags = computed(() => this.editorVariableTagsWrite());
 
   protected readonly textLabel = signal('');
   protected readonly textContent = signal('');
@@ -103,6 +131,15 @@ export class AccountPageComponent {
   protected readonly signatureLabel = signal('');
   protected readonly signatureContent = signal('');
   protected readonly editingSignatureId = signal<string | null>(null);
+
+  protected readonly emailTemplateLabel = signal('');
+  protected readonly emailTemplateSubject = signal('');
+  protected readonly emailTemplateBody = signal('');
+  protected readonly editingEmailTemplateId = signal<string | null>(null);
+  protected readonly emailTemplateSaving = signal(false);
+  protected readonly emailTemplateSaveDisabled = computed(
+    () => this.emailTemplateSaving() || !this.emailTemplateLabel().trim() || !this.emailTemplateBody().trim()
+  );
 
   protected readonly imageDataUrl = signal('');
   protected readonly imageMimeType = signal('image/*');
@@ -130,6 +167,15 @@ export class AccountPageComponent {
   constructor() {
     this.store.ensureLoaded();
     void this.loadOrganizationInfo();
+    this.loadMailEditorTags();
+    effect(() => {
+      if (!this.selectedEditorTextBlockId() && this.editorTextBlocks().length) {
+        this.selectedEditorTextBlockId.set(this.editorTextBlocks()[0]?.id ?? null);
+      }
+      if (!this.selectedEditorImageId() && this.editorImages().length) {
+        this.selectedEditorImageId.set(this.editorImages()[0]?.id ?? null);
+      }
+    });
   }
 
   protected editTextBlock(id: string): void {
@@ -182,6 +228,71 @@ export class AccountPageComponent {
     this.editingSignatureId.set(null);
     this.signatureLabel.set('');
     this.signatureContent.set('');
+  }
+
+  protected editEmailTemplate(id: string): void {
+    const row = this.emailTemplates().find((item) => item.id === id);
+    if (!row) return;
+    this.editingEmailTemplateId.set(row.id);
+    this.emailTemplateLabel.set(row.label);
+    this.emailTemplateSubject.set(row.subject);
+    this.emailTemplateBody.set(row.body);
+  }
+
+  protected saveEmailTemplate(): void {
+    if (this.emailTemplateSaveDisabled()) return;
+    this.emailTemplateSaving.set(true);
+    this.store
+      .upsertEmailTemplate(
+        this.editingEmailTemplateId(),
+        this.emailTemplateLabel(),
+        this.emailTemplateSubject(),
+        this.emailTemplateBody()
+      )
+      .subscribe({
+        next: () => {
+          this.cancelEmailTemplateEdit();
+          this.toast.show('Modèle d’email enregistré.', 'success');
+          this.emailTemplateSaving.set(false);
+        },
+        error: () => {
+          this.toast.show('Impossible d’enregistrer le modèle d’email.', 'alert');
+          this.emailTemplateSaving.set(false);
+        }
+      });
+  }
+
+  protected requestRemoveEmailTemplate(id: string): void {
+    const row = this.emailTemplates().find((item) => item.id === id);
+    if (!row) return;
+    this.removeTarget.set({ id, type: 'emailTemplate', label: row.label });
+  }
+
+  protected cancelEmailTemplateEdit(): void {
+    this.editingEmailTemplateId.set(null);
+    this.emailTemplateLabel.set('');
+    this.emailTemplateSubject.set('');
+    this.emailTemplateBody.set('');
+  }
+
+  protected emailTemplatePreviewText(html: string): string {
+    const raw = String(html ?? '').trim();
+    if (!raw) return '';
+    const text = raw
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return text.length > 160 ? `${text.slice(0, 160)}…` : text;
+  }
+
+  protected removeTargetMessage(target: RemoveTarget): string {
+    if (!target) return '';
+    if (target.type === 'logo') return 'Supprimer le logo ?';
+    if (target.type === 'emailTemplate') return `Supprimer le modèle « ${target.label} » ?`;
+    if (target.type === 'signature') return `Supprimer la signature « ${target.label} » ?`;
+    return `Supprimer le bloc « ${target.label} » ?`;
   }
 
   protected pickImageFile(input: HTMLInputElement): void {
@@ -250,6 +361,19 @@ export class AccountPageComponent {
         },
         error: () => {
           this.toast.show('Impossible de supprimer le logo.', 'alert');
+        }
+      });
+      return;
+    }
+    if (target.type === 'emailTemplate') {
+      this.store.removeEmailTemplate(target.id).subscribe({
+        next: () => {
+          if (this.editingEmailTemplateId() === target.id) this.cancelEmailTemplateEdit();
+          this.toast.show('Modèle d’email supprimé.', 'success');
+          this.removeTarget.set(null);
+        },
+        error: () => {
+          this.toast.show('Impossible de supprimer le modèle d’email.', 'alert');
         }
       });
       return;
@@ -362,6 +486,28 @@ export class AccountPageComponent {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return '';
     return String(Math.trunc(numeric));
+  }
+
+  private loadMailEditorTags(): void {
+    this.http
+      .get<MailEditorVariableTagApiModel[]>(
+        API_ENDPOINTS.sending.mailEditorTags({ hasCompanyRecipient: true })
+      )
+      .subscribe({
+        next: (tags) => {
+          const normalized = (tags ?? [])
+            .map((tag) => ({
+              id: String(tag?.id ?? '').trim(),
+              label: String(tag?.label ?? '').trim(),
+              token: String(tag?.token ?? '').trim()
+            }))
+            .filter((tag) => tag.id && tag.label && tag.token);
+          this.editorVariableTagsWrite.set(normalized);
+        },
+        error: () => {
+          this.editorVariableTagsWrite.set([]);
+        }
+      });
   }
 
   private readAsDataUrl(file: File): Promise<string> {

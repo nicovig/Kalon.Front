@@ -19,7 +19,7 @@
 .account-title {
   margin: 0 0 12px;
   font-family: var(--font-title);
-  font-size: 1.04rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--ink);
 }
@@ -234,6 +234,22 @@
   font-size: 0.86rem;
   color: var(--ink-70);
   white-space: pre-wrap;
+}
+
+.account-list-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--ink-70);
+  font-weight: 600;
+}
+
+.account-template-editor {
+  min-width: 0;
+}
+
+.account-template-editor mail-editor {
+  display: block;
+  margin-top: 4px;
 }
 
 .account-delete-text {

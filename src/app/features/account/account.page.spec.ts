@@ -38,9 +38,13 @@ describe('AccountPageComponent', () => {
           useValue: {
             ensureLoaded: () => undefined,
             textBlocks: () => textBlocksData,
+            emailTemplates: () => [],
+            images: () => [],
             logo: () => null,
             upsertTextBlock: (...args: unknown[]) => upsertTextArgs.push(args),
             removeTextBlock: (id: string) => removedTextIds.push(id),
+            upsertEmailTemplate: () => of({}),
+            removeEmailTemplate: () => of(undefined),
             upsertLogo: (...args: unknown[]) => {
               upsertLogoArgs.push(args);
               return of({});
@@ -54,8 +58,11 @@ describe('AccountPageComponent', () => {
         {
           provide: HttpClient,
           useValue: {
-            get: () =>
-              of({
+            get: (url: string) => {
+              if (url.includes('/api/Sending/mail-editor-tags')) {
+                return of([{ id: 'prenom', label: 'Prénom', token: '{{prenom}}' }]);
+              }
+              return of({
                 name: 'Association API',
                 senderEmail: 'api@asso.test',
                 description: 'Description API',
@@ -66,7 +73,8 @@ describe('AccountPageComponent', () => {
                 siret: '123',
                 userId: '00000000-0000-0000-0000-000000000001',
                 defaultReceiptFrequency: 0
-              }),
+              });
+            },
             put: (_url: string, payload: unknown) => {
               updateOrganizationArgs.push(payload);
               return of(payload);

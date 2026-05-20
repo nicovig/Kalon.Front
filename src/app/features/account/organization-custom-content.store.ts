@@ -200,6 +200,38 @@ export class OrganizationCustomContentStore {
     });
   }
 
+  upsertEmailTemplate(
+    id: string | null,
+    label: string,
+    subject: string,
+    body: string,
+    emailTemplateType = 'message'
+  ): Observable<EmailTemplateResponseApiModel> {
+    const name = label.trim();
+    const subjectTrim = subject.trim();
+    const bodyTrim = body.trim();
+    if (!name || !bodyTrim || !this.userStore.isAuthenticated()) {
+      return EMPTY;
+    }
+    const payload: EmailTemplateUpsertRequestApiModel = {
+      name,
+      subject: subjectTrim,
+      body: bodyTrim,
+      emailTemplateType: emailTemplateType.trim() || 'message'
+    };
+    const req = id
+      ? this.http.put<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.update({ id }), payload)
+      : this.http.post<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.create(), payload);
+    return req.pipe(tap(() => this.loadAll()));
+  }
+
+  removeEmailTemplate(id: string): Observable<void> {
+    if (!id || !this.userStore.isAuthenticated()) {
+      return EMPTY;
+    }
+    return this.http.delete<void>(API_ENDPOINTS.emailTemplate.remove({ id })).pipe(tap(() => this.loadAll()));
+  }
+
   addFiscalReceiptTemplate(label: string, body: string, footer: string): void {
     const payload = this.toTemplatePayload(label, body, footer);
     if (!payload || !this.userStore.isAuthenticated()) return;
