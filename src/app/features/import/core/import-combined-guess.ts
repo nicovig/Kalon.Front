@@ -17,17 +17,15 @@ export function guessCombinedMappingForHeaders(headers: string[]): CombinedImpor
   const used = new Set<string>();
   used.add('skip');
   const out = [...raw];
-  for (let pass = 0; pass < 2; pass++) {
-    for (let i = 0; i < out.length; i++) {
-      const f = out[i];
-      if (f === 'skip') {
-        continue;
-      }
-      if (used.has(f)) {
-        out[i] = 'skip';
-      } else {
-        used.add(f);
-      }
+  for (let i = 0; i < out.length; i++) {
+    const f = out[i];
+    if (f === 'skip') {
+      continue;
+    }
+    if (used.has(f)) {
+      out[i] = 'skip';
+    } else {
+      used.add(f);
     }
   }
   return out;
