@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -105,6 +105,7 @@ export class MailPageComponent {
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly aiMailStore = inject(AiMailStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
   private readonly organizationSendTypeFilter = signal<ReadonlySet<string> | null>(null);
@@ -152,7 +153,7 @@ export class MailPageComponent {
   protected readonly typeOptions = computed<ChoiceCardItem[]>(() => {
     const taxReceiptToSend = this.dashboardNotificationStore.taxReceiptsToSend();
     const taxReceiptBadge = taxReceiptToSend > 0 ? String(taxReceiptToSend) : undefined;
-    const taxReceiptHint = taxReceiptToSend > 0 ? (taxReceiptToSend > 1 ? `${taxReceiptToSend} reçus fiscaux à éditer` : '1 reçu fiscal à éditer') : 'Envoyez un reçu fiscal à vos contacts.';
+    const taxReceiptHint = taxReceiptToSend > 0 ? (taxReceiptToSend > 1 ? `${taxReceiptToSend} reçus fiscaux à éditer, seuls les profils à relancer seront affichés` : '1 reçu fiscal à éditer, seul le profil à relancer sera affiché') : 'Envoyez un reçu fiscal à vos contacts.';
 
     const base: ChoiceCardItem[] = [
       {
@@ -164,7 +165,7 @@ export class MailPageComponent {
       {
         key: 'tax_receipt',
         icon: '🧾',
-        title: 'Reçus fiscal',
+        title: 'Reçu fiscal',
         hint: taxReceiptHint,
         badge: taxReceiptBadge
       },
@@ -977,10 +978,6 @@ export class MailPageComponent {
 
   protected closeSendResultModal(): void {
     this.sendResultModal.set(null);
-    if (typeof window !== 'undefined') {
-      window.location.assign(window.location.pathname);
-      return;
-    }
     this.activeStepKey.set('choix_type');
     this.selectedSendType.set(null);
     this.selectedSendMethod.set(null);
@@ -1003,6 +1000,11 @@ export class MailPageComponent {
     this.generatedBody.set('');
     this.generatedDocumentBody.set('');
     this.previewRecipientId.set('');
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true
+    });
   }
 
   protected onSearchQueryChange(value: string): void {

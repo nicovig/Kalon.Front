@@ -660,6 +660,30 @@ describe('MailPageComponent filters', () => {
     });
   });
 
+  it('ferme le resultat d envoi en reinitialisant le tunnel sans recharger la page', async () => {
+    const cmp = component as any;
+    const navigateSpy = vi.spyOn(cmp['router'], 'navigate').mockResolvedValue(true);
+    cmp.chooseType('message');
+    cmp.chooseMethod('email');
+    cmp.toggleContact('c1');
+    cmp.goToPreviewStep();
+    await cmp.sendEmail();
+
+    cmp.closeSendResultModal();
+
+    expect(cmp.sendResultModal()).toBeNull();
+    expect(cmp.activeStepKey()).toBe('choix_type');
+    expect(cmp.selectedSendType()).toBeNull();
+    expect(cmp.selectedSendMethod()).toBeNull();
+    expect(cmp.selectedContactIds().size).toBe(0);
+    expect(navigateSpy).toHaveBeenCalledWith([], {
+      relativeTo: cmp['route'],
+      queryParams: {},
+      replaceUrl: true
+    });
+    navigateSpy.mockRestore();
+  });
+
   it('envoie le body en html avec retours a la ligne preserves', async () => {
     const cmp = component as any;
     cmp.toggleContact('c1');
