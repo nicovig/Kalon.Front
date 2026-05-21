@@ -132,8 +132,93 @@
         [centerText]="selectedCount() + ' contact(s) sélectionné(s)'"
         [disableNext]="!selectedCount()"
         (prev)="goToPreviousStep()"
-        (next)="goToTemplateStep()"
+        (next)="goToNextAfterRecipients()"
       ></floating-step-bar>
+    </section>
+  }
+
+  @if (activeStepKey() === 'selection_periode') {
+    <section class="mail-type-step" aria-labelledby="mail-period-title">
+      <h2 id="mail-period-title" class="mail-type-title">Sélection période</h2>
+      <p class="mail-type-lead">
+        Indiquez la période couverte par le reçu fiscal. Les contributions enregistrées sur cette
+        fourchette seront agrégées par le serveur pour chaque destinataire sélectionné.
+      </p>
+
+      <div class="mail-placeholder-card">
+        <div class="mail-placeholder-inline">
+          <span class="mail-placeholder-label">Destinataires</span>
+          <span class="mail-placeholder-value mail-placeholder-value--mint">{{ selectedCount() }}</span>
+        </div>
+      </div>
+
+      <div class="mail-period-form">
+        <label class="mail-period-field">
+          <span>Du (inclus)</span>
+          <form-date-component
+            [ngModel]="taxReceiptPeriodFrom()"
+            (ngModelChange)="onTaxReceiptPeriodFromChange($event)"
+            [max]="taxReceiptPeriodTo() || null"
+          ></form-date-component>
+        </label>
+        <label class="mail-period-field">
+          <span>Au (inclus)</span>
+          <form-date-component
+            [ngModel]="taxReceiptPeriodTo()"
+            (ngModelChange)="onTaxReceiptPeriodToChange($event)"
+            [min]="taxReceiptPeriodFrom() || null"
+          ></form-date-component>
+        </label>
+      </div>
+
+      @if (taxReceiptPeriodValid()) {
+        <div class="mail-period-summary">
+          <span>{{ taxReceiptPeriodSummary().count }} contribution(s)</span>
+          <span class="mail-placeholder-separator">•</span>
+          <span>{{ taxReceiptPeriodSummary().contactCount }} profil(s) concerné(s)</span>
+        </div>
+      }
+
+      <div class="mail-period-list">
+        @if (periodDonationsLoading()) {
+          <p class="mail-period-empty">Chargement des contributions…</p>
+        } @else if (!taxReceiptPeriodValid()) {
+          <p class="mail-period-empty">Choisissez une période valide (date de début ≤ date de fin).</p>
+        } @else if (!taxReceiptPeriodDonationRows().length) {
+          <p class="mail-period-empty">
+            Aucune contribution enregistrée sur cette période pour les profils sélectionnés.
+          </p>
+        } @else {
+          @for (group of taxReceiptPeriodDonationsByContact(); track group.contactName) {
+            <div class="mail-period-group">
+              <div class="mail-period-group-head">
+                <span class="mail-period-group-name">{{ group.contactName }}</span>
+                <span class="mail-period-group-total">{{ formatAmount(group.total) }} €</span>
+              </div>
+              <ul class="mail-period-group-list">
+                @for (row of group.rows; track row.id) {
+                  <li>
+                    <span>{{ row.dateLabel }}</span>
+                    <span>{{ row.amountLabel }}</span>
+                    <span class="mail-period-type">{{ row.donationTypeLabel }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="mail-actions">
+        <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+        <button-label-component
+          type="primary"
+          [disabled]="!taxReceiptPeriodValid()"
+          (click)="goToWritingStepFromPeriod()"
+        >
+          Continuer
+        </button-label-component>
+      </div>
     </section>
   }
 

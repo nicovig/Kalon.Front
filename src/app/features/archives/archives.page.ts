@@ -299,7 +299,7 @@ export class ArchivesPageComponent {
     const map: Record<string, string> = {
       sent: 'Envoyé',
       error: 'Erreur',
-      printed: 'À confirmer',
+      printed: 'Imprimé',
       mailed: 'Expédié',
     };
     return map[status] ?? 'Non renseigné';
@@ -400,22 +400,14 @@ export class ArchivesPageComponent {
     if (!s) {
       return 'Non renseigné';
     }
+
     const map: Record<string, string> = {
       sent: 'Envoyé',
-      error: 'Erreur',
-      
-      printed: 'À confirmer',
+      error: 'Erreur',      
+      printed: 'Imprimé',
       mailed: 'Expédié',
-      delivered: 'Livré',
-      failed: 'Échec',
-      pending: 'En attente',
-      processing: 'En cours',
-      completed: 'Terminé',
-      draft: 'Brouillon',
-      cancelled: 'Annulé',
-      generated: 'Généré',
-      ready: 'Prêt'
     };
+
     return map[s] ?? String(status ?? '').trim();
   }
 

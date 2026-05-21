@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, forkJoin, map, of, tap } from 'rxjs';
 import {
   DonationPaymentMethod,
   DonationType,
@@ -13,6 +13,7 @@ import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { UserStore } from '../../core/auth/user.store';
 import {
   DonationApiModel,
+  DonationByContactListResponseApiModel,
   DonationListResponse,
   GeneratedDocumentApiModel
 } from '../../core/api/backend-api.model';
@@ -34,11 +35,94 @@ export class DonationStoreService {
     if (!this.userStore.isAuthenticated()) {
       return of(this.donationsSignal());
     }
-    const url = API_ENDPOINTS.donation.list({ page: 1, pageSize: 200 });
-    return this.http.get<DonationListResponse>(url).pipe(
-      map((payload) => (payload.items ?? []).map((row) => this.mapApiDonation(row))),
+    return this.queryDonations({ page: 1, pageSize: 200 }).pipe(
       tap((donations) => this.donationsSignal.set(donations))
     );
+  }
+
+  queryDonations(params: {
+    fromDate?: string;
+    toDate?: string;
+    contactId?: string;
+    donationType?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}): Observable<IDonation[]> {
+    if (!this.userStore.isAuthenticated()) {
+      return of([]);
+    }
+    const url = API_ENDPOINTS.donation.list({
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      contactId: params.contactId,
+      donationType: params.donationType,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 500
+    });
+    return this.http.get<DonationListResponse>(url).pipe(
+      map((payload) => (payload.items ?? []).map((row) => this.mapApiDonation(row)))
+    );
+  }
+
+  queryDonationsByContact(params: {
+    contactId: string;
+    fromDate?: string;
+    toDate?: string;
+    donationType?: string;
+    minAmount?: number;
+    maxAmount?: number;
+  }): Observable<IDonation[]> {
+    const contactId = params.contactId.trim();
+    if (!contactId || !this.userStore.isAuthenticated()) {
+      return of([]);
+    }
+    const url = API_ENDPOINTS.donation.listByContact({
+      contactId,
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      donationType: params.donationType,
+      minAmount: params.minAmount,
+      maxAmount: params.maxAmount
+    });
+    return this.http.get<DonationByContactListResponseApiModel>(url).pipe(
+      map((payload) => (payload.items ?? []).map((row) => this.mapApiDonation(row)))
+    );
+  }
+
+  queryDonationsForContacts(params: {
+    contactIds: string[];
+    fromDate?: string;
+    toDate?: string;
+    donationType?: string;
+    minAmount?: number;
+    maxAmount?: number;
+  }): Observable<IDonation[]> {
+    const ids = [...new Set(params.contactIds.map((id) => id.trim()).filter(Boolean))];
+    if (!ids.length || !this.userStore.isAuthenticated()) {
+      return of([]);
+    }
+    if (ids.length === 1) {
+      return this.queryDonationsByContact({
+        contactId: ids[0],
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+        donationType: params.donationType,
+        minAmount: params.minAmount,
+        maxAmount: params.maxAmount
+      });
+    }
+    return forkJoin(
+      ids.map((contactId) =>
+        this.queryDonationsByContact({
+          contactId,
+          fromDate: params.fromDate,
+          toDate: params.toDate,
+          donationType: params.donationType,
+          minAmount: params.minAmount,
+          maxAmount: params.maxAmount
+        })
+      )
+    ).pipe(map((lists) => lists.flat()));
   }
 
   addDonationForContact(
