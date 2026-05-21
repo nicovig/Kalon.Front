@@ -6,6 +6,10 @@ import { ContactSettingsStore } from './settings/contact-settings.store';
 import { UserStore } from '../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel } from '../../core/api/backend-api.model';
+import { isDemoMode } from '../../core/demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../../core/demo/demo-persistence.service';
+import { createDemoContactsSeed } from '../../core/demo/demo-seed.data';
+import { reviveContacts } from '../../core/demo/demo-revive';
 
 export interface NewContactInputIndividual {
   kind: 'donor' | 'member' | 'helper';
@@ -38,13 +42,14 @@ export class ContactStoreService {
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly userStore = inject(UserStore);
   private readonly http = inject(HttpClient);
+  private readonly demoPersistence = inject(DemoPersistenceService);
 
   contacts(): IContact[] {
     return this.contactsSignal();
   }
 
   getContactByIdAsync(contactId: string): Observable<IContact | null> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       const local = this.contactsSignal().find((c) => c.id === contactId) ?? null;
       return of(local);
     }
@@ -58,6 +63,14 @@ export class ContactStoreService {
   }
 
   loadContactsFromApi(): Observable<IContact[]> {
+    if (isDemoMode()) {
+      const contacts = reviveContacts(
+        this.demoPersistence.read(DEMO_STORAGE_KEYS.contacts, createDemoContactsSeed())
+      );
+      this.contactsSignal.set(contacts);
+      this.persistDemoContacts();
+      return of(this.contactsSignal());
+    }
     if (!this.userStore.isAuthenticated()) {
       return of(this.contactsSignal());
     }
@@ -109,6 +122,10 @@ export class ContactStoreService {
       status: this.contactSettings.statusOf(baseData, now)
     });
     this.contactsSignal.set([contact, ...this.contactsSignal()]);
+    if (isDemoMode()) {
+      this.persistDemoContacts();
+      return contact;
+    }
     this.pushCreateToApi(contact).subscribe({ error: () => undefined });
     return contact;
   }
@@ -132,6 +149,10 @@ export class ContactStoreService {
       status: this.contactSettings.statusOf(updated)
     };
     this.contactsSignal.update((list) => list.map((d) => (d.id === id ? updatedWithStatus : d)));
+    if (isDemoMode()) {
+      this.persistDemoContacts();
+      return updatedWithStatus;
+    }
     this.pushUpdateToApi(updatedWithStatus).subscribe({ error: () => undefined });
     return updatedWithStatus;
   }
@@ -152,6 +173,10 @@ export class ContactStoreService {
       status: this.contactSettings.statusOf(baseData, now)
     });
     this.contactsSignal.set([contact, ...this.contactsSignal()]);
+    if (isDemoMode()) {
+      this.persistDemoContacts();
+      return of(contact);
+    }
     return this.pushCreateToApi(contact);
   }
 
@@ -174,6 +199,10 @@ export class ContactStoreService {
       status: this.contactSettings.statusOf(updated)
     };
     this.contactsSignal.update((list) => list.map((d) => (d.id === id ? updatedWithStatus : d)));
+    if (isDemoMode()) {
+      this.persistDemoContacts();
+      return of(updatedWithStatus);
+    }
     return this.pushUpdateToApi(updatedWithStatus);
   }
 
@@ -197,6 +226,9 @@ export class ContactStoreService {
         };
       })
     );
+    if (isDemoMode()) {
+      this.persistDemoContacts();
+    }
   }
 
   recomputeStatuses(): void {
@@ -284,8 +316,15 @@ export class ContactStoreService {
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
+  private persistDemoContacts(): void {
+    if (!isDemoMode()) {
+      return;
+    }
+    this.demoPersistence.write(DEMO_STORAGE_KEYS.contacts, this.contactsSignal());
+  }
+
   private pushCreateToApi(contact: IContact): Observable<IContact> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       return of(contact);
     }
     const url = API_ENDPOINTS.contact.create();
@@ -301,7 +340,7 @@ export class ContactStoreService {
   }
 
   private pushUpdateToApi(contact: IContact): Observable<IContact> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       return of(contact);
     }
     const url = API_ENDPOINTS.contact.update({ id: contact.id });

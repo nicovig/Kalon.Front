@@ -24,6 +24,10 @@ import {
   parseAllowedSendTypesFromOrganization,
   serializeAllowedSendTypes
 } from '../../core/organization-sending-preferences';
+import { isDemoMode } from '../../core/demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../../core/demo/demo-persistence.service';
+import { createDemoOrganizationSeed } from '../../core/demo/demo-seed.data';
+import { DEMO_MAIL_EDITOR_TAGS } from '../../core/demo/demo-mail-editor-tags';
 
 type AccountOrganizationInfo = {
   associationName: string;
@@ -60,6 +64,7 @@ export class AccountPageComponent {
   private readonly store = inject(OrganizationCustomContentStore);
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
+  private readonly demoPersistence = inject(DemoPersistenceService);
 
   protected readonly organizationInfo = signal<AccountOrganizationInfo>({
     associationName: this.userStore.currentUser?.associationName?.trim() || 'Association',
@@ -439,44 +444,47 @@ export class AccountPageComponent {
       sendingPreferences: serializeAllowedSendTypes(this.sendingPreferencesSelected())
     };
     try {
+      if (isDemoMode()) {
+        const response = { ...payload };
+        this.demoPersistence.write(DEMO_STORAGE_KEYS.organization, response);
+        this.applyOrganizationResponse(response);
+        this.toast.show(successMessage, 'success');
+        return;
+      }
       const response = await firstValueFrom(this.http.put<Record<string, unknown>>(API_ENDPOINTS.organization.update(), payload));
-      this.organizationRaw.set(response ?? payload);
-      this.organizationInfo.set({
-        associationName: String(response?.['name'] ?? payload['name'] ?? info.associationName).trim() || 'Association',
-        senderEmail: String(response?.['senderEmail'] ?? response?.['email'] ?? payload['senderEmail'] ?? '').trim(),
-        description: String(response?.['description'] ?? payload['description'] ?? '').trim(),
-        foundedYear: this.normalizeFoundedYear(response?.['foundedYear'] ?? payload['foundedYear']),
-        activitySector: String(response?.['activitySector'] ?? payload['activitySector'] ?? '').trim(),
-        audienceDescription: String(response?.['audienceDescription'] ?? payload['audienceDescription'] ?? '').trim()
-      });
-      this.sendingPreferencesSelected.set(
-        parseAllowedSendTypesFromOrganization(response?.['sendingPreferences'] ?? payload['sendingPreferences'])
-      );
+      this.applyOrganizationResponse(response ?? payload);
       this.toast.show(successMessage, 'success');
     } catch {
       this.toast.show(errorMessage, 'alert');
     }
   }
 
+  private applyOrganizationResponse(response: Record<string, unknown>): void {
+    const info = this.organizationInfo();
+    this.organizationRaw.set(response);
+    this.organizationInfo.set({
+      associationName: String(response['name'] ?? info.associationName).trim() || 'Association',
+      senderEmail: String(response['senderEmail'] ?? response['email'] ?? info.senderEmail).trim(),
+      description: String(response['description'] ?? '').trim(),
+      foundedYear: this.normalizeFoundedYear(response['foundedYear']),
+      activitySector: String(response['activitySector'] ?? '').trim(),
+      audienceDescription: String(response['audienceDescription'] ?? '').trim()
+    });
+    this.sendingPreferencesSelected.set(parseAllowedSendTypesFromOrganization(response['sendingPreferences']));
+  }
+
   private async loadOrganizationInfo(): Promise<void> {
     try {
+      if (isDemoMode()) {
+        const response = this.demoPersistence.read(
+          DEMO_STORAGE_KEYS.organization,
+          createDemoOrganizationSeed()
+        );
+        this.applyOrganizationResponse(response);
+        return;
+      }
       const response = await firstValueFrom(this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()));
-      this.organizationRaw.set(response ?? null);
-      const associationName = String(response?.['name'] ?? this.organizationInfo().associationName).trim() || 'Association';
-      const senderEmail = String(response?.['senderEmail'] ?? response?.['email'] ?? this.organizationInfo().senderEmail).trim();
-      const description = String(response?.['description'] ?? '').trim();
-      const foundedYear = this.normalizeFoundedYear(response?.['foundedYear']);
-      const activitySector = String(response?.['activitySector'] ?? '').trim();
-      const audienceDescription = String(response?.['audienceDescription'] ?? '').trim();
-      this.organizationInfo.set({
-        associationName,
-        senderEmail,
-        description,
-        foundedYear,
-        activitySector,
-        audienceDescription
-      });
-      this.sendingPreferencesSelected.set(parseAllowedSendTypesFromOrganization(response?.['sendingPreferences']));
+      this.applyOrganizationResponse(response ?? {});
     } catch {
     }
   }
@@ -489,25 +497,33 @@ export class AccountPageComponent {
   }
 
   private loadMailEditorTags(): void {
+    const tags = isDemoMode()
+      ? DEMO_MAIL_EDITOR_TAGS
+      : null;
+    if (tags) {
+      this.editorVariableTagsWrite.set(this.normalizeMailEditorTags(tags));
+      return;
+    }
     this.http
       .get<MailEditorVariableTagApiModel[]>(
         API_ENDPOINTS.sending.mailEditorTags({ hasCompanyRecipient: true })
       )
       .subscribe({
-        next: (tags) => {
-          const normalized = (tags ?? [])
-            .map((tag) => ({
-              id: String(tag?.id ?? '').trim(),
-              label: String(tag?.label ?? '').trim(),
-              token: String(tag?.token ?? '').trim()
-            }))
-            .filter((tag) => tag.id && tag.label && tag.token);
-          this.editorVariableTagsWrite.set(normalized);
-        },
+        next: (loaded) => this.editorVariableTagsWrite.set(this.normalizeMailEditorTags(loaded ?? [])),
         error: () => {
           this.editorVariableTagsWrite.set([]);
         }
       });
+  }
+
+  private normalizeMailEditorTags(tags: MailEditorVariableTagApiModel[]): MailEditorVariableTag[] {
+    return (tags ?? [])
+      .map((tag) => ({
+        id: String(tag?.id ?? '').trim(),
+        label: String(tag?.label ?? '').trim(),
+        token: String(tag?.token ?? '').trim()
+      }))
+      .filter((tag) => tag.id && tag.label && tag.token);
   }
 
   private readAsDataUrl(file: File): Promise<string> {

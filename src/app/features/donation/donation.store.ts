@@ -17,12 +17,17 @@ import {
   DonationListResponse,
   GeneratedDocumentApiModel
 } from '../../core/api/backend-api.model';
+import { isDemoMode } from '../../core/demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../../core/demo/demo-persistence.service';
+import { createDemoDonationsSeed } from '../../core/demo/demo-seed.data';
+import { reviveDonations } from '../../core/demo/demo-revive';
 
 @Injectable({ providedIn: 'root' })
 export class DonationStoreService {
   private readonly contactStore = inject(ContactStoreService);
   private readonly userStore = inject(UserStore);
   private readonly http = inject(HttpClient);
+  private readonly demoPersistence = inject(DemoPersistenceService);
   private readonly donationsSignal = signal<IDonation[]>([]);
 
   readonly donationsRead = this.donationsSignal.asReadonly();
@@ -32,6 +37,14 @@ export class DonationStoreService {
   }
 
   loadDonationsFromApi(): Observable<IDonation[]> {
+    if (isDemoMode()) {
+      const donations = reviveDonations(
+        this.demoPersistence.read(DEMO_STORAGE_KEYS.donations, createDemoDonationsSeed())
+      );
+      this.donationsSignal.set(donations);
+      this.persistDemoDonations();
+      return of(this.donationsSignal());
+    }
     if (!this.userStore.isAuthenticated()) {
       return of(this.donationsSignal());
     }
@@ -48,6 +61,9 @@ export class DonationStoreService {
     page?: number;
     pageSize?: number;
   } = {}): Observable<IDonation[]> {
+    if (isDemoMode()) {
+      return of(this.filterDemoDonations(params));
+    }
     if (!this.userStore.isAuthenticated()) {
       return of([]);
     }
@@ -73,6 +89,16 @@ export class DonationStoreService {
     maxAmount?: number;
   }): Observable<IDonation[]> {
     const contactId = params.contactId.trim();
+    if (isDemoMode()) {
+      return of(
+        this.filterDemoDonations({
+          contactId,
+          fromDate: params.fromDate,
+          toDate: params.toDate,
+          donationType: params.donationType
+        })
+      );
+    }
     if (!contactId || !this.userStore.isAuthenticated()) {
       return of([]);
     }
@@ -149,6 +175,10 @@ export class DonationStoreService {
     };
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
     this.contactStore.recordDonation(contact.id, amount, date);
+    if (isDemoMode()) {
+      this.persistDemoDonations();
+      return donation;
+    }
     this.pushCreateToApi(donation).subscribe({ error: () => undefined });
     return donation;
   }
@@ -177,6 +207,10 @@ export class DonationStoreService {
     };
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
     this.contactStore.recordDonation(contact.id, amount, date);
+    if (isDemoMode()) {
+      this.persistDemoDonations();
+      return of(donation);
+    }
     return this.pushCreateToApi(donation);
   }
 
@@ -184,8 +218,41 @@ export class DonationStoreService {
     return `don-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
+  private persistDemoDonations(): void {
+    if (!isDemoMode()) {
+      return;
+    }
+    this.demoPersistence.write(DEMO_STORAGE_KEYS.donations, this.donationsSignal());
+  }
+
+  private filterDemoDonations(params: {
+    fromDate?: string;
+    toDate?: string;
+    contactId?: string;
+    donationType?: string;
+  }): IDonation[] {
+    const fromMs = params.fromDate ? new Date(params.fromDate).getTime() : null;
+    const toMs = params.toDate ? new Date(params.toDate).getTime() : null;
+    return this.donationsSignal().filter((d) => {
+      if (params.contactId && d.contactId !== params.contactId) {
+        return false;
+      }
+      if (params.donationType && d.donationType !== params.donationType) {
+        return false;
+      }
+      const t = d.date.getTime();
+      if (fromMs != null && t < fromMs) {
+        return false;
+      }
+      if (toMs != null && t > toMs) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   private pushCreateToApi(donation: IDonation): Observable<IDonation> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       return of(donation);
     }
     const url = API_ENDPOINTS.donation.create();

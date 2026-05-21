@@ -5,6 +5,7 @@ import { ContactStatus, IContact } from '../../../core/models/contact.model';
 import { UserStore } from '../../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../../core/api/api.endpoints';
 import { ContactStatusSettingsApiModel } from '../../../core/api/backend-api.model';
+import { isDemoMode } from '../../../core/demo/demo-mode';
 
 export type ContactStatusSettings = {
   newForDays: number;
@@ -30,7 +31,7 @@ export class ContactSettingsStore {
   readonly settings = this.settingsWrite.asReadonly();
 
   loadFromApi(): Observable<ContactStatusSettings> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       return of(this.settingsWrite());
     }
     const url = API_ENDPOINTS.contactStatusSettings.get();
@@ -47,7 +48,7 @@ export class ContactSettingsStore {
     const normalized = this.normalize(next);
     this.settingsWrite.set(normalized);
     this.writeStored(normalized);
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       return of(normalized);
     }
     const url = API_ENDPOINTS.contactStatusSettings.update();
@@ -61,7 +62,7 @@ export class ContactSettingsStore {
   }
 
   resetAsync(): Observable<ContactStatusSettings> {
-    if (!this.userStore.isAuthenticated()) {
+    if (isDemoMode() || !this.userStore.isAuthenticated()) {
       this.update(DEFAULT_SETTINGS);
       return of(this.settingsWrite());
     }

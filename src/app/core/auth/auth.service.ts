@@ -29,7 +29,30 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
+    if (AUTH_MOCK_ENABLED) {
+      return true;
+    }
     return this.userStore.isAuthenticated();
+  }
+
+  ensureDemoSession(): void {
+    if (!AUTH_MOCK_ENABLED) {
+      return;
+    }
+    if (this.userStore.isAuthenticated()) {
+      return;
+    }
+    const user: AuthUser = {
+      id: '11111111-1111-1111-1111-111111111111',
+      organizationId: '22222222-2222-2222-2222-222222222222',
+      role: 'admin',
+      firstname: 'Marie',
+      lastname: 'Dupont',
+      email: 'demo@kalon.local',
+      associationName: 'Association Kalon Démo',
+      plan: 'basic'
+    };
+    this.userStore.setSession('demo-session', user);
   }
 
   login(email: string, password: string): Observable<AuthUser> {

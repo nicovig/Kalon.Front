@@ -39,6 +39,7 @@ import { parseAllowedSendTypesFromOrganization } from '../../core/organization-s
 import {
   AiMailRequestDtoApiModel,
   MailEditorVariableTagApiModel,
+  MailLogListResponseApiModel,
   PrintDocumentResultDtoApiModel,
   SendDocumentDtoApiModel,
   SendDocumentResultDtoApiModel,
@@ -47,6 +48,12 @@ import {
 import { UserStore } from '../../core/auth/user.store';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
+import { isDemoMode } from '../../core/demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../../core/demo/demo-persistence.service';
+import { createDemoOrganizationSeed } from '../../core/demo/demo-seed.data';
+import { DEMO_MAIL_EDITOR_TAGS } from '../../core/demo/demo-mail-editor-tags';
+import { appendDemoMailLogs } from '../../core/demo/demo-mail-logs';
+import { OrganizationDocumentsStore } from '../archives/organization-documents.store';
 
 type SendTypeKey =
   | 'choix_type'
@@ -122,6 +129,8 @@ export class MailPageComponent {
   private readonly userStore = inject(UserStore);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly aiMailStore = inject(AiMailStore);
+  private readonly demoPersistence = inject(DemoPersistenceService);
+  private readonly documentsStore = inject(OrganizationDocumentsStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -457,16 +466,22 @@ export class MailPageComponent {
     this.contactStore.loadContactsFromApi().subscribe({ error: () => undefined });
     this.donationStore.loadDonationsFromApi().subscribe({ error: () => undefined });
     this.customContentStore.ensureLoaded();
-    this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()).subscribe({
-      next: (res) => {
-        this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(res?.['sendingPreferences']));
-        this.sendTypeOptionsLoaded.set(true);
-      },
-      error: () => {
-        this.organizationSendTypeFilter.set(null);
-        this.sendTypeOptionsLoaded.set(true);
-      }
-    });
+    if (isDemoMode()) {
+      const org = this.demoPersistence.read(DEMO_STORAGE_KEYS.organization, createDemoOrganizationSeed());
+      this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(org['sendingPreferences']));
+      this.sendTypeOptionsLoaded.set(true);
+    } else {
+      this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()).subscribe({
+        next: (res) => {
+          this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(res?.['sendingPreferences']));
+          this.sendTypeOptionsLoaded.set(true);
+        },
+        error: () => {
+          this.organizationSendTypeFilter.set(null);
+          this.sendTypeOptionsLoaded.set(true);
+        }
+      });
+    }
     this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
       const type = this.parseSendType(params.get('type'));
       const method = this.parseSendMethod(params.get('canal'));
@@ -999,6 +1014,27 @@ export class MailPageComponent {
         payload.taxReceiptPeriodTo = this.toPeriodIsoEnd(this.taxReceiptPeriodTo());
       }
       const selectedRecipients = this.selectedRecipients();
+      if (isDemoMode()) {
+        await this.dispatchSendDemo(channel, payload, selectedRecipients);
+        this.documentsStore.load();
+        this.dashboardNotificationStore.refresh();
+        const successCount = this.sendResultModal()?.successCount ?? 0;
+        const errorCount = this.sendResultModal()?.errorCount ?? 0;
+        if (errorCount > 0) {
+          this.toast.show(
+            `${channel === 'print' ? 'Impression partielle' : 'Envoi partiel'} : ${successCount} succès, ${errorCount} échec(s).`,
+            'alert'
+          );
+        } else {
+          this.toast.show(
+            channel === 'print'
+              ? `Impression terminée : ${successCount} courrier(s) prêt(s).`
+              : `Envoi terminé : ${successCount} email(s) envoyé(s).`,
+            'success'
+          );
+        }
+        return;
+      }
       if (channel === 'print') {
         const response = await firstValueFrom(
           this.http.post(API_ENDPOINTS.sending.print(), payload, { observe: 'response', responseType: 'blob' })
@@ -1218,25 +1254,76 @@ export class MailPageComponent {
   }
 
   private loadMailEditorTags(): void {
+    if (isDemoMode()) {
+      this.editorVariableTagsWrite.set(this.normalizeMailEditorTags(DEMO_MAIL_EDITOR_TAGS));
+      return;
+    }
     this.http
       .get<MailEditorVariableTagApiModel[]>(
         API_ENDPOINTS.sending.mailEditorTags({ hasCompanyRecipient: true })
       )
       .subscribe({
-        next: (tags) => {
-          const normalized = (tags ?? [])
-            .map((tag) => ({
-              id: String(tag?.id ?? '').trim(),
-              label: String(tag?.label ?? '').trim(),
-              token: String(tag?.token ?? '').trim()
-            }))
-            .filter((tag) => tag.id && tag.label && tag.token);
-          this.editorVariableTagsWrite.set(normalized);
-        },
+        next: (tags) => this.editorVariableTagsWrite.set(this.normalizeMailEditorTags(tags ?? [])),
         error: () => {
           this.editorVariableTagsWrite.set([]);
         }
       });
+  }
+
+  private normalizeMailEditorTags(tags: MailEditorVariableTagApiModel[]): MailEditorVariableTag[] {
+    return (tags ?? [])
+      .map((tag) => ({
+        id: String(tag?.id ?? '').trim(),
+        label: String(tag?.label ?? '').trim(),
+        token: String(tag?.token ?? '').trim()
+      }))
+      .filter((tag) => tag.id && tag.label && tag.token);
+  }
+
+  private async dispatchSendDemo(
+    channel: 'email' | 'print',
+    payload: SendDocumentDtoApiModel,
+    selectedRecipients: Array<{ id: string; name: string; subtitle: string }>
+  ): Promise<void> {
+    const now = new Date().toISOString();
+    const docType = String(payload.documentType ?? 'message');
+    const stamp = Date.now();
+    const entries: MailLogListResponseApiModel[] = selectedRecipients.map((recipient, index) => {
+      const contact = this.contactStore.contacts().find((c) => c.id === recipient.id);
+      return {
+        id: `log-demo-${stamp}-${index}`,
+        type: docType,
+        date: now,
+        isEmail: channel === 'email',
+        status: channel === 'email' ? 'sent' : 'printed',
+        firstname: contact?.firstname ?? '',
+        lastname: contact?.lastname ?? ''
+      };
+    });
+    appendDemoMailLogs(this.demoPersistence, entries);
+
+    if (channel === 'print') {
+      const blob = new Blob(['%PDF-1.4 demo'], { type: 'application/pdf' });
+      this.downloadBlob(blob, 'courriers-demo.pdf');
+      this.sendResultModal.set({
+        channel,
+        successCount: selectedRecipients.length,
+        errorCount: 0,
+        sentRecipients: selectedRecipients.map((r) => r.name),
+        failedRecipients: [],
+        returnedDocuments: [{ fileName: 'courriers-demo.pdf' }]
+      });
+      return;
+    }
+
+    this.sendResultModal.set({
+      channel,
+      successCount: selectedRecipients.length,
+      errorCount: 0,
+      sentRecipients: selectedRecipients.map((r) => r.name),
+      failedRecipients: [],
+      returnedDocuments: []
+    });
   }
 
   private extractFileNameFromResponse(response: HttpResponse<SendPrintResponseApiModel>): string | null {

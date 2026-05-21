@@ -13,6 +13,12 @@ import {
   OrganizationLogoResponseApiModel,
   OrganizationLogoUpsertRequestApiModel
 } from '../../core/api/backend-api.model';
+import { isDemoMode } from '../../core/demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../../core/demo/demo-persistence.service';
+import {
+  createDemoCustomContentSeed,
+  DemoCustomContentState
+} from '../../core/demo/demo-seed.data';
 
 export type MailTextBlockRole = 'signature' | 'text';
 
@@ -72,6 +78,7 @@ const DEFAULT_RECEIPT_REQUIRED_MENTIONS = [
 export class OrganizationCustomContentStore {
   private readonly http = inject(HttpClient);
   private readonly userStore = inject(UserStore);
+  private readonly demoPersistence = inject(DemoPersistenceService);
 
   private readonly textBlocksWrite = signal<MailTextBlock[]>([]);
   private readonly logoWrite = signal<MailImageAsset | null>(null);
@@ -99,6 +106,13 @@ export class OrganizationCustomContentStore {
   }
 
   loadAll(): void {
+    if (isDemoMode()) {
+      this.applyDemoState(
+        this.demoPersistence.read(DEMO_STORAGE_KEYS.customContent, createDemoCustomContentSeed())
+      );
+      this.loadedWrite.set(true);
+      return;
+    }
     if (!this.userStore.isAuthenticated()) {
       this.loadedWrite.set(true);
       return;
@@ -128,7 +142,22 @@ export class OrganizationCustomContentStore {
   upsertTextBlock(id: string | null, label: string, content: string, role: MailTextBlockRole = 'text'): void {
     const l = label.trim();
     const c = content.trim();
-    if (!l || !c || !this.userStore.isAuthenticated()) return;
+    if (!l || !c) return;
+    if (isDemoMode()) {
+      const blocks = [...this.textBlocksWrite()];
+      const blockId = id?.trim() || `tb-${Date.now()}`;
+      const entry: MailTextBlock = { id: blockId, label: l, content: c, role, addedAt: Date.now() };
+      const idx = blocks.findIndex((b) => b.id === blockId);
+      if (idx >= 0) {
+        blocks[idx] = { ...blocks[idx], ...entry, addedAt: blocks[idx].addedAt };
+      } else {
+        blocks.push(entry);
+      }
+      this.textBlocksWrite.set(blocks);
+      this.persistDemoState();
+      return;
+    }
+    if (!this.userStore.isAuthenticated()) return;
     const payload: ContentBlockUpsertRequestApiModel = {
       name: l,
       kind: role,
@@ -144,7 +173,13 @@ export class OrganizationCustomContentStore {
   }
 
   removeTextBlock(id: string): void {
-    if (!id || !this.userStore.isAuthenticated()) return;
+    if (!id) return;
+    if (isDemoMode()) {
+      this.textBlocksWrite.set(this.textBlocksWrite().filter((b) => b.id !== id));
+      this.persistDemoState();
+      return;
+    }
+    if (!this.userStore.isAuthenticated()) return;
     this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
@@ -153,7 +188,22 @@ export class OrganizationCustomContentStore {
 
   upsertLogo(dataUrl: string, mimeType: string, fileName: string): Observable<OrganizationLogoResponseApiModel> {
     const raw = dataUrl.trim();
-    if (!raw || !this.userStore.isAuthenticated()) return EMPTY;
+    if (!raw) return EMPTY;
+    if (isDemoMode()) {
+      const name = (fileName.trim() || 'logo.png').replace(/^.*[/\\]/, '') || 'logo.png';
+      const id = this.logoWrite()?.id ?? `logo-${Date.now()}`;
+      const asset: MailImageAsset = { id, label: name, fileName: name, dataUrl: raw, addedAt: Date.now() };
+      this.logoWrite.set(asset);
+      this.persistDemoState();
+      return of({
+        id,
+        fileName: name,
+        mimeType: mimeType.trim() || 'image/png',
+        content: raw,
+        storedPath: raw
+      });
+    }
+    if (!this.userStore.isAuthenticated()) return EMPTY;
     const name = (fileName.trim() || 'logo.png').replace(/^.*[/\\]/, '') || 'logo.png';
     const mime = (mimeType.trim() || this.mimeFromDataUrl(raw) || 'image/png').trim();
     const payload: OrganizationLogoUpsertRequestApiModel = {
@@ -172,13 +222,33 @@ export class OrganizationCustomContentStore {
   }
 
   removeLogo(): Observable<void> {
+    if (isDemoMode()) {
+      this.logoWrite.set(null);
+      this.persistDemoState();
+      return of(undefined);
+    }
     if (!this.userStore.isAuthenticated()) return EMPTY;
     return this.http.delete<void>(API_ENDPOINTS.organizationCustomContent.logo()).pipe(tap(() => this.loadAll()));
   }
 
   addDocument(label: string, fileName: string, mimeType: string, dataUrl: string): void {
     const l = label.trim() || fileName.trim();
-    if (!l || !dataUrl.trim() || !this.userStore.isAuthenticated()) return;
+    const raw = dataUrl.trim();
+    if (!l || !raw) return;
+    if (isDemoMode()) {
+      const doc: MailDocumentAsset = {
+        id: `doc-${Date.now()}`,
+        label: l,
+        fileName: fileName.trim() || l,
+        mimeType: mimeType.trim() || 'application/octet-stream',
+        dataUrl: raw,
+        addedAt: Date.now()
+      };
+      this.documentsWrite.set([...this.documentsWrite(), doc]);
+      this.persistDemoState();
+      return;
+    }
+    if (!this.userStore.isAuthenticated()) return;
     const payload: ContentBlockUpsertRequestApiModel = {
       name: l,
       kind: 'document',
@@ -193,7 +263,13 @@ export class OrganizationCustomContentStore {
   }
 
   removeDocument(id: string): void {
-    if (!id || !this.userStore.isAuthenticated()) return;
+    if (!id) return;
+    if (isDemoMode()) {
+      this.documentsWrite.set(this.documentsWrite().filter((d) => d.id !== id));
+      this.persistDemoState();
+      return;
+    }
+    if (!this.userStore.isAuthenticated()) return;
     this.http.delete<void>(API_ENDPOINTS.contentBlock.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
@@ -210,7 +286,37 @@ export class OrganizationCustomContentStore {
     const name = label.trim();
     const subjectTrim = subject.trim();
     const bodyTrim = body.trim();
-    if (!name || !bodyTrim || !this.userStore.isAuthenticated()) {
+    if (!name || !bodyTrim) {
+      return EMPTY;
+    }
+    if (isDemoMode()) {
+      const templates = [...this.emailTemplatesWrite()];
+      const templateId = id?.trim() || `tpl-${Date.now()}`;
+      const entry: MailTemplate = {
+        id: templateId,
+        label: name,
+        subject: subjectTrim,
+        body: bodyTrim,
+        emailTemplateType: emailTemplateType.trim() || 'message',
+        addedAt: Date.now()
+      };
+      const idx = templates.findIndex((t) => t.id === templateId);
+      if (idx >= 0) {
+        templates[idx] = { ...templates[idx], ...entry, addedAt: templates[idx].addedAt };
+      } else {
+        templates.push(entry);
+      }
+      this.emailTemplatesWrite.set(templates);
+      this.persistDemoState();
+      return of({
+        id: templateId,
+        name,
+        subject: subjectTrim,
+        body: bodyTrim,
+        emailTemplateType: entry.emailTemplateType
+      });
+    }
+    if (!this.userStore.isAuthenticated()) {
       return EMPTY;
     }
     const payload: EmailTemplateUpsertRequestApiModel = {
@@ -226,13 +332,40 @@ export class OrganizationCustomContentStore {
   }
 
   removeEmailTemplate(id: string): Observable<void> {
-    if (!id || !this.userStore.isAuthenticated()) {
+    if (!id) {
+      return EMPTY;
+    }
+    if (isDemoMode()) {
+      this.emailTemplatesWrite.set(this.emailTemplatesWrite().filter((t) => t.id !== id));
+      this.persistDemoState();
+      return of(undefined);
+    }
+    if (!this.userStore.isAuthenticated()) {
       return EMPTY;
     }
     return this.http.delete<void>(API_ENDPOINTS.emailTemplate.remove({ id })).pipe(tap(() => this.loadAll()));
   }
 
   addFiscalReceiptTemplate(label: string, body: string, footer: string): void {
+    const l = label.trim();
+    const b = body.trim();
+    const f = footer.trim();
+    if (!l || !b || !f) return;
+    if (isDemoMode()) {
+      const templates = [...this.fiscalReceiptTemplatesWrite()];
+      templates.push({
+        id: `frtpl-${Date.now()}`,
+        label: l,
+        body: b,
+        footer: f,
+        requiredMentions: DEFAULT_RECEIPT_REQUIRED_MENTIONS,
+        system: false,
+        addedAt: Date.now()
+      });
+      this.fiscalReceiptTemplatesWrite.set(templates);
+      this.persistDemoState();
+      return;
+    }
     const payload = this.toTemplatePayload(label, body, footer);
     if (!payload || !this.userStore.isAuthenticated()) return;
     this.http
@@ -241,15 +374,35 @@ export class OrganizationCustomContentStore {
   }
 
   updateFiscalReceiptTemplate(id: string, label: string, body: string, footer: string): void {
+    if (!id) return;
+    const l = label.trim();
+    const b = body.trim();
+    const f = footer.trim();
+    if (!l || !b || !f) return;
+    if (isDemoMode()) {
+      this.fiscalReceiptTemplatesWrite.set(
+        this.fiscalReceiptTemplatesWrite().map((t) =>
+          t.id === id ? { ...t, label: l, body: b, footer: f } : t
+        )
+      );
+      this.persistDemoState();
+      return;
+    }
     const payload = this.toTemplatePayload(label, body, footer);
-    if (!id || !payload || !this.userStore.isAuthenticated()) return;
+    if (!payload || !this.userStore.isAuthenticated()) return;
     this.http
       .put<EmailTemplateResponseApiModel>(API_ENDPOINTS.emailTemplate.update({ id }), payload)
       .subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
   removeFiscalReceiptTemplate(id: string): void {
-    if (!id || !this.userStore.isAuthenticated()) return;
+    if (!id) return;
+    if (isDemoMode()) {
+      this.fiscalReceiptTemplatesWrite.set(this.fiscalReceiptTemplatesWrite().filter((t) => t.id !== id));
+      this.persistDemoState();
+      return;
+    }
+    if (!this.userStore.isAuthenticated()) return;
     this.http.delete<void>(API_ENDPOINTS.emailTemplate.remove({ id })).subscribe({
       next: () => this.loadAll(),
       error: () => undefined
@@ -398,6 +551,48 @@ export class OrganizationCustomContentStore {
   private mimeFromDataUrl(dataUrl: string): string | null {
     const m = dataUrl.match(/^data:([^;,]+)[;,]/i);
     return m?.[1] ?? null;
+  }
+
+  private applyDemoState(state: DemoCustomContentState): void {
+    this.textBlocksWrite.set(state.textBlocks ?? []);
+    this.emailTemplatesWrite.set(state.emailTemplates ?? []);
+    this.fiscalReceiptTemplatesWrite.set(state.fiscalReceiptTemplates ?? []);
+    this.documentsWrite.set(state.documents ?? []);
+    const logo = state.logo;
+    this.logoWrite.set(
+      logo
+        ? {
+            id: logo.id,
+            label: logo.label,
+            fileName: logo.fileName,
+            dataUrl: logo.dataUrl,
+            addedAt: logo.addedAt
+          }
+        : null
+    );
+  }
+
+  private persistDemoState(): void {
+    if (!isDemoMode()) {
+      return;
+    }
+    const logo = this.logoWrite();
+    const state: DemoCustomContentState = {
+      textBlocks: this.textBlocksWrite(),
+      emailTemplates: this.emailTemplatesWrite(),
+      fiscalReceiptTemplates: this.fiscalReceiptTemplatesWrite(),
+      documents: this.documentsWrite(),
+      logo: logo
+        ? {
+            id: logo.id,
+            label: logo.label,
+            fileName: logo.fileName,
+            dataUrl: logo.dataUrl,
+            addedAt: logo.addedAt
+          }
+        : null
+    };
+    this.demoPersistence.write(DEMO_STORAGE_KEYS.customContent, state);
   }
 }
 

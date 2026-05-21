@@ -4,11 +4,18 @@ import { Subject, catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { API_ENDPOINTS } from '../api/api.endpoints';
 import { NotificationDashboardResponseApiModel } from '../api/backend-api.model';
 import { UserStore } from '../auth/user.store';
+import { isDemoMode } from '../demo/demo-mode';
+import { DEMO_STORAGE_KEYS, DemoPersistenceService } from '../demo/demo-persistence.service';
+import {
+  createDemoNotificationsSeed,
+  DemoNotificationsState
+} from '../demo/demo-seed.data';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardNotificationStore {
   private readonly http = inject(HttpClient);
   private readonly userStore = inject(UserStore);
+  private readonly demoPersistence = inject(DemoPersistenceService);
 
   private readonly contactsToRemindWrite = signal(0);
   private readonly taxReceiptsToSendWrite = signal(0);
@@ -37,6 +44,12 @@ export class DashboardNotificationStore {
       .pipe(
         debounceTime(0),
         switchMap(() => {
+          if (isDemoMode()) {
+            this.applyDemoNotifications(
+              this.demoPersistence.read(DEMO_STORAGE_KEYS.notifications, createDemoNotificationsSeed())
+            );
+            return of(undefined);
+          }
           if (!this.userStore.isAuthenticated()) {
             this.reset();
             return of(undefined);
@@ -70,6 +83,12 @@ export class DashboardNotificationStore {
   }
 
   refresh(): void {
+    if (isDemoMode()) {
+      this.applyDemoNotifications(
+        this.demoPersistence.read(DEMO_STORAGE_KEYS.notifications, createDemoNotificationsSeed())
+      );
+      return;
+    }
     if (!this.userStore.isAuthenticated()) {
       this.reset();
       return;
@@ -84,6 +103,17 @@ export class DashboardNotificationStore {
     this.taxReceiptContactIdsWrite.set(new Set());
     this.taxReceiptPeriodFromWrite.set(null);
     this.taxReceiptPeriodToWrite.set(null);
+  }
+
+  private applyDemoNotifications(state: DemoNotificationsState): void {
+    const remind = state.contactsToRemind ?? [];
+    const receipts = state.contactsToSendTaxReceipts ?? [];
+    this.contactsToRemindWrite.set(remind.length);
+    this.taxReceiptsToSendWrite.set(receipts.length);
+    this.physicalLettersToSendWrite.set(Number(state.physicalLettersToSendCount ?? 0));
+    this.taxReceiptContactIdsWrite.set(new Set(receipts));
+    this.taxReceiptPeriodFromWrite.set(state.taxReceiptPeriodFrom ?? null);
+    this.taxReceiptPeriodToWrite.set(state.taxReceiptPeriodTo ?? null);
   }
 
   private toDateInputValue(value: unknown): string | null {
