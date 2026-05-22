@@ -22,7 +22,7 @@ export type ImportFieldKey =
   | 'country';
 
 export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
-  { key: 'skip', label: '— Ignorer —' },
+  { key: 'skip', label: '- Ignorer -' },
   { key: 'enterpriseName', label: 'Entreprise - Raison sociale' },
   { key: 'siret', label: 'Entreprise - SIRET' },
   { key: 'legalForm', label: 'Entreprise - Forme juridique (SARL, SASU, ...)' },

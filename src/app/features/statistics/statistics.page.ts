@@ -123,7 +123,7 @@ export class StatisticsPageComponent {
         const contact = contactMap.get(donation.contactId);
         const fallbackName = donation.contactDisplayName?.trim() || 'Profil inconnu';
         const contactName = contact ? contactDisplayName(contact) : fallbackName;
-        const contactEmail = contact?.email ?? '—';
+        const contactEmail = contact?.email ?? '-';
         const contactKind: ContactKind = contact?.kind ?? 'donor';
         const contactStatus = contact ? this.contactSettings.statusOf(contact) : 'inactive';
         const { last, first } = this.contactExportNames(contact, contactName);
@@ -132,7 +132,7 @@ export class StatisticsPageComponent {
           contactId: donation.contactId,
           contactDisplayName: contactName,
           contactEmail,
-          contactPhoneNumber: contact?.phone ?? '—',
+          contactPhoneNumber: contact?.phone ?? '-',
           contactKind,
           contactStatus,
           contactLastName: last,
@@ -390,7 +390,7 @@ export class StatisticsPageComponent {
     fallbackDisplay: string
   ): { last: string; first: string } {
     if (!contact) {
-      return { last: fallbackDisplay.trim() || '—', first: '—' };
+      return { last: fallbackDisplay.trim() || '-', first: '-' };
     }
     if (contact.kind === 'company' && contact.enterprise) {
       const e = contact.enterprise;
@@ -399,13 +399,13 @@ export class StatisticsPageComponent {
         .filter((x): x is string => !!x)
         .join(' ');
       return {
-        last: e.name?.trim() || '—',
-        first: referent || '—'
+        last: e.name?.trim() || '-',
+        first: referent || '-'
       };
     }
     return {
-      last: contact.lastname?.trim() || '—',
-      first: contact.firstname?.trim() || '—'
+      last: contact.lastname?.trim() || '-',
+      first: contact.firstname?.trim() || '-'
     };
   }
 
@@ -413,28 +413,28 @@ export class StatisticsPageComponent {
     if (contact?.kind === 'company' && contact.enterprise?.siret?.trim()) {
       return contact.enterprise.siret.trim();
     }
-    return '—';
+    return '-';
   }
 
   private formatPostalAddress(contact: IContact | undefined): string {
     if (!contact) {
-      return '—';
+      return '-';
     }
     if (contact.kind === 'company' && contact.enterprise?.address) {
       const a = contact.enterprise.address;
       const parts = [a.street, a.postalCode, a.city, a.country]
         .map((x) => x?.trim())
         .filter((x): x is string => !!x);
-      return parts.length ? parts.join(', ') : '—';
+      return parts.length ? parts.join(', ') : '-';
     }
     if (contact.address) {
       const a = contact.address;
       const parts = [a.street, a.postalCode, a.city, a.country]
         .map((x) => x?.trim())
         .filter((x): x is string => !!x);
-      return parts.length ? parts.join(', ') : '—';
+      return parts.length ? parts.join(', ') : '-';
     }
-    return '—';
+    return '-';
   }
 
   private donationTypeLabelFr(type: DonationType): string {
@@ -453,7 +453,7 @@ export class StatisticsPageComponent {
   }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {
-    if (!paymentMethod) return '—';
+    if (!paymentMethod) return '-';
     switch (paymentMethod) {
       case 'bank_transfer':
         return 'Virement';

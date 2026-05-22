@@ -132,11 +132,11 @@ export function mapRowToNewContactInput(
   if (bag.addressLine?.trim() && !street) {
     street = bag.addressLine.trim();
   }
-  const postalCode = (bag.postalCode ?? '').trim() || '—';
-  const city = (bag.city ?? '').trim() || '—';
+  const postalCode = (bag.postalCode ?? '').trim() || '-';
+  const city = (bag.city ?? '').trim() || '-';
   const country = (bag.country ?? '').trim() || 'France';
   if (!street) {
-    street = '—';
+    street = '-';
   }
 
   if (intendedKind === 'company') {
@@ -180,8 +180,8 @@ export function mapRowToNewContactInput(
 
   return {
     kind: 'donor',
-    firstname: firstname || '—',
-    lastname: lastname || '—',
+    firstname: firstname || '-',
+    lastname: lastname || '-',
     email,
     phone: (bag.phone ?? '').trim() || undefined,
     jobTitle,

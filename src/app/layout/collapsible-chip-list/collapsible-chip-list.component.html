@@ -1,0 +1,24 @@
+<details class="chip-list-card">
+  <summary class="chip-list-head">
+    <span class="chip-list-title">{{ title() }}</span>
+    <span class="chip-list-summary-right">
+      <span class="chip-list-count">{{ items().length }}</span>
+      <span class="chip-list-chevron">▾</span>
+    </span>
+  </summary>
+  <div class="chip-list-body">
+    @for (item of items(); track item.id) {
+      <div class="chip-list-chip">
+        <div class="chip-list-chip-text">
+          <div class="chip-list-chip-name">{{ item.name }}</div>
+          @if (item.subtitle) {
+            <div class="chip-list-chip-subtitle">{{ item.subtitle }}</div>
+          }
+        </div>
+        <button type="button" class="chip-list-chip-remove" (click)="removeItem.emit(item.id)">
+          {{ removeLabel() }}
+        </button>
+      </div>
+    }
+  </div>
+</details>

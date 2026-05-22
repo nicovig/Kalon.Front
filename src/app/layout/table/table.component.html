@@ -1,4 +1,4 @@
-<div class="tbl-wrap">
+<div class="tbl-wrap" [class.tbl-wrap-horizontal-scroll-off]="!isHorizontalScrollable">
   <div class="tbl-head" *ngIf="showSearch">
     <form-text-component
       placeholder="Rechercher"
@@ -54,7 +54,7 @@
                 {{
                   getCellValue(row, col)
                     ? (getCellValue(row, col) | date: 'd MMM yyyy': undefined : 'fr-FR')
-                    : '—'
+                    : '-'
                 }}
               </span>
             }

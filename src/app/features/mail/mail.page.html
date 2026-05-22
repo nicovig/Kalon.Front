@@ -241,34 +241,11 @@
         </div>
       </div>
 
-      <details class="mail-selected-recipients-card">
-        <summary class="mail-selected-recipients-head">
-          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
-          <span class="mail-selected-recipients-summary-right">
-            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
-            <span class="mail-selected-recipients-chevron">▾</span>
-          </span>
-        </summary>
-        <div class="mail-selected-recipients-list">
-          @for (recipient of selectedRecipients(); track recipient.id) {
-            <div class="mail-selected-recipient-chip">
-              <div class="mail-selected-recipient-text">
-                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
-                @if (recipient.subtitle) {
-                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
-                }
-              </div>
-              <button
-                type="button"
-                class="mail-selected-recipient-remove"
-                (click)="removeSelectedContact(recipient.id)"
-              >
-                Retirer
-              </button>
-            </div>
-          }
-        </div>
-      </details>
+      <collapsible-chip-list
+        title="Destinataires sélectionnés"
+        [items]="selectedRecipients()"
+        (removeItem)="removeSelectedContact($event)"
+      />
 
       <div class="mail-step4-grid" [class.mail-step4-grid--with-or]="hasTemplateStep()">
         @if (hasTemplateStep()) {
@@ -377,34 +354,11 @@
           <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedTemplateSourceLabel() }}</span>
         </div>
       </div>
-      <details class="mail-selected-recipients-card">
-        <summary class="mail-selected-recipients-head">
-          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
-          <span class="mail-selected-recipients-summary-right">
-            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
-            <span class="mail-selected-recipients-chevron">▾</span>
-          </span>
-        </summary>
-        <div class="mail-selected-recipients-list">
-          @for (recipient of selectedRecipients(); track recipient.id) {
-            <div class="mail-selected-recipient-chip">
-              <div class="mail-selected-recipient-text">
-                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
-                @if (recipient.subtitle) {
-                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
-                }
-              </div>
-              <button
-                type="button"
-                class="mail-selected-recipient-remove"
-                (click)="removeSelectedContact(recipient.id)"
-              >
-                Retirer
-              </button>
-            </div>
-          }
-        </div>
-      </details>
+      <collapsible-chip-list
+        title="Destinataires sélectionnés"
+        [items]="selectedRecipients()"
+        (removeItem)="removeSelectedContact($event)"
+      />
       <div class="mail-writing-shell" [class.mail-writing-shell--with-floating-side]="hasDocumentPayload()">
         <div class="mail-writing-layout" [class.mail-writing-layout--with-side]="hasDocumentPayload()">
           <div class="mail-writing-left">
@@ -486,34 +440,18 @@
           <span class="mail-placeholder-value mail-placeholder-value--violet">{{ selectedTemplateSourceLabel() }}</span>
         </div>
       </div>
-      <details class="mail-selected-recipients-card">
-        <summary class="mail-selected-recipients-head">
-          <span class="mail-selected-recipients-title">Destinataires sélectionnés</span>
-          <span class="mail-selected-recipients-summary-right">
-            <span class="mail-selected-recipients-count">{{ selectedCount() }}</span>
-            <span class="mail-selected-recipients-chevron">▾</span>
-          </span>
-        </summary>
-        <div class="mail-selected-recipients-list">
-          @for (recipient of selectedRecipients(); track recipient.id) {
-            <div class="mail-selected-recipient-chip">
-              <div class="mail-selected-recipient-text">
-                <div class="mail-selected-recipient-name">{{ recipient.name }}</div>
-                @if (recipient.subtitle) {
-                  <div class="mail-selected-recipient-subtitle">{{ recipient.subtitle }}</div>
-                }
-              </div>
-              <button
-                type="button"
-                class="mail-selected-recipient-remove"
-                (click)="removeSelectedContact(recipient.id)"
-              >
-                Retirer
-              </button>
-            </div>
-          }
-        </div>
-      </details>
+      <collapsible-chip-list
+        title="Destinataires sélectionnés"
+        [items]="selectedRecipients()"
+        (removeItem)="removeSelectedContact($event)"
+      />
+      @if (canUseEmailAttachments() && emailAttachmentChipItems().length) {
+        <collapsible-chip-list
+          title="Pièces jointes"
+          [items]="emailAttachmentChipItems()"
+          (removeItem)="removeEmailAttachment($event)"
+        />
+      }
       <div class="mail-preview-card">
         <div class="mail-preview-recipient">
           <form-select-component
@@ -534,8 +472,26 @@
           }
         </div>
       </div>
-      <div class="mail-actions">
+      <div class="mail-actions mail-actions--preview">
         <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
+        @if (canUseEmailAttachments()) {
+          <input
+            #emailAttachmentInput
+            type="file"
+            class="mail-attachment-input"
+            [accept]="emailAttachmentAccept"
+            [attr.multiple]="canAddEmailAttachment() ? '' : null"
+            (change)="onEmailAttachmentInput($event)"
+          />
+          <button-label-component
+            type="ghost"
+            htmlType="button"
+            [disabled]="!canAddEmailAttachment() || sendingState() === 'loading'"
+            (click)="openEmailAttachmentPicker(emailAttachmentInput)"
+          >
+            Ajouter une pièce jointe
+          </button-label-component>
+        }
         <button-label-component
           type="primary"
           [disabled]="sendingState() === 'loading' || !selectedCount()"

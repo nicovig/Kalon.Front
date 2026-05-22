@@ -36,9 +36,9 @@ export interface IContactAddress {
 }
 
 // export type OrganizationLegalXXXX =
-//   | 'general_interest_66'   // intérêt général — réduction IS 60%
-//   | 'public_utility_66'     // utilité publique — réduction IS 60%
-//   | 'aid_organization_75';  // aide aux personnes — réduction IS 60% (taux particulier differ)
+//   | 'general_interest_66'   // intérêt général - réduction IS 60%
+//   | 'public_utility_66'     // utilité publique - réduction IS 60%
+//   | 'aid_organization_75';  // aide aux personnes - réduction IS 60% (taux particulier differ)
 
  export type EnterpriseSupportKind =
   | 'patronage'

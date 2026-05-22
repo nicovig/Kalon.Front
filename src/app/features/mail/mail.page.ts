@@ -20,6 +20,10 @@ import {
 import { FloatingStepBarComponent } from '../../layout/floating-step-bar/floating-step-bar.component';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import {
+  CollapsibleChipItem,
+  CollapsibleChipListComponent
+} from '../../layout/collapsible-chip-list/collapsible-chip-list.component';
+import {
   MailAvailabilityMode,
   MailContactSelectorComponent,
   MailSelectorItem
@@ -89,6 +93,14 @@ type SendResultModalData = {
   failedRecipients: SendResultErrorItem[];
   returnedDocuments: { fileName: string }[];
 };
+type EmailAttachmentItem = {
+  id: string;
+  file: File;
+};
+
+const MAX_EMAIL_ATTACHMENTS = 2;
+const EMAIL_ATTACHMENT_ACCEPT =
+  '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv,.zip';
 
 @Component({
   selector: 'mail-page',
@@ -110,7 +122,8 @@ type SendResultModalData = {
     FormSelectComponent,
     FormTextareaComponent,
     FormDateComponent,
-    FormsModule
+    FormsModule,
+    CollapsibleChipListComponent
   ]
 })
 export class MailPageComponent {
@@ -510,6 +523,9 @@ export class MailPageComponent {
 
   protected chooseType(kind: SendType): void {
     this.selectedSendType.set(kind);
+    if (kind !== 'message') {
+      this.clearEmailAttachments();
+    }
     if (kind === 'tax_receipt') {
       this.ensureDefaultTaxReceiptPeriod();
     }
@@ -525,6 +541,9 @@ export class MailPageComponent {
 
   protected chooseMethod(kind: SendMethod): void {
     this.selectedSendMethod.set(kind);
+    if (kind !== 'email') {
+      this.clearEmailAttachments();
+    }
     this.applyDefaultAvailabilityForMethod(kind);
   }
 
@@ -581,7 +600,7 @@ export class MailPageComponent {
     this.emailTemplates().map((tpl) => ({
       id: tpl.id,
       label: tpl.label,
-      subject: tpl.subject || '—',
+      subject: tpl.subject || '-',
       raw: tpl
     }))
   );
@@ -639,6 +658,22 @@ export class MailPageComponent {
   private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
   protected readonly previewRecipientId = signal<string>('');
   protected readonly sendingState = signal<'idle' | 'loading'>('idle');
+  protected readonly emailAttachments = signal<EmailAttachmentItem[]>([]);
+  protected readonly maxEmailAttachments = MAX_EMAIL_ATTACHMENTS;
+  protected readonly emailAttachmentAccept = EMAIL_ATTACHMENT_ACCEPT;
+  protected readonly canUseEmailAttachments = computed(
+    () => this.selectedSendType() === 'message' && this.selectedSendMethod() === 'email'
+  );
+  protected readonly canAddEmailAttachment = computed(
+    () => this.canUseEmailAttachments() && this.emailAttachments().length < MAX_EMAIL_ATTACHMENTS
+  );
+  protected readonly emailAttachmentChipItems = computed<CollapsibleChipItem[]>(() =>
+    this.emailAttachments().map((item) => ({
+      id: item.id,
+      name: item.file.name,
+      subtitle: formatFileSizeLabel(item.file.size)
+    }))
+  );
   protected readonly sendResultModal = signal<SendResultModalData | null>(null);
   protected readonly canContinueFromTemplateStep = computed(() => {
     if (!this.hasTemplateStep()) return true;
@@ -967,6 +1002,31 @@ export class MailPageComponent {
     this.previewRecipientId.set(value);
   }
 
+  protected onEmailAttachmentInput(event: Event): void {
+    if (!this.canAddEmailAttachment()) return;
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files?.length) return;
+    const remaining = MAX_EMAIL_ATTACHMENTS - this.emailAttachments().length;
+    const picked = Array.from(files).slice(0, remaining);
+    if (!picked.length) return;
+    const nextItems = picked.map((file) => ({
+      id: `att-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      file
+    }));
+    this.emailAttachments.update((list) => [...list, ...nextItems]);
+    input.value = '';
+  }
+
+  protected removeEmailAttachment(id: string): void {
+    this.emailAttachments.update((list) => list.filter((item) => item.id !== id));
+  }
+
+  protected openEmailAttachmentPicker(input: HTMLInputElement): void {
+    if (!this.canAddEmailAttachment()) return;
+    input.click();
+  }
+
   protected async sendEmail(): Promise<void> {
     await this.dispatchSend('email');
   }
@@ -981,6 +1041,8 @@ export class MailPageComponent {
     if (!recipientIds.length) return;
     if (this.sendingState() === 'loading') return;
     this.sendingState.set('loading');
+    const hadEmailAttachments =
+      channel === 'email' && this.canUseEmailAttachments() && this.emailAttachments().length > 0;
     try {
       const payload: SendDocumentDtoApiModel = {
         documentType: this.selectedSendType() ?? 'message',
@@ -1019,8 +1081,16 @@ export class MailPageComponent {
           returnedDocuments: returnedDocuments.length ? returnedDocuments : [{ fileName }]
         });
       } else {
+        const attachmentFiles = this.canUseEmailAttachments()
+          ? this.emailAttachments().map((item) => item.file)
+          : [];
         const result = await firstValueFrom(
-          this.http.post<SendDocumentResultDtoApiModel>(API_ENDPOINTS.sending.send(), payload)
+          attachmentFiles.length
+            ? this.http.post<SendDocumentResultDtoApiModel>(
+                API_ENDPOINTS.sending.send(),
+                this.buildSendEmailFormData(payload, attachmentFiles)
+              )
+            : this.http.post<SendDocumentResultDtoApiModel>(API_ENDPOINTS.sending.send(), payload)
         );
         const successCount = result?.successCount ?? 0;
         const errorCount = result?.errorCount ?? 0;
@@ -1058,11 +1128,27 @@ export class MailPageComponent {
         );
       }
       this.dashboardNotificationStore.refresh();
+      if (hadEmailAttachments) {
+        this.clearEmailAttachments();
+      }
     } catch {
       this.toast.show(channel === 'print' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
     } finally {
       this.sendingState.set('idle');
     }
+  }
+
+  private buildSendEmailFormData(payload: SendDocumentDtoApiModel, files: File[]): FormData {
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(payload));
+    for (const file of files) {
+      formData.append('attachments', file, file.name);
+    }
+    return formData;
+  }
+
+  private clearEmailAttachments(): void {
+    this.emailAttachments.set([]);
   }
 
   private async parsePrintResponse(response: HttpResponse<SendPrintResponseApiModel>): Promise<PrintDocumentResultDtoApiModel | null> {
@@ -1121,6 +1207,7 @@ export class MailPageComponent {
     this.taxReceiptPeriodFrom.set('');
     this.taxReceiptPeriodTo.set('');
     this.periodDonationsWrite.set([]);
+    this.clearEmailAttachments();
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {},
@@ -1295,14 +1382,14 @@ export class MailPageComponent {
     if (value === 'tax_receipt') return 'Reçu fiscal';
     if (value === 'payment_attestation') return 'Attestation de cotisation';
     if (value === 'membership_certificate') return "Certificat d'adhésion";
-    return '—';
+    return '-';
   }
 
   protected selectedSendMethodLabel(): string {
     const value = this.selectedSendMethod();
     if (value === 'email') return 'Email';
     if (value === 'print') return 'Courrier papier';
-    return '—';
+    return '-';
   }
 
   protected selectedTemplateSourceLabel(): string {
@@ -1590,5 +1677,12 @@ export class MailPageComponent {
     if (type === 'sponsoring') return 'Mécénat';
     return 'Don financier';
   }
+}
+
+function formatFileSizeLabel(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 

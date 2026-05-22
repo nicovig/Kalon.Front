@@ -3355,7 +3355,7 @@
           "Sending"
         ],
         "summary": "Envoi email",
-        "description": "Envoie un email. Si DocumentType = tax_receipt, le backend choisit automatiquement le CERFA par destinataire: cerfa_11580 (particulier) ou cerfa_16216 (entreprise), y compris pour des listes RecipientIds mixtes.",
+        "description": "Envoie un email (JSON ou multipart/form-data). Multipart: champ 'payload' (JSON SendDocumentDto) + jusqu'à 2 fichiers 'attachments'. Si DocumentType = tax_receipt, le backend choisit automatiquement le CERFA par destinataire.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3363,12 +3363,7 @@
                 "$ref": "#/components/schemas/SendDocumentDto"
               }
             },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendDocumentDto"
-              }
-            },
-            "application/*+json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/SendDocumentDto"
               }

@@ -1,19 +1,91 @@
 <app-popup-shell [maxWidth]="'560px'" [zIndex]="2000" (dismiss)="onDismiss()">
   <div popup-header>
-    <div class="app-popup-title">Dons — {{ contactTitle() }}</div>
+    <div class="app-popup-title">Dons {{ contactTitle() }}</div>
     <p class="app-popup-sub">Historique des dons enregistrés pour ce profil.</p>
   </div>
-  @if (donationRows().length === 0) {
-    <div class="dd-empty">Aucun don enregistré pour ce profil.</div>
-  } @else {
-    <div class="dd-table-wrap">
-      <table-component
-        [rows]="donationRows()"
-        [columns]="donationColumns"
-        [showSearch]="false"
-        [pageSizeOptions]="[5, 10, 25]"
-        [initialPageSize]="10"
-      />
-    </div>
+
+  <div class="cd-actions">
+    <button
+      type="button"
+      class="add-donation-choice cd-add-choice"
+      [class.active]="addFormOpen"
+      (click)="openAddForm()"
+    >
+      <span class="add-donation-choice-ico">✍️</span>
+      <span class="add-donation-choice-ttl">Ajouter un don</span>
+      <span class="add-donation-choice-desc">Saisir un montant et l'enregistrer pour ce profil</span>
+    </button>
+  </div>
+
+  @if (addFormOpen) {
+    <section class="cd-add">
+      <form class="add-donation-manual cd-add-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="add-donation-manual-grid">
+          <div class="add-donation-field">
+            <label class="add-donation-label" for="cd-donation-amount">Montant (€)</label>
+            <form-text-component
+              id="cd-donation-amount"
+              formControlName="amount"
+              placeholder="50"
+              type="text"
+              [icon]="null"
+              width="100%"
+            ></form-text-component>
+          </div>
+          <div class="add-donation-field">
+            <label class="add-donation-label" for="cd-donation-date">Date du don</label>
+            <form-date-component
+              id="cd-donation-date"
+              formControlName="date"
+              width="100%"
+              [max]="todayDateString"
+            ></form-date-component>
+          </div>
+        </div>
+
+        <div class="add-donation-field">
+          <label class="add-donation-label">Moyen de paiement</label>
+          <div class="add-donation-manual-grid add-donation-manual-grid--payment">
+            <button-radio [control]="paymentMethodControl" value="bank_transfer">Virement</button-radio>
+            <button-radio [control]="paymentMethodControl" value="cash">Espèces</button-radio>
+            <button-radio [control]="paymentMethodControl" value="check">Chèques</button-radio>
+            <button-radio [control]="paymentMethodControl" value="other">Autre</button-radio>
+          </div>
+        </div>
+
+        @if (submitted && form.invalid) {
+          <div class="add-donation-error" role="alert">Indiquez un montant valide et une date.</div>
+        }
+        @if (saving) {
+          <inline-loader label="Enregistrement du don..."></inline-loader>
+        }
+        <div class="add-donation-actions">
+          <button-label-component type="ghost" htmlType="button" (click)="closeAddForm()">
+            Annuler
+          </button-label-component>
+          <button-label-component type="primary" htmlType="submit" [disabled]="saving">
+            Enregistrer ce don
+          </button-label-component>
+        </div>
+      </form>
+    </section>
   }
+
+  <section class="cd-history">
+    <h3 class="cd-history-title">Historique</h3>
+    @if (donationRows().length === 0) {
+      <div class="dd-empty">Aucun don enregistré pour ce profil.</div>
+    } @else {
+      <div class="dd-table-wrap">
+        <table-component
+          [rows]="donationRows()"
+          [columns]="donationColumns"
+          [showSearch]="false"
+          [pageSizeOptions]="[5, 10, 25]"
+          [initialPageSize]="10"
+          [isHorizontalScrollable]="false"
+        />
+      </div>
+    }
+  </section>
 </app-popup-shell>

@@ -161,11 +161,11 @@ export class ImportPageComponent implements OnInit {
       const bag = collectDonationImportBag(r, b);
       const email = (bag.contactEmail ?? '').trim();
       const contact = email ? this.contactStore.findContactByLink(email) : undefined;
-      const contactName = contact ? contactDisplayName(contact) : '—';
+      const contactName = contact ? contactDisplayName(contact) : '-';
       return {
-        date: bag.donationDate ?? '—',
-        amount: bag.donationAmount ?? '—',
-        contactEmail: email || '—',
+        date: bag.donationDate ?? '-',
+        amount: bag.donationAmount ?? '-',
+        contactEmail: email || '-',
         contactName
       };
     });
@@ -250,7 +250,7 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly fileColumnSelectOptions = computed((): FormSelectOption[] => {
     const h = this.headers();
-    const opts: FormSelectOption[] = [{ value: '', label: '— Aucune colonne —' }];
+    const opts: FormSelectOption[] = [{ value: '', label: '- Aucune colonne -' }];
     for (let i = 0; i < h.length; i++) {
       const label = h[i]?.trim() ? h[i] : `(Colonne ${i + 1})`;
       opts.push({ value: String(i), label });
@@ -974,9 +974,9 @@ export class ImportPageComponent implements OnInit {
     }
     const addedPart = created > 0 ? `${created} profil(s) ajouté(s)` : '';
     const updatedPart = updated > 0 ? `${updated} profil(s) mis à jour` : '';
-    const counts = [addedPart, updatedPart].filter(Boolean).join(' — ');
+    const counts = [addedPart, updatedPart].filter(Boolean).join(' - ');
     this.toast.show(
-      `${counts}${skipped > 0 ? ` — ${skipped} ligne(s) ignorée(s)` : ''}.`,
+      `${counts}${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
       'success',
       5000
     );
@@ -1055,7 +1055,7 @@ export class ImportPageComponent implements OnInit {
       return;
     }
     this.toast.show(
-      `${created} don(s) enregistré(s)${skipped > 0 ? ` — ${skipped} ligne(s) ignorée(s)` : ''}.`,
+      `${created} don(s) enregistré(s)${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
       'success',
       5000
     );
@@ -1152,11 +1152,11 @@ export class ImportPageComponent implements OnInit {
     }
     const createdPart = contactsCreated > 0 ? `${contactsCreated} ${contactsCreated === 1 ? 'profil' : 'profils'} créé${contactsCreated === 1 ? '' : 's'}` : '';
     const updatedPart = contactsUpdated > 0 ? `${contactsUpdated} ${contactsUpdated === 1 ? 'profil' : 'profils'} mis à jour${contactsUpdated === 1 ? '' : 's'}` : '';
-    const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' — ');
+    const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' - ');
     this.toast.show(
       `${contactsPart}${
         donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'don' : 'dons'} associé${donationsCreated === 1 ? '' : 's'}` : ''
-      }${skipped > 0 ? ` — ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
+      }${skipped > 0 ? ` - ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
       'success',
       5500
     );

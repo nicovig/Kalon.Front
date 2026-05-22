@@ -10,9 +10,22 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ButtonRadioComponent {
+  private static nextGroupId = 0;
+  private static readonly groupNameByControl = new WeakMap<FormControl<string>, string>();
+
   @Input({ required: true }) control!: FormControl<string>;
   @Input({ required: true }) value!: string;
   @Input() name: string | null = null;
 
-  protected readonly instanceName = `radio-${Math.random().toString(16).slice(2)}`;
+  protected get radioName(): string {
+    if (this.name) {
+      return this.name;
+    }
+    let groupName = ButtonRadioComponent.groupNameByControl.get(this.control);
+    if (!groupName) {
+      groupName = `radio-group-${ButtonRadioComponent.nextGroupId++}`;
+      ButtonRadioComponent.groupNameByControl.set(this.control, groupName);
+    }
+    return groupName;
+  }
 }

@@ -181,7 +181,7 @@ export class DashboardPageComponent {
 
   private contributionTypeLabel(contact: IContact | undefined): string {
     if (!contact) {
-      return '—';
+      return '-';
     }
     switch (contact.kind) {
       case 'company':
@@ -196,7 +196,7 @@ export class DashboardPageComponent {
   }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {
-    if (!paymentMethod) return '—';
+    if (!paymentMethod) return '-';
     switch (paymentMethod) {
       case 'bank_transfer':
         return 'Virement';

@@ -6,6 +6,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.tbl-wrap-horizontal-scroll-off {
+  overflow-x: hidden;
+}
+
 table {
   width: 100%;
   min-width: 680px;

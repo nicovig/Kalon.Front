@@ -88,10 +88,10 @@
           title="Relier vos colonnes à Kalon"
           [subtitle]="
             importMode() === 'donations'
-              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon — à droite : colonne du fichier (détection automatique).'
+              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon - à droite : colonne du fichier (détection automatique).'
               : importMode() === 'combined'
                 ? 'Champs obligatoires : email + (Nom ou Prénom). Si don sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
-                : 'Champs obligatoires : Email + (Nom ou Prénom). À gauche : champ Kalon — à droite : colonne du fichier détectée automatiquement.'
+                : 'Champs obligatoires : Email + (Nom ou Prénom). À gauche : champ Kalon - à droite : colonne du fichier détectée automatiquement.'
           "
           paddingClass="advanced"
         >
@@ -155,7 +155,7 @@
             <div class="imp-preview-head">
               <div id="imp-preview-title" class="imp-preview-title">Aperçu en direct</div>
               <p class="imp-preview-sub">
-                {{ sampleRows().length }} ligne(s) d’exemple — ce que Kalon comprendra une fois
+                {{ sampleRows().length }} ligne(s) d’exemple - ce que Kalon comprendra une fois
                 l’import terminé
               </p>
             </div>
@@ -177,17 +177,17 @@
                       @for (p of previewRows(); track $index) {
                         <tr>
                           <td>{{ p.kind === 'company' ? 'Entreprise' : 'Particulier' }}</td>
-                          <td>{{ p.lastname || '—' }}</td>
+                          <td>{{ p.lastname || '-' }}</td>
                           <td>
                             @if (p.kind === 'company') {
-                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '—') }}
+                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '-') }}
                             } @else {
-                              {{ p.firstname || '—' }}
+                              {{ p.firstname || '-' }}
                             }
                           </td>
-                          <td>{{ p.email || '—' }}</td>
-                          <td>{{ p.phone || '—' }}</td>
-                          <td>{{ p.address || '—' }}</td>
+                          <td>{{ p.email || '-' }}</td>
+                          <td>{{ p.phone || '-' }}</td>
+                          <td>{{ p.address || '-' }}</td>
                         </tr>
                       }
                     </tbody>
@@ -233,19 +233,19 @@
                       @for (p of combinedPreviewRows(); track $index) {
                         <tr>
                           <td>{{ p.kind === 'company' ? 'Entreprise' : 'Particulier' }}</td>
-                          <td>{{ p.lastname || '—' }}</td>
+                          <td>{{ p.lastname || '-' }}</td>
                           <td>
                             @if (p.kind === 'company') {
-                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '—') }}
+                              {{ p.firstname && p.contactLastname ? p.firstname + ' ' + p.contactLastname : (p.firstname || p.contactLastname || '-') }}
                             } @else {
-                              {{ p.firstname || '—' }}
+                              {{ p.firstname || '-' }}
                             }
                           </td>
-                          <td>{{ p.email || '—' }}</td>
-                          <td>{{ p.phone || '—' }}</td>
-                          <td>{{ p.address || '—' }}</td>
-                          <td>{{ p.donationDate || '—' }}</td>
-                          <td>{{ p.donationAmount || '—' }}</td>
+                          <td>{{ p.email || '-' }}</td>
+                          <td>{{ p.phone || '-' }}</td>
+                          <td>{{ p.address || '-' }}</td>
+                          <td>{{ p.donationDate || '-' }}</td>
+                          <td>{{ p.donationAmount || '-' }}</td>
                         </tr>
                       }
                     </tbody>

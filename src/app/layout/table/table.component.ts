@@ -52,6 +52,7 @@ export class TableComponent implements OnChanges {
   @Input() selectedRowKey = 'id';
   @Input() rowActions: TableRowAction[] = [];
   @Input() sortable = true;
+  @Input() isHorizontalScrollable = true;
 
   @Output() rowClick = new EventEmitter<unknown>();
   @Output() rowAction = new EventEmitter<{ actionId: string; row: unknown }>();

@@ -2,7 +2,7 @@
   <input
     type="radio"
     [value]="value"
-    [attr.name]="name ?? instanceName"
+    [attr.name]="radioName"
     [checked]="control.value === value"
     (change)="control.setValue(value)"
   />

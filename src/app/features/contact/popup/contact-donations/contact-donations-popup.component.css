@@ -1,3 +1,40 @@
+.cd-actions {
+  margin-bottom: 12px;
+}
+
+.cd-add-choice {
+  width: 100%;
+}
+
+.cd-add {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ink-10);
+}
+
+.cd-history-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.cd-add-form {
+  border-top: none;
+  padding-top: 0;
+}
+
+.cd-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .dd-empty {
   font-family: var(--font-body);
   font-size: 0.95rem;
@@ -7,7 +44,9 @@
 }
 
 .dd-table-wrap {
+  width: 500px;
   margin-top: 4px;
+  overflow: hidden;
 }
 
 .dd-table-wrap ::ng-deep .tbl-foot {

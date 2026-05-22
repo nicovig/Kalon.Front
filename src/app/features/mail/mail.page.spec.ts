@@ -21,6 +21,7 @@ describe('MailPageComponent filters', () => {
   let donations: IDonation[];
   let component: MailPageComponent;
   let capturedSendPayload: any = null;
+  let capturedSendFormData: FormData | null = null;
   let capturedPostUrl: string | null = null;
   let capturedGetUrls: string[] = [];
   let sendResultResponse: { successCount: number; errorCount: number; errors: Array<{ contactId?: string; contactName?: string; reason?: string }> };
@@ -39,6 +40,7 @@ describe('MailPageComponent filters', () => {
     taxReceiptContactIdsMock.set(new Set());
     taxReceiptsToSendMock.set(0);
     capturedSendPayload = null;
+    capturedSendFormData = null;
     capturedPostUrl = null;
     capturedGetUrls = [];
     sendResultResponse = { successCount: 1, errorCount: 0, errors: [] };
@@ -159,7 +161,15 @@ describe('MailPageComponent filters', () => {
             },
             post: (url: string, payload: unknown) => {
               capturedPostUrl = url;
-              capturedSendPayload = payload;
+              if (payload instanceof FormData) {
+                capturedSendFormData = payload;
+                const rawPayload = payload.get('payload');
+                capturedSendPayload =
+                  typeof rawPayload === 'string' ? JSON.parse(rawPayload) : rawPayload;
+              } else {
+                capturedSendFormData = null;
+                capturedSendPayload = payload;
+              }
               if (String(url).includes('/api/Sending/print')) {
                 return of(printResponse);
               }
@@ -653,6 +663,39 @@ describe('MailPageComponent filters', () => {
     cmp.onPreviewRecipientChange('c1');
 
     expect(cmp.previewBodyHtml()).toContain('Ligne 1<br>Ligne 2');
+  });
+
+  it('envoie les pieces jointes en multipart pour un message email', async () => {
+    const cmp = component as any;
+    const file = new File(['contenu'], 'piece.pdf', { type: 'application/pdf' });
+    cmp.emailAttachments.set([{ id: 'att-1', file }]);
+    cmp.toggleContact('c1');
+    cmp.generatedSubject.set('Sujet');
+    cmp.generatedBody.set('<p>Contenu</p>');
+
+    await cmp.sendEmail();
+
+    expect(capturedSendFormData).toBeInstanceOf(FormData);
+    expect(capturedSendFormData?.getAll('attachments').length).toBe(1);
+    expect(capturedSendPayload?.documentType).toBe('message');
+    expect(capturedSendPayload?.channel).toBe('email');
+    expect(cmp.emailAttachments().length).toBe(0);
+  });
+
+  it('n envoie pas de multipart pour un reçu fiscal', async () => {
+    const cmp = component as any;
+    const file = new File(['contenu'], 'piece.pdf', { type: 'application/pdf' });
+    cmp.chooseType('tax_receipt');
+    cmp.chooseMethod('email');
+    cmp.emailAttachments.set([{ id: 'att-1', file }]);
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set('<p>Corps</p>');
+    cmp.generatedDocumentBody.set('<p>Document</p>');
+
+    await cmp.sendEmail();
+
+    expect(capturedSendFormData).toBeNull();
+    expect(capturedSendPayload?.documentType).toBe('tax_receipt');
   });
 
   it('envoie via Sending/send en mode email', async () => {
