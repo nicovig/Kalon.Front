@@ -177,7 +177,7 @@
   <app-popup-shell [maxWidth]="'min(560px, calc(100% - 32px))'" (dismiss)="closeRegenerateConfirm()">
     <div popup-header>
       <div class="app-popup-title">Confirmer la régénération</div>
-      <p class="app-popup-sub">Voulez-vous régénérer le document lié à ce log ?</p>
+      <p class="app-popup-sub">Voulez-vous régénérer le document lié ?</p>
       @if (regenerateLoading()) {
         <inline-loader label="Régénération en cours..." />
       }

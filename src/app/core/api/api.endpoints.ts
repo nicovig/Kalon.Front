@@ -69,7 +69,31 @@ export const API_ENDPOINTS = {
         })
       ),
     getById: ({ id }: { id: string }) => toUrl(`/api/Donation/${encodeURIComponent(id)}`),
-    update: ({ id }: { id: string }) => toUrl(`/api/Donation/${encodeURIComponent(id)}`)
+    update: ({ id }: { id: string }) => toUrl(`/api/Donation/${encodeURIComponent(id)}`),
+    listByContact: ({
+      contactId,
+      fromDate,
+      toDate,
+      donationType,
+      minAmount,
+      maxAmount
+    }: {
+      contactId: string;
+      fromDate?: string;
+      toDate?: string;
+      donationType?: string;
+      minAmount?: number;
+      maxAmount?: number;
+    }) =>
+      toUrl(
+        withQuery(`/api/Donation/contact/${encodeURIComponent(contactId)}`, {
+          fromDate,
+          toDate,
+          donationType,
+          minAmount,
+          maxAmount
+        })
+      )
   },
   health: {
     check: () => toUrl('/api/Health')
@@ -110,7 +134,19 @@ export const API_ENDPOINTS = {
       toUrl(withQuery(`/api/OrganizationDocuments/mail-logs/${encodeURIComponent(id)}`, { light }))
   },
   notification: {
-    dashboard: () => toUrl('/api/Notification/dashboard')
+    dashboard: ({
+      taxReceiptPeriodFrom,
+      taxReceiptPeriodTo
+    }: {
+      taxReceiptPeriodFrom?: string;
+      taxReceiptPeriodTo?: string;
+    } = {}) =>
+      toUrl(
+        withQuery('/api/Notification/dashboard', {
+          taxReceiptPeriodFrom,
+          taxReceiptPeriodTo
+        })
+      )
   },
   mailLog: {
     list: () => toUrl('/api/OrganizationDocuments/mail-logs')

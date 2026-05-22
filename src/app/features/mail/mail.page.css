@@ -43,6 +43,101 @@
   color: var(--ink-70);
 }
 
+.mail-period-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.mail-period-field {
+  display: grid;
+  gap: 6px;
+}
+
+.mail-period-field span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-70);
+}
+
+.mail-period-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 0.86rem;
+  color: var(--ink-70);
+  font-weight: 600;
+}
+
+.mail-period-list {
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  background: white;
+  padding: 12px;
+  max-height: min(420px, 50vh);
+  overflow: auto;
+  margin-bottom: 14px;
+}
+
+.mail-period-empty {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ink-70);
+  padding: 18px 8px;
+}
+
+.mail-period-group + .mail-period-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink-10);
+}
+
+.mail-period-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mail-period-group-name {
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.mail-period-group-total {
+  font-weight: 700;
+  color: var(--violet);
+  font-size: 0.88rem;
+}
+
+.mail-period-group-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.mail-period-group-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  font-size: 0.86rem;
+  color: var(--ink-70);
+}
+
+.mail-period-type {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-50, var(--ink-70));
+}
+
 .mail-actions {
   display: flex;
   justify-content: center;
@@ -635,6 +730,17 @@
   margin-top: 14px;
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .mail-period-form {
+    grid-template-columns: 1fr;
+  }
+
+  .mail-period-group-list li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
 
 @media (max-width: 1100px) {

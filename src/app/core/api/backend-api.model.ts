@@ -138,6 +138,11 @@ export interface DonationListResponse {
   totalPages?: number;
 }
 
+export interface DonationByContactListResponseApiModel {
+  contactId?: string;
+  items?: DonationApiModel[] | null;
+}
+
 export interface ContactStatusSettingsApiModel {
   id?: string;
   organizationId?: string;
@@ -313,6 +318,8 @@ export interface SendDocumentDtoApiModel {
   recipientIds?: string[] | null;
   signatureBlockId?: string | null;
   donationIds?: string[] | null;
+  taxReceiptPeriodFrom?: string | null;
+  taxReceiptPeriodTo?: string | null;
 }
 
 export interface SendDocumentErrorDtoApiModel {
@@ -352,4 +359,6 @@ export interface NotificationDashboardResponseApiModel {
   contactsToRemind?: NotificationContactItemApiModel[] | null;
   contactsToSendTaxReceipts?: NotificationContactItemApiModel[] | null;
   physicalLettersToSendCount?: number;
+  taxReceiptPeriodFrom?: string | null;
+  taxReceiptPeriodTo?: string | null;
 }

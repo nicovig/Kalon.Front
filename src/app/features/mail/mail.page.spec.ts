@@ -69,7 +69,10 @@ describe('MailPageComponent filters', () => {
           provide: DonationStoreService,
           useValue: {
             donations: () => donations,
-            loadDonationsFromApi: () => of(donations)
+            loadDonationsFromApi: () => of(donations),
+            queryDonations: () => of(donations),
+            queryDonationsForContacts: ({ contactIds }: { contactIds: string[] }) =>
+              of(donations.filter((d) => contactIds.includes(d.contactId)))
           }
         },
         {
@@ -126,6 +129,8 @@ describe('MailPageComponent filters', () => {
             taxReceiptsToSend: taxReceiptsToSendMock.asReadonly(),
             physicalLettersToSend: signal(0).asReadonly(),
             taxReceiptContactIds: taxReceiptContactIdsMock.asReadonly(),
+            taxReceiptPeriodFrom: signal<string | null>(null).asReadonly(),
+            taxReceiptPeriodTo: signal<string | null>(null).asReadonly(),
             hasAnyPending: signal(false).asReadonly(),
             refresh: () => undefined,
             reset: () => undefined
@@ -348,7 +353,7 @@ describe('MailPageComponent filters', () => {
     const marie = cmp.recipientItems().find((item: { id: string }) => item.id === 'c1');
 
     expect(marie?.infoText).toContain('3 contributions');
-    expect(marie?.infoText).toContain('150 cumulés');
+    expect(marie?.infoText).toContain('150€ cumulés');
     expect(marie?.detailText).toContain('Dernier don :');
     expect(marie?.detailText).toContain('Don moyen :');
   });
@@ -435,13 +440,17 @@ describe('MailPageComponent filters', () => {
     expect(cmp.activeStepKey()).toBe('destinataires');
   });
 
-  it('saute directement a ecriture pour un recu fiscal', () => {
+  it('passe par selection periode avant ecriture pour un recu fiscal', () => {
     const cmp = component as any;
 
     cmp.chooseType('tax_receipt');
     cmp.toggleContact('c1');
     cmp.goToTemplateStep();
 
+    expect(cmp.activeStepKey()).toBe('selection_periode');
+    cmp.taxReceiptPeriodFrom.set('2025-01-01');
+    cmp.taxReceiptPeriodTo.set('2025-12-31');
+    cmp.goToWritingStepFromPeriod();
     expect(cmp.activeStepKey()).toBe('ecriture');
   });
 
@@ -537,7 +546,10 @@ describe('MailPageComponent filters', () => {
           provide: DonationStoreService,
           useValue: {
             donations: () => donations,
-            loadDonationsFromApi: () => of(donations)
+            loadDonationsFromApi: () => of(donations),
+            queryDonations: () => of(donations),
+            queryDonationsForContacts: ({ contactIds }: { contactIds: string[] }) =>
+              of(donations.filter((d) => contactIds.includes(d.contactId)))
           }
         },
         {
@@ -579,6 +591,8 @@ describe('MailPageComponent filters', () => {
             taxReceiptsToSend: taxReceiptsToSendMock.asReadonly(),
             physicalLettersToSend: signal(0).asReadonly(),
             taxReceiptContactIds: taxReceiptContactIdsMock.asReadonly(),
+            taxReceiptPeriodFrom: signal<string | null>(null).asReadonly(),
+            taxReceiptPeriodTo: signal<string | null>(null).asReadonly(),
             hasAnyPending: signal(false).asReadonly(),
             refresh: () => undefined,
             reset: () => undefined
@@ -692,6 +706,35 @@ describe('MailPageComponent filters', () => {
     await cmp.sendEmail();
 
     expect(capturedSendPayload?.bodyHtml).toContain('Bonjour<br>Deuxieme ligne');
+  });
+
+  it('affiche l etape selection periode pour un reçu fiscal', () => {
+    const cmp = component as any;
+    cmp.chooseType('tax_receipt');
+    cmp.chooseMethod('email');
+    cmp.toggleContact('c1');
+    cmp.goToNextAfterRecipients();
+
+    expect(cmp.activeStepKey()).toBe('selection_periode');
+    expect(cmp.flowSteps().some((s: { key: string }) => s.key === 'selection_periode')).toBe(true);
+    expect(cmp.flowSteps().some((s: { key: string }) => s.key === 'modele')).toBe(false);
+  });
+
+  it('envoie la periode du reçu fiscal dans le payload', async () => {
+    const cmp = component as any;
+    cmp.chooseType('tax_receipt');
+    cmp.chooseMethod('email');
+    cmp.toggleContact('c1');
+    cmp.taxReceiptPeriodFrom.set('2025-01-01');
+    cmp.taxReceiptPeriodTo.set('2025-12-31');
+    cmp.generatedBody.set('<p>Corps</p>');
+    cmp.generatedDocumentBody.set('<p>Document</p>');
+
+    await cmp.sendEmail();
+
+    expect(capturedSendPayload?.documentType).toBe('tax_receipt');
+    expect(capturedSendPayload?.taxReceiptPeriodFrom).toContain('2025-01-01');
+    expect(capturedSendPayload?.taxReceiptPeriodTo).toContain('2025-12-31');
   });
 
   it('envoie documentBodyHtml pour un envoi avec document', async () => {

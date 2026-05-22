@@ -28,6 +28,8 @@ import { ContactStoreService } from '../contact/contact.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
 import { ContactStatus, IContact, contactDisplayName } from '../../core/models/contact.model';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
+import { FormDateComponent } from '../../layout/forms/date/form-date.component';
+import { IDonation } from '../../core/models/donation.model';
 import { DonationStoreService } from '../donation/donation.store';
 import { OrganizationCustomContentStore } from '../account/organization-custom-content.store';
 import { ReminderTemplateTone } from '../../core/ia-agent/ia_agent.core';
@@ -46,7 +48,22 @@ import { UserStore } from '../../core/auth/user.store';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
 
-type SendTypeKey = 'choix_type' | 'choix_canal' | 'destinataires' | 'modele' | 'ecriture' | 'apercu';
+type SendTypeKey =
+  | 'choix_type'
+  | 'choix_canal'
+  | 'destinataires'
+  | 'selection_periode'
+  | 'modele'
+  | 'ecriture'
+  | 'apercu';
+type TaxReceiptPeriodDonationRow = {
+  id: string;
+  contactId: string;
+  contactName: string;
+  dateLabel: string;
+  amountLabel: string;
+  donationTypeLabel: string;
+};
 type SendType = 'tax_receipt' | 'payment_attestation' | 'membership_certificate' | 'message';
 type SendMethod = 'email' | 'print';
 type TemplateChoiceSource = 'template' | 'ia' | null;
@@ -92,6 +109,7 @@ type SendResultModalData = {
     MailContactSelectorComponent,
     FormSelectComponent,
     FormTextareaComponent,
+    FormDateComponent,
     FormsModule
   ]
 })
@@ -115,6 +133,7 @@ export class MailPageComponent {
     { key: 'choix_type', label: 'Type' },
     { key: 'choix_canal', label: 'Par quel moyen ?' },
     { key: 'destinataires', label: 'Destinataires' },
+    { key: 'selection_periode', label: 'Sélection période' },
     { key: 'modele', label: 'Modèle' },
     { key: 'ecriture', label: 'Écriture' },
     { key: 'apercu', label: 'Aperçu' }
@@ -304,10 +323,65 @@ export class MailPageComponent {
 
   protected readonly contactsCount = computed(() => this.contactStore.contacts().length);
   protected readonly hasTemplateStep = computed(() => this.selectedSendType() === 'message');
+  protected readonly hasTaxReceiptPeriodStep = computed(() => this.selectedSendType() === 'tax_receipt');
   protected readonly showEditorSubject = computed(() => true);
-  protected readonly flowSteps = computed<StepTrailItem[]>(() =>
-    this.hasTemplateStep() ? this.steps : this.steps.filter((s) => s.key !== 'modele')
-  );
+  protected readonly flowSteps = computed<StepTrailItem[]>(() => {
+    let flow = this.steps;
+    if (!this.hasTemplateStep()) {
+      flow = flow.filter((s) => s.key !== 'modele');
+    }
+    if (!this.hasTaxReceiptPeriodStep()) {
+      flow = flow.filter((s) => s.key !== 'selection_periode');
+    }
+    return flow;
+  });
+
+  protected readonly taxReceiptPeriodFrom = signal('');
+  protected readonly taxReceiptPeriodTo = signal('');
+  protected readonly periodDonationsLoading = signal(false);
+  private readonly periodDonationsWrite = signal<IDonation[]>([]);
+  protected readonly periodDonations = this.periodDonationsWrite.asReadonly();
+  protected readonly taxReceiptPeriodValid = computed(() => {
+    const from = this.taxReceiptPeriodFrom().trim();
+    const to = this.taxReceiptPeriodTo().trim();
+    return !!from && !!to && from <= to;
+  });
+  protected readonly taxReceiptPeriodDonationRows = computed<TaxReceiptPeriodDonationRow[]>(() => {
+    const selected = this.selectedContactIds();
+    return this.periodDonations()
+      .filter((d) => selected.has(d.contactId))
+      .map((d) => ({
+        id: d.id,
+        contactId: d.contactId,
+        contactName: d.contactDisplayName,
+        dateLabel: this.formatDonationDate(d.date),
+        amountLabel: `${this.formatAmount(d.amount)} €`,
+        donationTypeLabel: this.donationTypeLabel(d.donationType)
+      }))
+      .sort((a, b) => a.contactName.localeCompare(b.contactName, 'fr') || a.dateLabel.localeCompare(b.dateLabel, 'fr'));
+  });
+  protected readonly taxReceiptPeriodDonationsByContact = computed(() => {
+    const map = new Map<string, { contactName: string; rows: TaxReceiptPeriodDonationRow[]; total: number }>();
+    for (const row of this.taxReceiptPeriodDonationRows()) {
+      const bucket = map.get(row.contactId) ?? { contactName: row.contactName, rows: [], total: 0 };
+      bucket.rows.push(row);
+      const donation = this.periodDonations().find((d) => d.id === row.id);
+      bucket.total += donation?.amount ?? 0;
+      map.set(row.contactId, bucket);
+    }
+    return Array.from(map.values()).sort((a, b) => a.contactName.localeCompare(b.contactName, 'fr'));
+  });
+  protected readonly taxReceiptPeriodSummary = computed(() => {
+    const rows = this.taxReceiptPeriodDonationRows();
+    const total = rows.reduce((sum, row) => {
+      const donation = this.periodDonations().find((d) => d.id === row.id);
+      return sum + (donation?.amount ?? 0);
+    }, 0);
+    return {
+      count: rows.length,
+      contactCount: this.taxReceiptPeriodDonationsByContact().length
+    };
+  });
   protected readonly revealedSteps = computed<StepTrailItem[]>(() => {
     const flow = this.flowSteps();
     const current = this.activeStepKey();
@@ -413,6 +487,10 @@ export class MailPageComponent {
         this.selectedContactIds.set(new Set(contactIds));
       }
 
+      if (step === 'periode' || step === 'selection_periode') {
+        this.activeStepKey.set(type === 'tax_receipt' ? 'selection_periode' : 'ecriture');
+        return;
+      }
       if (step === 'modele') {
         this.activeStepKey.set(type === 'message' ? 'modele' : 'ecriture');
         return;
@@ -432,6 +510,9 @@ export class MailPageComponent {
 
   protected chooseType(kind: SendType): void {
     this.selectedSendType.set(kind);
+    if (kind === 'tax_receipt') {
+      this.ensureDefaultTaxReceiptPeriod();
+    }
     if (kind !== 'tax_receipt' && this.availabilityMode() === 'pending_tax_receipt') {
       const method = this.selectedSendMethod();
       if (method) {
@@ -460,9 +541,34 @@ export class MailPageComponent {
     this.activeStepKey.set('destinataires');
   }
 
-  protected goToTemplateStep(): void {
+  protected goToNextAfterRecipients(): void {
     if (!this.selectedContactIds().size) return;
+    if (this.hasTaxReceiptPeriodStep()) {
+      this.ensureDefaultTaxReceiptPeriod();
+      this.activeStepKey.set('selection_periode');
+      void this.loadPeriodDonations();
+      return;
+    }
     this.activeStepKey.set(this.hasTemplateStep() ? 'modele' : 'ecriture');
+  }
+
+  protected goToTemplateStep(): void {
+    this.goToNextAfterRecipients();
+  }
+
+  protected goToWritingStepFromPeriod(): void {
+    if (!this.taxReceiptPeriodValid()) return;
+    this.activeStepKey.set('ecriture');
+  }
+
+  protected onTaxReceiptPeriodFromChange(value: string): void {
+    this.taxReceiptPeriodFrom.set(value);
+    void this.loadPeriodDonations();
+  }
+
+  protected onTaxReceiptPeriodToChange(value: string): void {
+    this.taxReceiptPeriodTo.set(value);
+    void this.loadPeriodDonations();
   }
 
   protected readonly signatureBlocks = computed(() => this.customContentStore.textBlocks().filter((b) => b.role === 'signature'));
@@ -717,11 +823,19 @@ export class MailPageComponent {
       this.activeStepKey.set('choix_canal');
       return;
     }
+    if (current === 'selection_periode') {
+      this.activeStepKey.set('destinataires');
+      return;
+    }
     if (current === 'modele') {
       this.activeStepKey.set('destinataires');
       return;
     }
     if (current === 'ecriture') {
+      if (this.hasTaxReceiptPeriodStep()) {
+        this.activeStepKey.set('selection_periode');
+        return;
+      }
       this.activeStepKey.set(this.hasTemplateStep() ? 'modele' : 'destinataires');
       return;
     }
@@ -880,6 +994,10 @@ export class MailPageComponent {
         signatureBlockId: this.selectedSignatureBlockId(),
         donationIds: []
       };
+      if (this.selectedSendType() === 'tax_receipt') {
+        payload.taxReceiptPeriodFrom = this.toPeriodIsoStart(this.taxReceiptPeriodFrom());
+        payload.taxReceiptPeriodTo = this.toPeriodIsoEnd(this.taxReceiptPeriodTo());
+      }
       const selectedRecipients = this.selectedRecipients();
       if (channel === 'print') {
         const response = await firstValueFrom(
@@ -1000,6 +1118,9 @@ export class MailPageComponent {
     this.generatedBody.set('');
     this.generatedDocumentBody.set('');
     this.previewRecipientId.set('');
+    this.taxReceiptPeriodFrom.set('');
+    this.taxReceiptPeriodTo.set('');
+    this.periodDonationsWrite.set([]);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {},
@@ -1315,7 +1436,7 @@ export class MailPageComponent {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
-  private formatAmount(value: number): string {
+  protected formatAmount(value: number): string {
     return new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
@@ -1409,6 +1530,65 @@ export class MailPageComponent {
 
   private looksLikeHtml(value: string): boolean {
     return /<\/?[a-z][\s\S]*>/i.test(value);
+  }
+
+  private ensureDefaultTaxReceiptPeriod(): void {
+    if (this.taxReceiptPeriodFrom().trim() && this.taxReceiptPeriodTo().trim()) {
+      return;
+    }
+    const fromDashboard = this.dashboardNotificationStore.taxReceiptPeriodFrom();
+    const toDashboard = this.dashboardNotificationStore.taxReceiptPeriodTo();
+    if (fromDashboard && toDashboard) {
+      this.taxReceiptPeriodFrom.set(fromDashboard);
+      this.taxReceiptPeriodTo.set(toDashboard);
+      return;
+    }
+    const year = new Date().getFullYear() - 1;
+    this.taxReceiptPeriodFrom.set(`${year}-01-01`);
+    this.taxReceiptPeriodTo.set(`${year}-12-31`);
+  }
+
+  private async loadPeriodDonations(): Promise<void> {
+    const from = this.taxReceiptPeriodFrom().trim();
+    const to = this.taxReceiptPeriodTo().trim();
+    if (!from || !to || from > to) {
+      this.periodDonationsWrite.set([]);
+      return;
+    }
+    this.periodDonationsLoading.set(true);
+    try {
+      const donations = await firstValueFrom(
+        this.donationStore.queryDonationsForContacts({
+          contactIds: Array.from(this.selectedContactIds()),
+          fromDate: this.toPeriodIsoStart(from),
+          toDate: this.toPeriodIsoEnd(to)
+        })
+      );
+      this.periodDonationsWrite.set(donations);
+    } catch {
+      this.periodDonationsWrite.set([]);
+      this.toast.show('Impossible de charger les contributions sur cette période.', 'alert');
+    } finally {
+      this.periodDonationsLoading.set(false);
+    }
+  }
+
+  private toPeriodIsoStart(dateInput: string): string {
+    return `${dateInput}T00:00:00.000Z`;
+  }
+
+  private toPeriodIsoEnd(dateInput: string): string {
+    return `${dateInput}T23:59:59.999Z`;
+  }
+
+  private formatDonationDate(value: Date): string {
+    return this.formatShortDate(value);
+  }
+
+  private donationTypeLabel(type: IDonation['donationType']): string {
+    if (type === 'in_kind') return 'Don en nature';
+    if (type === 'sponsoring') return 'Mécénat';
+    return 'Don financier';
   }
 }
 
