@@ -86,7 +86,7 @@
           placeholder="Ex: Relance douce profils"
         />
       </label>
-      <label class="account-form-grid-full account-template-editor">
+      <div class="account-form-grid-full account-template-editor">
         <span>Contenu du message</span>
         <mail-editor
           [showSubject]="true"
@@ -103,7 +103,7 @@
           (selectedImageIdChange)="selectedEditorImageId.set($event)"
           [variableTags]="editorVariableTags()"
         ></mail-editor>
-      </label>
+      </div>
     </div>
     <div class="account-actions">
       <button-label-component type="ghost" (click)="cancelEmailTemplateEdit()">Réinitialiser</button-label-component>

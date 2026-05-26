@@ -244,6 +244,8 @@
 }
 
 .account-template-editor {
+  display: grid;
+  gap: 6px;
   min-width: 0;
 }
 

@@ -7,10 +7,16 @@
             <div class="mail-editor-subject-inline">
               <label for="mail-editor-subject">Objet</label>
               <input
+                #subjectInput
                 id="mail-editor-subject"
                 type="text"
                 [ngModel]="subject"
-                (ngModelChange)="onSubjectInput($event)"
+                (input)="onSubjectInput(subjectInput.value); rememberSubjectCaret(subjectInput)"
+                (focus)="rememberSubjectCaret(subjectInput)"
+                (click)="rememberSubjectCaret(subjectInput)"
+                (keyup)="rememberSubjectCaret(subjectInput)"
+                (select)="rememberSubjectCaret(subjectInput)"
+                (blur)="rememberSubjectCaret(subjectInput)"
                 placeholder="Objet du message"
               />
             </div>
@@ -56,7 +62,7 @@
               />
             </label>
           </div>
-          <div class="mail-editor-body">
+            <div class="mail-editor-body" (focusin)="markBodyAsInsertionTarget()" (click)="markBodyAsInsertionTarget()">
             <div class="mail-editor-dropzone" (dragover)="onEditorDragOver($event)" (drop)="onEditorDrop($event)">
               <tiptap-editor [editor]="editor"></tiptap-editor>
             </div>
@@ -124,8 +130,6 @@
                 <button
                   type="button"
                   class="mail-editor-tag mail-editor-tag--variable"
-                  draggable="true"
-                  (dragstart)="onVariableTagDragStart($event, tag)"
                   (click)="onVariableTagClick(tag)"
                 >
                   {{ tag.label }}

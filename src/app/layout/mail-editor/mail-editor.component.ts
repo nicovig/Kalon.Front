@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmojiHolderComponent } from './emoji-holder/emoji-holder.component';
@@ -85,6 +96,8 @@ const FontSize = Extension.create({
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MailEditorComponent implements OnChanges, OnDestroy {
+  @ViewChild('subjectInput') private subjectInput?: ElementRef<HTMLInputElement>;
+
   @Input() showSubject = true;
   @Input() showSidePanel = true;
   @Input() showMainPanel = true;
@@ -112,6 +125,9 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   protected selectedHighlightColor = '#fff3a3';
   protected selectedFontFamily = 'Inter, Arial, sans-serif';
   protected selectedFontSize = '14px';
+  private insertionTarget: 'subject' | 'body' = 'body';
+  private subjectSelectionStart = 0;
+  private subjectSelectionEnd = 0;
   protected readonly fontFamilies = [
     { value: 'Inter, Arial, sans-serif', label: 'Inter' },
     { value: 'Aptos, Arial, sans-serif', label: 'Aptos' },
@@ -127,6 +143,9 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   protected editor: Editor = new Editor({
     extensions: [StarterKit, Image, TextStyle, Color, Highlight.configure({ multicolor: true }), FontFamily, FontSize],
     content: '',
+    onFocus: () => {
+      this.insertionTarget = 'body';
+    },
     onUpdate: ({ editor }) => {
       this.bodyChange.emit(editor.getHTML());
     }
@@ -148,6 +167,17 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
 
   protected onSubjectInput(value: string): void {
     this.subjectChange.emit(value ?? '');
+  }
+
+  protected rememberSubjectCaret(input: HTMLInputElement): void {
+    this.insertionTarget = 'subject';
+    const fallback = input.value.length;
+    this.subjectSelectionStart = input.selectionStart ?? fallback;
+    this.subjectSelectionEnd = input.selectionEnd ?? this.subjectSelectionStart;
+  }
+
+  protected markBodyAsInsertionTarget(): void {
+    this.insertionTarget = 'body';
   }
 
   protected toggleMark(mark: 'bold' | 'italic'): void {
@@ -227,13 +257,11 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
       this.variableTagInsert.emit(tag);
       return;
     }
+    if (this.showSubject && this.insertionTarget === 'subject') {
+      this.insertVariableTagInSubject(tag.token);
+      return;
+    }
     this.editor.chain().focus().insertContent(tag.token).run();
-  }
-
-  protected onVariableTagDragStart(event: DragEvent, tag: MailEditorVariableTag): void {
-    if (!event.dataTransfer || !tag?.token) return;
-    event.dataTransfer.setData('text/plain', tag.token);
-    event.dataTransfer.effectAllowed = 'copy';
   }
 
   protected onEditorDragOver(event: DragEvent): void {
@@ -296,6 +324,24 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
     const image = this.images.find((item) => item.id === id);
     if (!image?.dataUrl) return;
     this.editor.chain().focus().setImage({ src: image.dataUrl, alt: image.label }).run();
+  }
+
+  private insertVariableTagInSubject(token: string): void {
+    const current = String(this.subject ?? '');
+    const start = Math.max(0, Math.min(this.subjectSelectionStart, current.length));
+    const end = Math.max(start, Math.min(this.subjectSelectionEnd, current.length));
+    const next = `${current.slice(0, start)}${token}${current.slice(end)}`;
+    const caret = start + token.length;
+    this.subject = next;
+    this.subjectSelectionStart = caret;
+    this.subjectSelectionEnd = caret;
+    this.subjectChange.emit(next);
+    queueMicrotask(() => {
+      const input = this.subjectInput?.nativeElement;
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(caret, caret);
+    });
   }
 
   private normalizeIncomingBody(raw: string): string {
