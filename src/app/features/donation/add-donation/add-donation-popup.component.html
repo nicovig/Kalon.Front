@@ -1,8 +1,8 @@
 <app-popup-shell [maxWidth]="'560px'" [zIndex]="2100" (dismiss)="onDismiss()">
   <div popup-header>
-    <div class="app-popup-title">Enregistrer des dons</div>
+    <div class="app-popup-title">Enregistrer des contributions</div>
     <p class="app-popup-sub">
-      Pour <strong>{{ displayName() }}</strong>, ajoutez des dons ou importez un fichier.
+      Pour <strong>{{ displayName() }}</strong>, ajoutez des contributions ou importez un fichier.
     </p>
   </div>
 
@@ -17,7 +17,7 @@
       <button type="button" class="add-donation-choice" (click)="goImportExcel()">
         <span class="add-donation-choice-ico">📥</span>
         <span class="add-donation-choice-ttl">Import de données</span>
-        <span class="add-donation-choice-desc">Importer des lignes de dons depuis un tableur</span>
+        <span class="add-donation-choice-desc">Importer des lignes de contributions depuis un tableur</span>
       </button>
     </div>
 
@@ -59,12 +59,12 @@
           <div class="add-donation-error" role="alert">Indiquez un montant valide et une date.</div>
         }
         @if (saving) {
-          <inline-loader label="Enregistrement du don..."></inline-loader>
+          <inline-loader label="Enregistrement de la contribution..."></inline-loader>
         }
         <div class="add-donation-actions">
           <button-label-component type="ghost" htmlType="button" (click)="onDismiss()">Plus tard</button-label-component>
           <button-label-component type="primary" htmlType="submit" [disabled]="saving">
-            Enregistrer ce don
+            Enregistrer cette contribution
           </button-label-component>
         </div>
       </form>

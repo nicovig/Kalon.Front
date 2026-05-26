@@ -111,9 +111,9 @@ export class ImportPageComponent implements OnInit {
       case 'contacts':
         return 'Import de profils';
       case 'donations':
-        return 'Import de dons';
+        return 'Import de contributions';
       case 'combined':
-        return 'Import de profils et dons';
+        return 'Import de profils et contributions';
       default:
         return 'Import de données';
     }
@@ -1155,7 +1155,7 @@ export class ImportPageComponent implements OnInit {
     const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' - ');
     this.toast.show(
       `${contactsPart}${
-        donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'don' : 'dons'} associé${donationsCreated === 1 ? '' : 's'}` : ''
+        donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'contribution' : 'contributions'} associé${donationsCreated === 1 ? '' : 's'}` : ''
       }${skipped > 0 ? ` - ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
       'success',
       5500

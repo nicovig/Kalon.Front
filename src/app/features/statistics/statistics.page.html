@@ -6,8 +6,8 @@
 <div class="st-shell">
   <div class="st-kpis">
     <card
-      title="Dons filtrés"
-      [subtitle]="'Nombre de dons dans le périmètre courant'"
+      title="Contributions filtrées"
+      [subtitle]="'Nombre de contributions dans le périmètre courant'"
       paddingClass="advanced"
     >
       <div class="st-kpi-val">{{ totalDonationsCount() }}</div>
@@ -15,7 +15,7 @@
 
     <card
       title="Montant total"
-      [subtitle]="'Somme des dons sur la sélection'"
+      [subtitle]="'Somme des contributions sur la sélection'"
       paddingClass="advanced"
     >
       <div class="st-kpi-val">{{ totalAmount() | number: '1.0-0' : 'fr-FR' }} €</div>
@@ -29,7 +29,7 @@
       <div class="st-kpi-val">{{ uniquecontactsCount() }}</div>
     </card>
 
-    <card title="Don moyen" [subtitle]="'Montant moyen par don'" paddingClass="advanced">
+    <card title="Contribution moyenne" [subtitle]="'Montant moyen par contribution'" paddingClass="advanced">
       <div class="st-kpi-row">
         <div class="st-kpi-val">{{ averageDonation() | number: '1.0-0' : 'fr-FR' }} €</div>
         <div class="st-kpi-helper">Part mécènes : {{ companyAmountShare() }}%</div>
@@ -128,8 +128,8 @@
   </card>
 
   <card
-    title="Détail des dons"
-    [subtitle]="totalDonationsCount() + ' don(s) trouvé(s) dans la sélection'"
+    title="Détail des contributions"
+    [subtitle]="totalDonationsCount() + ' contribution(s) trouvée(s) dans la sélection'"
     paddingClass="advanced"
   >
     <table-component

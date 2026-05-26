@@ -282,7 +282,7 @@ export class StatisticsPageComponent {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `statistiques-dons-${this.fileDateStamp()}.csv`;
+    anchor.download = `statistiques-contributions-${this.fileDateStamp()}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);

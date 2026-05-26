@@ -208,7 +208,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
   });
 
-  it('filtre sur le total de contributions minimum depuis les dons reels', () => {
+  it('filtre sur le total de contributions minimum depuis les contributions reelles', () => {
     const cmp = component as any;
     cmp.onAvailabilityModeChange('without_email');
 
@@ -217,7 +217,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
-  it('filtre sur le total de contributions maximum depuis les dons reels', () => {
+  it('filtre sur le total de contributions maximum depuis les contributions reelles', () => {
     const cmp = component as any;
 
     cmp.onTotalDonationMaxChange('100');
@@ -266,7 +266,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
   });
 
-  it('prefere les agregats contact a une liste partielle de dons', () => {
+  it('prefere les agregats contact a une liste partielle de contributions', () => {
     const cmp = component as any;
 
     cmp.onSearchQueryChange('marie');
@@ -369,7 +369,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
-  it('affiche les infos de dernier don et don moyen dans la liste', () => {
+  it('affiche les infos de dernier contribution et contribution moyenne dans la liste', () => {
     const cmp = component as any;
 
     const marie = cmp.recipientItems().find((item: { id: string }) => item.id === 'c1');

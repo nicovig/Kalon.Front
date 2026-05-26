@@ -640,7 +640,7 @@ export class MailPageComponent {
     { key: 'other', icon: '✍️', label: 'Autre' }
   ];
   protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
-    chill_reminder: "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des dons…",
+    chill_reminder: "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des contributions",
     fidelity_reminder: "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
     thank_you_reminder: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
     urgency_reminder: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",

@@ -15,7 +15,7 @@
     <app-popup-shell [maxWidth]="'760px'" [zIndex]="2065" (dismiss)="onDonationsImportPromptNo()">
       <div popup-header>
         <div class="app-popup-title">Données importées avec succès</div>
-        <p class="app-popup-sub">Souhaitez-vous importer les données de <b>dons</b> maintenant ?</p>
+        <p class="app-popup-sub">Souhaitez-vous importer les données de <b>contributions</b> maintenant ?</p>
       </div>
 
       <div class="imp-prompt-actions">
@@ -88,9 +88,9 @@
           title="Relier vos colonnes à Kalon"
           [subtitle]="
             importMode() === 'donations'
-              ? 'Champs obligatoires : Date du don + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon - à droite : colonne du fichier (détection automatique).'
+              ? 'Champs obligatoires : Date de la contribution + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon - à droite : colonne du fichier (détection automatique).'
               : importMode() === 'combined'
-                ? 'Champs obligatoires : email + (Nom ou Prénom). Si don sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
+                ? 'Champs obligatoires : email + (Nom ou Prénom). Si contribution sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
                 : 'Champs obligatoires : Email + (Nom ou Prénom). À gauche : champ Kalon - à droite : colonne du fichier détectée automatiquement.'
           "
           paddingClass="advanced"
@@ -225,7 +225,7 @@
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Adresse</th>
-                        <th>Date du don</th>
+                        <th>Date de la contribution</th>
                         <th>Montant</th>
                       </tr>
                     </thead>
