@@ -52,6 +52,7 @@ import { UserStore } from '../../core/auth/user.store';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
 import { SendingApiService } from '../../core/api/sending-api.service';
+import { MAX_EMAIL_ATTACHMENTS } from '../../core/config/api.config';
 
 type SendTypeKey =
   | 'choix_type'
@@ -99,9 +100,13 @@ type EmailAttachmentItem = {
   file: File;
 };
 
-const MAX_EMAIL_ATTACHMENTS = 2;
 const EMAIL_ATTACHMENT_ACCEPT =
   '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv,.zip';
+const EMAIL_ATTACHMENT_SEND_TYPES = new Set<SendType>([
+  'message',
+  'payment_attestation',
+  'membership_certificate'
+]);
 
 @Component({
   selector: 'mail-page',
@@ -207,13 +212,13 @@ export class MailPageComponent {
         key: 'payment_attestation',
         icon: '📄',
         title: 'Attestation de cotisation',
-        hint: 'Envoyez une attestation de cotisation à vos contacts.'
+        hint: 'Envoyez une attestation de cotisation automatiquement générée à vos contacts.'
       },
       {
         key: 'membership_certificate',
         icon: '🏅',
         title: "Certificat d'adhésion",
-        hint: 'Idéal pour les clubs sportifs et associations.'
+        hint: 'Envoyez un certificat d\'adhésion automatiquement généré à vos contacts.'
       }
     ];
     const filter = this.organizationSendTypeFilter();
@@ -525,7 +530,7 @@ export class MailPageComponent {
 
   protected chooseType(kind: SendType): void {
     this.selectedSendType.set(kind);
-    if (kind !== 'message') {
+    if (!EMAIL_ATTACHMENT_SEND_TYPES.has(kind)) {
       this.clearEmailAttachments();
     }
     if (kind === 'tax_receipt') {
@@ -663,11 +668,17 @@ export class MailPageComponent {
   protected readonly emailAttachments = signal<EmailAttachmentItem[]>([]);
   protected readonly maxEmailAttachments = MAX_EMAIL_ATTACHMENTS;
   protected readonly emailAttachmentAccept = EMAIL_ATTACHMENT_ACCEPT;
-  protected readonly canUseEmailAttachments = computed(
-    () => this.selectedSendType() === 'message' && this.selectedSendMethod() === 'email'
-  );
+  protected readonly canUseEmailAttachments = computed(() => {
+    const type = this.selectedSendType();
+    return this.selectedSendMethod() === 'email' && !!type && EMAIL_ATTACHMENT_SEND_TYPES.has(type);
+  });
   protected readonly canAddEmailAttachment = computed(
     () => this.canUseEmailAttachments() && this.emailAttachments().length < MAX_EMAIL_ATTACHMENTS
+  );
+  protected readonly emailAttachmentListTitle = computed(() =>
+    this.emailAttachments().length >= MAX_EMAIL_ATTACHMENTS
+      ? 'Pièces jointes - limite atteinte'
+      : 'Pièces jointes'
   );
   protected readonly emailAttachmentChipItems = computed<CollapsibleChipItem[]>(() =>
     this.emailAttachments().map((item) => ({

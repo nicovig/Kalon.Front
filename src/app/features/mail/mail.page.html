@@ -446,7 +446,7 @@
       />
       @if (canUseEmailAttachments() && emailAttachmentChipItems().length) {
         <collapsible-chip-list
-          title="Pièces jointes"
+          [title]="emailAttachmentListTitle()"
           [items]="emailAttachmentChipItems()"
           (removeItem)="removeEmailAttachment($event)"
         />

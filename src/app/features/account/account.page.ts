@@ -88,13 +88,13 @@ export class AccountPageComponent {
       key: 'payment_attestation',
       icon: '📄',
       title: 'Attestation de cotisation',
-      hint: 'Envoyez une attestation de cotisation à vos contacts.'
+      hint: 'Envoyez une attestation de cotisation automatiquement générée à vos contacts.'
     },
     {
       key: 'membership_certificate',
       icon: '🏅',
       title: "Certificat d'adhésion",
-      hint: 'Idéal pour les clubs sportifs et associations.'
+      hint: 'Envoyez un certificat d\'adhésion automatiquement généré à vos contacts.'
     }
   ] as const;
 
