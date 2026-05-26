@@ -318,7 +318,7 @@
       </div>
 
       <div class="mail-step4-choice-summary">
-        <span class="mail-step4-choice-label">Étape 5 utilisera :</span>
+        <span class="mail-step4-choice-label">Le texte utilisé sera :</span>
         <span class="mail-step4-choice-value">{{ templateChoiceLabel() }}</span>
       </div>
 
@@ -326,7 +326,6 @@
         <button-label-component type="ghost" (click)="goToPreviousStep()">Précédent</button-label-component>
         <button-label-component
           type="primary"
-          [disabled]="!canContinueFromTemplateStep()"
           (click)="goToWritingStep()"
         >
           Continuer

@@ -12,7 +12,9 @@ import { DonationStoreService } from '../donation/donation.store';
 import { IDonation } from '../../core/models/donation.model';
 import { IaAgentCore } from '../../core/ia-agent/ia_agent.core';
 import { OrganizationCustomContentStore } from '../account/organization-custom-content.store';
+import { SendingApiService, buildSendingSendFormData } from '../../core/api/sending-api.service';
 import { of as rxOf } from 'rxjs';
+import { SendDocumentDtoApiModel } from '../../core/api/backend-api.model';
 
 describe('MailPageComponent filters', () => {
   const taxReceiptContactIdsMock = signal<ReadonlySet<string>>(new Set());
@@ -26,6 +28,20 @@ describe('MailPageComponent filters', () => {
   let capturedGetUrls: string[] = [];
   let sendResultResponse: { successCount: number; errorCount: number; errors: Array<{ contactId?: string; contactName?: string; reason?: string }> };
   let printResponse: HttpResponse<Blob>;
+  const sendingApiMock = {
+    sendEmail: (payload: SendDocumentDtoApiModel, files: File[] = []) => {
+      capturedPostUrl = '/api/Sending/send';
+      if (files.length) {
+        capturedSendFormData = buildSendingSendFormData(payload, files);
+        capturedSendPayload = payload;
+      } else {
+        capturedSendFormData = null;
+        capturedSendPayload = payload;
+      }
+      return of(sendResultResponse);
+    }
+  };
+
   const mailEditorTagsBase = [
     { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
     { id: 'nom', label: 'Nom', token: '{{nom}}' },
@@ -139,6 +155,10 @@ describe('MailPageComponent filters', () => {
           }
         },
         {
+          provide: SendingApiService,
+          useValue: sendingApiMock
+        },
+        {
           provide: HttpClient,
           useValue: {
             get: (url: string) => {
@@ -161,16 +181,8 @@ describe('MailPageComponent filters', () => {
             },
             post: (url: string, payload: unknown) => {
               capturedPostUrl = url;
-              if (payload instanceof FormData) {
-                capturedSendFormData = payload;
-                const rawPayload = payload.get('payload');
-                capturedSendPayload =
-                  typeof rawPayload === 'string' ? JSON.parse(rawPayload) : rawPayload;
-              } else {
-                capturedSendFormData = null;
-                capturedSendPayload = payload;
-              }
               if (String(url).includes('/api/Sending/print')) {
+                capturedSendPayload = payload;
                 return of(printResponse);
               }
               return of(sendResultResponse);
@@ -379,22 +391,6 @@ describe('MailPageComponent filters', () => {
     expect(cmp.generatedBody()).toContain('<p>Bien cordialement, {{nom_association}}</p>');
   });
 
-  it('n autorise pas continuer sans choix explicite a l etape modele', () => {
-    const cmp = component as any;
-
-    expect(cmp.canContinueFromTemplateStep()).toBe(false);
-    expect(cmp.templateChoiceLabel()).toBe('Aucun choix sélectionné');
-  });
-
-  it('autorise continuer apres selection d un modele stocke', () => {
-    const cmp = component as any;
-
-    cmp.onSelectEmailTemplate('mail1');
-
-    expect(cmp.canContinueFromTemplateStep()).toBe(true);
-    expect(cmp.templateChoiceLabel()).toContain('Modèle stocké');
-  });
-
   it('selectionne un modele stocke depuis une ligne du tableau', () => {
     const cmp = component as any;
 
@@ -417,19 +413,7 @@ describe('MailPageComponent filters', () => {
     expect(cmp.iaGenerationState()).toBe('done');
     expect(cmp.iaButtonLabel()).toBe('Utiliser le texte généré');
   });
-
-  it('autorise continuer apres generation IA terminee', async () => {
-    const cmp = component as any;
-
-    cmp.onSelectSignatureBlock('sb1');
-
-    await cmp.generateAiText();
-
-    expect(cmp.canContinueFromTemplateStep()).toBe(true);
-    expect(cmp.templateChoiceLabel()).toBe('Génération par IA');
-    expect(cmp.iaButtonLabel()).toBe('Utiliser le texte généré');
-  });
-
+  
   it('expose les destinataires selectionnes pour les etapes suivantes', () => {
     const cmp = component as any;
 
@@ -609,6 +593,10 @@ describe('MailPageComponent filters', () => {
           }
         },
         {
+          provide: SendingApiService,
+          useValue: sendingApiMock
+        },
+        {
           provide: HttpClient,
           useValue: {
             get: (url: string) => {
@@ -677,6 +665,7 @@ describe('MailPageComponent filters', () => {
 
     expect(capturedSendFormData).toBeInstanceOf(FormData);
     expect(capturedSendFormData?.getAll('attachments').length).toBe(1);
+    expect(typeof capturedSendFormData?.get('payload')).toBe('string');
     expect(capturedSendPayload?.documentType).toBe('message');
     expect(capturedSendPayload?.channel).toBe('email');
     expect(cmp.emailAttachments().length).toBe(0);

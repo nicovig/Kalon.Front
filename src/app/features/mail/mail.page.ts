@@ -51,6 +51,7 @@ import {
 import { UserStore } from '../../core/auth/user.store';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
+import { SendingApiService } from '../../core/api/sending-api.service';
 
 type SendTypeKey =
   | 'choix_type'
@@ -135,6 +136,7 @@ export class MailPageComponent {
   private readonly userStore = inject(UserStore);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly aiMailStore = inject(AiMailStore);
+  private readonly sendingApi = inject(SendingApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -462,8 +464,8 @@ export class MailPageComponent {
     const names = invalid.slice(0, 3).map((c) => contactDisplayName(c)).join(', ');
     const suffix = invalid.length > 3 ? ` et ${invalid.length - 3} autre(s)` : '';
     return this.selectedSendMethod() === 'print'
-      ? `Attention, ${names}${suffix} n'ont pas leur adresse postale renseignée.`
-      : `Attention, ${names}${suffix} n'ont pas leur adresse email renseignée.`;
+      ? invalid.length > 1 ? `Attention, ${names}${suffix} n'ont pas leur adresse postale renseignée.` : `Attention, ${names} n'a pas son adresse postale renseignée.`
+      : invalid.length > 1 ? `Attention, ${names}${suffix} n'ont pas leur adresse email renseignée.` : `Attention, ${names} n'a pas son adresse email renseignée.`;
   });
 
   constructor() {
@@ -675,12 +677,7 @@ export class MailPageComponent {
     }))
   );
   protected readonly sendResultModal = signal<SendResultModalData | null>(null);
-  protected readonly canContinueFromTemplateStep = computed(() => {
-    if (!this.hasTemplateStep()) return true;
-    if (this.templateChoiceSource() === 'template') return !!this.getSelectedEmailTemplate();
-    if (this.templateChoiceSource() === 'ia') return this.iaGenerationState() === 'done' && !!this.generatedBody();
-    return false;
-  });
+
   protected readonly selectedRecipientContacts = computed(() => {
     const selectedIds = this.selectedContactIds();
     return this.contactStore.contacts().filter((c) => selectedIds.has(c.id));
@@ -838,7 +835,7 @@ export class MailPageComponent {
     if (this.templateChoiceSource() === 'ia') {
       return 'Génération par IA';
     }
-    return 'Aucun choix sélectionné';
+    return 'Pas de modèle prédéfini';
   }
 
   protected iaButtonLabel(): string {
@@ -881,7 +878,6 @@ export class MailPageComponent {
   }
 
   protected goToWritingStep(): void {
-    if (!this.canContinueFromTemplateStep()) return;
     if (this.hasTemplateStep() && this.templateChoiceSource() === 'template') {
       const template = this.getSelectedEmailTemplate();
       if (template) {
@@ -1084,14 +1080,7 @@ export class MailPageComponent {
         const attachmentFiles = this.canUseEmailAttachments()
           ? this.emailAttachments().map((item) => item.file)
           : [];
-        const result = await firstValueFrom(
-          attachmentFiles.length
-            ? this.http.post<SendDocumentResultDtoApiModel>(
-                API_ENDPOINTS.sending.send(),
-                this.buildSendEmailFormData(payload, attachmentFiles)
-              )
-            : this.http.post<SendDocumentResultDtoApiModel>(API_ENDPOINTS.sending.send(), payload)
-        );
+        const result = await firstValueFrom(this.sendingApi.sendEmail(payload, attachmentFiles));
         const successCount = result?.successCount ?? 0;
         const errorCount = result?.errorCount ?? 0;
         const failedRecipients = (result?.errors ?? []).map((error) => ({
@@ -1131,20 +1120,18 @@ export class MailPageComponent {
       if (hadEmailAttachments) {
         this.clearEmailAttachments();
       }
-    } catch {
-      this.toast.show(channel === 'print' ? "L'impression a échoué." : "L'envoi a échoué.", 'alert');
+    } catch (err: unknown) {
+      const detail =
+        err && typeof err === 'object' && 'status' in err
+          ? ` (${String((err as { status?: number }).status)})`
+          : '';
+      this.toast.show(
+        channel === 'print' ? `L'impression a échoué${detail}.` : `L'envoi a échoué${detail}.`,
+        'alert'
+      );
     } finally {
       this.sendingState.set('idle');
     }
-  }
-
-  private buildSendEmailFormData(payload: SendDocumentDtoApiModel, files: File[]): FormData {
-    const formData = new FormData();
-    formData.append('payload', JSON.stringify(payload));
-    for (const file of files) {
-      formData.append('attachments', file, file.name);
-    }
-    return formData;
   }
 
   private clearEmailAttachments(): void {
