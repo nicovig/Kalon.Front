@@ -115,21 +115,26 @@
         {{ editingEmailTemplateId() ? 'Mettre à jour' : 'Créer le modèle' }}
       </button-label-component>
     </div>
-    @for (item of emailTemplates(); track item.id) {
-      <div class="account-list">
-        <div class="account-list-row">
-          <div class="account-list-main">
-            <div class="account-list-title">{{ item.label }}</div>
-            @if (item.subject) {
-              <div class="account-list-meta">Objet : {{ item.subject }}</div>
-            }
-            <div class="account-list-content">{{ emailTemplatePreviewText(item.body) }}</div>
+    @if (emailTemplates().length) {
+      <div class="account-saved-list">
+        <h4 class="account-saved-list-title">Liste des modèles enregistrés</h4>
+        @for (item of emailTemplates(); track item.id) {
+          <div class="account-list">
+            <div class="account-list-row">
+              <div class="account-list-main">
+                <div class="account-list-title">{{ item.label }}</div>
+                @if (item.subject) {
+                  <div class="account-list-meta">Objet : {{ item.subject }}</div>
+                }
+                <div class="account-list-content">{{ emailTemplatePreviewText(item.body) }}</div>
+              </div>
+              <div class="account-list-actions">
+                <button-label-component type="ghost" (click)="editEmailTemplate(item.id)">Modifier</button-label-component>
+                <button-label-component type="ghost" (click)="requestRemoveEmailTemplate(item.id)">Supprimer</button-label-component>
+              </div>
+            </div>
           </div>
-          <div class="account-list-actions">
-            <button-label-component type="ghost" (click)="editEmailTemplate(item.id)">Modifier</button-label-component>
-            <button-label-component type="ghost" (click)="requestRemoveEmailTemplate(item.id)">Supprimer</button-label-component>
-          </div>
-        </div>
+        }
       </div>
     }
   </section>
@@ -184,18 +189,23 @@
         {{ editingTextId() ? 'Mettre à jour' : 'Créer le bloc' }}
       </button-label-component>
     </div>
-    @for (item of textBlocks(); track item.id) {
-    <div class="account-list">
-        <div class="account-list-row">
-          <div class="account-list-main">
-            <div class="account-list-title">{{ item.label }}</div>
-            <div class="account-list-content">{{ item.content }}</div>
+    @if (textBlocks().length) {
+      <div class="account-saved-list">
+        <h4 class="account-saved-list-title">Liste des blocs enregistrés</h4>
+        @for (item of textBlocks(); track item.id) {
+          <div class="account-list">
+            <div class="account-list-row">
+              <div class="account-list-main">
+                <div class="account-list-title">{{ item.label }}</div>
+                <div class="account-list-content">{{ item.content }}</div>
+              </div>
+              <div class="account-list-actions">
+                <button-label-component type="ghost" (click)="editTextBlock(item.id)">Modifier</button-label-component>
+                <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
+              </div>
+            </div>
           </div>
-          <div class="account-list-actions">
-            <button-label-component type="ghost" (click)="editTextBlock(item.id)">Modifier</button-label-component>
-            <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
-          </div>
-        </div>
+        }
       </div>
     }
   </section>
@@ -228,18 +238,23 @@
         {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
       </button-label-component>
     </div>
-    @for (item of signatureBlocks(); track item.id) {
-    <div class="account-list">
-        <div class="account-list-row">
-          <div class="account-list-main">
-            <div class="account-list-title">{{ item.label }}</div>
-            <div class="account-list-content">{{ item.content }}</div>
+    @if (signatureBlocks().length) {
+      <div class="account-saved-list">
+        <h4 class="account-saved-list-title">Liste des signatures enregistrées</h4>
+        @for (item of signatureBlocks(); track item.id) {
+          <div class="account-list">
+            <div class="account-list-row">
+              <div class="account-list-main">
+                <div class="account-list-title">{{ item.label }}</div>
+                <div class="account-list-content">{{ item.content }}</div>
+              </div>
+              <div class="account-list-actions">
+                <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>
+                <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
+              </div>
+            </div>
           </div>
-          <div class="account-list-actions">
-            <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>
-            <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
-          </div>
-        </div>
+        }
       </div>
     }
   </section>

@@ -204,8 +204,21 @@
   gap: 8px;
 }
 
-.account-list {
+.account-saved-list {
   margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.account-saved-list-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.account-list {
   display: grid;
   gap: 8px;
 }

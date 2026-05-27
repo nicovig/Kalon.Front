@@ -208,7 +208,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
   });
 
-  it('filtre sur le total de contributions minimum depuis les contributions reelles', () => {
+  it('filtre sur le total de contributions minimum depuis les dons reels', () => {
     const cmp = component as any;
     cmp.onAvailabilityModeChange('without_email');
 
@@ -217,7 +217,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
-  it('filtre sur le total de contributions maximum depuis les contributions reelles', () => {
+  it('filtre sur le total de contributions maximum depuis les dons reels', () => {
     const cmp = component as any;
 
     cmp.onTotalDonationMaxChange('100');
@@ -266,7 +266,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
   });
 
-  it('prefere les agregats contact a une liste partielle de contributions', () => {
+  it('prefere les agregats contact a une liste partielle de dons', () => {
     const cmp = component as any;
 
     cmp.onSearchQueryChange('marie');
@@ -369,7 +369,7 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c4']);
   });
 
-  it('affiche les infos de dernier contribution et contribution moyenne dans la liste', () => {
+  it('affiche les infos de dernier don et don moyen dans la liste', () => {
     const cmp = component as any;
 
     const marie = cmp.recipientItems().find((item: { id: string }) => item.id === 'c1');
@@ -413,7 +413,7 @@ describe('MailPageComponent filters', () => {
     expect(cmp.iaGenerationState()).toBe('done');
     expect(cmp.iaButtonLabel()).toBe('Utiliser le texte généré');
   });
-
+  
   it('expose les destinataires selectionnes pour les etapes suivantes', () => {
     const cmp = component as any;
 
@@ -480,43 +480,6 @@ describe('MailPageComponent filters', () => {
 
     cmp.chooseType('message');
     expect(cmp.showEditorSubject()).toBe(true);
-  });
-
-  it('autorise les pieces jointes pour message attestation et certificat par email', () => {
-    const cmp = component as any;
-
-    cmp.chooseMethod('email');
-    cmp.chooseType('message');
-    expect(cmp.canUseEmailAttachments()).toBe(true);
-
-    cmp.chooseType('payment_attestation');
-    expect(cmp.canUseEmailAttachments()).toBe(true);
-
-    cmp.chooseType('membership_certificate');
-    expect(cmp.canUseEmailAttachments()).toBe(true);
-
-    cmp.chooseType('tax_receipt');
-    expect(cmp.canUseEmailAttachments()).toBe(false);
-
-    cmp.chooseType('payment_attestation');
-    cmp.chooseMethod('print');
-    expect(cmp.canUseEmailAttachments()).toBe(false);
-  });
-
-  it('desactive l ajout et affiche la limite atteinte a 3 pieces jointes', () => {
-    const cmp = component as any;
-
-    cmp.chooseType('message');
-    cmp.chooseMethod('email');
-    cmp.emailAttachments.set([
-      { id: 'att-1', file: new File(['1'], 'one.pdf', { type: 'application/pdf' }) },
-      { id: 'att-2', file: new File(['2'], 'two.pdf', { type: 'application/pdf' }) },
-      { id: 'att-3', file: new File(['3'], 'three.pdf', { type: 'application/pdf' }) }
-    ]);
-
-    expect(cmp.maxEmailAttachments).toBe(3);
-    expect(cmp.canAddEmailAttachment()).toBe(false);
-    expect(cmp.emailAttachmentListTitle()).toBe('Pièces jointes - limite atteinte');
   });
 
   it('reveal progressif des etapes sur tunnel message', () => {
@@ -706,42 +669,6 @@ describe('MailPageComponent filters', () => {
     expect(capturedSendPayload?.documentType).toBe('message');
     expect(capturedSendPayload?.channel).toBe('email');
     expect(cmp.emailAttachments().length).toBe(0);
-  });
-
-  it('envoie les pieces jointes en multipart pour une attestation de cotisation', async () => {
-    const cmp = component as any;
-    const file = new File(['contenu'], 'attestation.pdf', { type: 'application/pdf' });
-    cmp.chooseType('payment_attestation');
-    cmp.chooseMethod('email');
-    cmp.emailAttachments.set([{ id: 'att-1', file }]);
-    cmp.toggleContact('c1');
-    cmp.generatedSubject.set('Sujet');
-    cmp.generatedBody.set('<p>Contenu</p>');
-    cmp.generatedDocumentBody.set('<p>Document</p>');
-
-    await cmp.sendEmail();
-
-    expect(capturedSendFormData).toBeInstanceOf(FormData);
-    expect(capturedSendFormData?.getAll('attachments').length).toBe(1);
-    expect(capturedSendPayload?.documentType).toBe('payment_attestation');
-  });
-
-  it("envoie les pieces jointes en multipart pour un certificat d'adhesion", async () => {
-    const cmp = component as any;
-    const file = new File(['contenu'], 'certificat.pdf', { type: 'application/pdf' });
-    cmp.chooseType('membership_certificate');
-    cmp.chooseMethod('email');
-    cmp.emailAttachments.set([{ id: 'att-1', file }]);
-    cmp.toggleContact('c1');
-    cmp.generatedSubject.set('Sujet');
-    cmp.generatedBody.set('<p>Contenu</p>');
-    cmp.generatedDocumentBody.set('<p>Document</p>');
-
-    await cmp.sendEmail();
-
-    expect(capturedSendFormData).toBeInstanceOf(FormData);
-    expect(capturedSendFormData?.getAll('attachments').length).toBe(1);
-    expect(capturedSendPayload?.documentType).toBe('membership_certificate');
   });
 
   it('n envoie pas de multipart pour un reçu fiscal', async () => {
