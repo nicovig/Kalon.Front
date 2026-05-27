@@ -106,6 +106,24 @@
           </div>
 
           <div class="mail-editor-asset-group">
+            <label>Signature</label>
+            <div class="mail-editor-tags">
+              @for (block of signatureBlocks; track block.id) {
+                <button
+                  type="button"
+                  class="mail-editor-tag"
+                  [class.mail-editor-tag--selected]="selectedSignatureBlockId === block.id"
+                  draggable="true"
+                  (dragstart)="onSignatureBlockDragStart($event, block)"
+                  (click)="onSignatureBlockClick(block.id)"
+                >
+                  {{ block.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="mail-editor-asset-group">
             <label>Image</label>
             <div class="mail-editor-tags">
               @for (image of images; track image.id) {

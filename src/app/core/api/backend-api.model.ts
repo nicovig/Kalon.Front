@@ -58,6 +58,7 @@ export interface ContactApiModel {
   updatedAt?: string | null;
   totalDonation?: number;
   firstDonationAt?: string | null;
+  firstDonationAmount?: number | null;
   lastDonation?: string | null;
   lastDonationAmount?: number | null;
   averageDonationAmount?: number;

@@ -98,6 +98,9 @@
           [textBlocks]="editorTextBlocks()"
           [selectedTextBlockId]="selectedEditorTextBlockId()"
           (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
+          [signatureBlocks]="editorSignatureBlocks()"
+          [selectedSignatureBlockId]="selectedEditorSignatureBlockId()"
+          (selectedSignatureBlockIdChange)="selectedEditorSignatureBlockId.set($event)"
           [images]="editorImages()"
           [selectedImageId]="selectedEditorImageId()"
           (selectedImageIdChange)="selectedEditorImageId.set($event)"
@@ -227,12 +230,35 @@
           placeholder="Ex: Bien cordialement, Le bureau de l’association"
         ></textarea>
       </label>
+      <label class="account-file-field account-form-grid-full">
+        <input
+          #signatureImageFileInput
+          type="file"
+          class="account-file-input-hidden"
+          accept="image/*"
+          (change)="onSignatureImageFileChange($event)"
+        />
+        <div class="account-file-picker">
+          <button-label-component type="ghost" (click)="pickSignatureImageFile(signatureImageFileInput)">
+            Choisir une image de signature
+          </button-label-component>
+          <span class="account-file-hint">{{ signatureImageFileHint() }}</span>
+          @if (signatureImagePreviewSrc()) {
+            <button-label-component type="ghost" (click)="clearSignatureImageSelection()">Retirer l’image</button-label-component>
+          }
+        </div>
+      </label>
+      @if (signatureImagePreviewSrc()) {
+        <div class="account-image-preview account-form-grid-full">
+          <img [src]="signatureImagePreviewSrc()" alt="Image de signature" />
+        </div>
+      }
     </div>
     <div class="account-actions">
       <button-label-component type="ghost" (click)="cancelSignatureEdit()">Réinitialiser</button-label-component>
       <button-label-component
         type="primary"
-        [disabled]="!signatureLabel().trim() || !signatureContent().trim()"
+        [disabled]="signatureSaveDisabled()"
         (click)="saveSignatureBlock()"
       >
         {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
@@ -246,7 +272,14 @@
             <div class="account-list-row">
               <div class="account-list-main">
                 <div class="account-list-title">{{ item.label }}</div>
-                <div class="account-list-content">{{ item.content }}</div>
+                @if (item.content) {
+                  <div class="account-list-content">{{ item.content }}</div>
+                }
+                @if (item.imageUrl) {
+                  <div class="account-list-signature-image">
+                    <img [src]="item.imageUrl" [alt]="item.label" />
+                  </div>
+                }
               </div>
               <div class="account-list-actions">
                 <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>

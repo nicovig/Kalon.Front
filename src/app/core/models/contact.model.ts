@@ -18,6 +18,7 @@ export interface IContact {
   status: ContactStatus;
   totalDonation: number;
   firstDonationAt?: Date;
+  firstDonationAmount?: number;
   lastDonation?: Date;
   lastDonationAmount?: number;
   averageDonationAmount?: number;

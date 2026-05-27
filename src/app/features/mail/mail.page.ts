@@ -78,6 +78,7 @@ type ContactContributionSummary = {
   totalAmount: number;
   count: number;
   firstDate: Date | null;
+  firstAmount: number | null;
   lastDate: Date | null;
   lastAmount: number | null;
   averageAmount: number | null;
@@ -267,11 +268,20 @@ export class MailPageComponent {
       const date = this.toValidDate(donation.date);
       const current =
         stats.get(donation.contactId) ??
-        { totalAmount: 0, count: 0, firstDate: null, lastDate: null, lastAmount: null, averageAmount: null };
+        {
+          totalAmount: 0,
+          count: 0,
+          firstDate: null,
+          firstAmount: null,
+          lastDate: null,
+          lastAmount: null,
+          averageAmount: null
+        };
       current.totalAmount += amount;
       current.count += 1;
       if (date && (!current.firstDate || date < current.firstDate)) {
         current.firstDate = date;
+        current.firstAmount = amount;
       }
       if (date && (!current.lastDate || date > current.lastDate)) {
         current.lastDate = date;
@@ -612,11 +622,25 @@ export class MailPageComponent {
     }))
   );
   protected readonly editorTextBlocks = computed<MailEditorSnippet[]>(() =>
-    this.customContentStore.textBlocks().map((block) => ({
-      id: block.id,
-      label: block.label,
-      text: block.content
-    }))
+    this.customContentStore
+      .textBlocks()
+      .filter((block) => block.role === 'text')
+      .map((block) => ({
+        id: block.id,
+        label: block.label,
+        text: block.content
+      }))
+  );
+  protected readonly editorSignatureBlocks = computed<MailEditorSnippet[]>(() =>
+    this.customContentStore
+      .textBlocks()
+      .filter((block) => block.role === 'signature')
+      .map((block) => ({
+        id: block.id,
+        label: block.label,
+        text: block.content,
+        imageUrl: block.imageUrl?.trim() || undefined
+      }))
   );
   protected readonly editorImages = computed<MailEditorImageAsset[]>(() =>
     this.customContentStore.images().map((image) => ({
@@ -626,6 +650,7 @@ export class MailPageComponent {
     }))
   );
   protected readonly selectedEditorTextBlockId = signal<string | null>(null);
+  protected readonly selectedEditorSignatureBlockId = signal<string | null>(null);
   protected readonly selectedEditorImageId = signal<string | null>(null);
 
   protected readonly aiToneCards: Array<{ key: ReminderTemplateTone; icon: string; label: string }> = [
@@ -747,6 +772,9 @@ export class MailPageComponent {
   private readonly syncEditorAssetsEffect = effect(() => {
     if (!this.selectedEditorTextBlockId() && this.editorTextBlocks().length) {
       this.selectedEditorTextBlockId.set(this.editorTextBlocks()[0]?.id ?? null);
+    }
+    if (!this.selectedEditorSignatureBlockId() && this.editorSignatureBlocks().length) {
+      this.selectedEditorSignatureBlockId.set(this.editorSignatureBlocks()[0]?.id ?? null);
     }
     if (!this.selectedEditorImageId() && this.editorImages().length) {
       this.selectedEditorImageId.set(this.editorImages()[0]?.id ?? null);
@@ -966,6 +994,29 @@ export class MailPageComponent {
     const text = this.editorTextBlocks().find((block) => block.id === id)?.text ?? '';
     if (!text) return;
     this.appendToActiveWritingBlock(text);
+  }
+
+  protected onSidebarSignatureBlockInsert(id: string): void {
+    const block = this.editorSignatureBlocks().find((b) => b.id === id);
+    if (!block) return;
+    const parts: string[] = [];
+    const t = (block.text ?? '').trim();
+    if (t) {
+      const escaped = t
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      parts.push(`<p>${escaped.replace(/\r?\n/g, '<br>')}</p>`);
+    }
+    const img = (block.imageUrl ?? '').trim();
+    if (img) {
+      const alt = (block.label ?? '').replace(/"/g, '&quot;');
+      parts.push(`<p><img src="${img}" alt="${alt}" /></p>`);
+    }
+    const fragment = parts.join('');
+    if (!fragment) return;
+    this.appendToActiveWritingBlock(fragment);
   }
 
   protected onSidebarImageInsert(id: string): void {
@@ -1480,13 +1531,17 @@ export class MailPageComponent {
     const contactTotal = this.parseNumberish(c.totalDonation);
     const contactCount = this.parseNumberish(c.donationCount);
     const contactFirstDate = this.toValidDate(c.firstDonationAt);
+    const contactFirstAmount = this.parseNumberish(c.firstDonationAmount);
     const contactLastDate = this.toValidDate(c.lastDonation);
     const contactLastAmount = this.parseNumberish(c.lastDonationAmount);
     const contactAverageAmount = this.parseNumberish(c.averageDonationAmount);
+    const firstDate = contactFirstDate ?? aggregated?.firstDate ?? null;
+    const firstAmount = contactFirstAmount ?? aggregated?.firstAmount ?? null;
     return {
       totalAmount: contactTotal ?? aggregated?.totalAmount ?? 0,
       count: contactCount ?? aggregated?.count ?? 0,
-      firstDate: contactFirstDate ?? aggregated?.firstDate ?? null,
+      firstDate,
+      firstAmount,
       lastDate: contactLastDate ?? aggregated?.lastDate ?? null,
       lastAmount: contactLastAmount ?? aggregated?.lastAmount ?? null,
       averageAmount: contactAverageAmount ?? aggregated?.averageAmount ?? null
@@ -1568,9 +1623,31 @@ export class MailPageComponent {
     const fullName = `${recipient.firstname ?? ''} ${recipient.lastname ?? ''}`.trim();
     const summary = this.contactContributionSummary(recipient);
     const enterpriseName = recipient.enterprise?.name ?? '';
+    const montantDonations = this.formatAmount(summary.totalAmount);
+    const totalContributions = String(summary.count);
+    const premiereContributionLe = summary.firstDate ? this.formatShortDate(summary.firstDate) : '';
+    const derniereContributionLe = summary.lastDate ? this.formatShortDate(summary.lastDate) : '';
+    const montantPremiereDonation =
+      summary.firstAmount == null ? '' : this.formatAmount(summary.firstAmount);
+    const montantDerniereDonation =
+      summary.lastAmount == null ? '' : this.formatAmount(summary.lastAmount);
+    const contributionMoyenne =
+      summary.averageAmount == null ? '' : this.formatAmount(summary.averageAmount);
     const replacements: Record<string, string> = {
       prenom: recipient.firstname ?? '',
       nom: recipient.lastname ?? '',
+      totalContributions,
+      premiereContributionLe,
+      derniereContributionLe,
+      montantPremiereDonation,
+      montantDerniereDonation,
+      contributionMoyenne,
+      montantDonations,
+      totalDonation: montantDonations,
+      firstDonationAt: premiereContributionLe,
+      lastDonation: derniereContributionLe,
+      averageDonationAmount: contributionMoyenne,
+      donationCount: totalContributions,
       nom_complet: fullName,
       association: associationName,
       nom_association: associationName,
@@ -1579,11 +1656,6 @@ export class MailPageComponent {
       email: recipient.email ?? recipient.enterprise?.contactEmail ?? '',
       ville: recipient.address?.city ?? recipient.enterprise?.address?.city ?? '',
       code_postal: recipient.address?.postalCode ?? recipient.enterprise?.address?.postalCode ?? '',
-      totalDonation: this.formatAmount(summary.totalAmount),
-      firstDonationAt: summary.firstDate ? this.formatShortDate(summary.firstDate) : '',
-      lastDonation: summary.lastDate ? this.formatShortDate(summary.lastDate) : '',
-      averageDonationAmount: summary.averageAmount == null ? '' : this.formatAmount(summary.averageAmount),
-      donationCount: String(summary.count),
       lien_paiement: '#'
     };
     const replaceWithPattern = (template: string, pattern: RegExp) =>

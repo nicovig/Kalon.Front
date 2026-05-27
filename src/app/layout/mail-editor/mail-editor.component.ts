@@ -27,6 +27,7 @@ export type MailEditorSnippet = {
   id: string;
   label: string;
   text: string;
+  imageUrl?: string;
 };
 
 export type MailEditorImageAsset = {
@@ -111,6 +112,10 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   @Input() selectedTextBlockId: string | null = null;
   @Output() selectedTextBlockIdChange = new EventEmitter<string | null>();
 
+  @Input() signatureBlocks: MailEditorSnippet[] = [];
+  @Input() selectedSignatureBlockId: string | null = null;
+  @Output() selectedSignatureBlockIdChange = new EventEmitter<string | null>();
+
   @Input() images: MailEditorImageAsset[] = [];
   @Input() selectedImageId: string | null = null;
   @Output() selectedImageIdChange = new EventEmitter<string | null>();
@@ -118,6 +123,7 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
   @Input() variableTags: MailEditorVariableTag[] = [];
   @Output() emojiInsert = new EventEmitter<string>();
   @Output() textBlockInsert = new EventEmitter<string>();
+  @Output() signatureBlockInsert = new EventEmitter<string>();
   @Output() imageInsert = new EventEmitter<string>();
   @Output() variableTagInsert = new EventEmitter<MailEditorVariableTag>();
 
@@ -235,6 +241,29 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
     event.dataTransfer.effectAllowed = 'copy';
   }
 
+  protected onSignatureBlockClick(id: string): void {
+    this.selectedSignatureBlockIdChange.emit(id || null);
+    if (!this.showMainPanel) {
+      this.signatureBlockInsert.emit(id || '');
+      return;
+    }
+    this.insertSignatureBlockById(id);
+  }
+
+  protected onSignatureBlockDragStart(event: DragEvent, block: MailEditorSnippet): void {
+    if (!event.dataTransfer) return;
+    event.dataTransfer.setData(
+      'application/x-kalon-signature',
+      JSON.stringify({
+        text: block.text ?? '',
+        imageUrl: block.imageUrl ?? '',
+        label: block.label ?? ''
+      })
+    );
+    event.dataTransfer.setData('text/plain', block.text || block.label || '');
+    event.dataTransfer.effectAllowed = 'copy';
+  }
+
   protected onImageClick(id: string): void {
     this.selectedImageIdChange.emit(id || null);
     if (!this.showMainPanel) {
@@ -272,12 +301,21 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
     event.preventDefault();
     const transfer = event.dataTransfer;
     if (!transfer) return;
+    const signatureRaw = transfer.getData('application/x-kalon-signature');
     const imageUrl = transfer.getData('application/x-kalon-image-url');
     const text = transfer.getData('text/plain');
     const pos = this.editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
     const chain = this.editor.chain().focus();
     if (pos?.pos != null) {
       chain.setTextSelection(pos.pos);
+    }
+    if (signatureRaw) {
+      try {
+        const parsed = JSON.parse(signatureRaw) as { text?: string; imageUrl?: string; label?: string };
+        this.insertSignaturePayload(parsed.text, parsed.imageUrl, parsed.label, chain);
+        return;
+      } catch {
+      }
     }
     if (imageUrl) {
       chain.setImage({ src: imageUrl }).run();
@@ -309,6 +347,31 @@ export class MailEditorComponent implements OnChanges, OnDestroy {
     const block = this.textBlocks.find((item) => item.id === id);
     if (!block?.text) return;
     this.editor.chain().focus().insertContent(block.text).run();
+  }
+
+  private insertSignatureBlockById(id: string): void {
+    const block = this.signatureBlocks.find((item) => item.id === id);
+    if (!block) return;
+    const chain = this.editor.chain().focus();
+    this.insertSignaturePayload(block.text, block.imageUrl, block.label, chain);
+  }
+
+  private insertSignaturePayload(
+    text: string | undefined,
+    imageUrl: string | undefined,
+    label: string | undefined,
+    chain = this.editor.chain().focus()
+  ): void {
+    const t = String(text ?? '').trim();
+    const img = String(imageUrl ?? '').trim();
+    if (!t && !img) return;
+    if (t) {
+      chain.insertContent(t);
+    }
+    if (img) {
+      chain.setImage({ src: img, alt: String(label ?? '').trim() || 'Signature' });
+    }
+    chain.run();
   }
 
   protected onSelectedImageChange(id: string): void {

@@ -64,12 +64,53 @@ describe('OrganizationCustomContentStore API', () => {
     expect(getUrls.join('|')).not.toContain('userId=');
   });
 
+  it('conserve le texte d une signature avec image quand mimeType est image', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        OrganizationCustomContentStore,
+        { provide: UserStore, useValue: { isAuthenticated: () => true } },
+        {
+          provide: HttpClient,
+          useValue: {
+            get: (url: string) => {
+              if (url.includes('/api/OrganizationCustomContent/logo')) return of(null);
+              if (url.includes('/api/OrganizationCustomContent/content-blocks')) {
+                return of([
+                  {
+                    id: 'sig-1',
+                    name: 'Signature bureau',
+                    kind: 'signature',
+                    content: 'Bien cordialement',
+                    storedPath: '/uploads/signature.png',
+                    mimeType: 'image/png'
+                  }
+                ]);
+              }
+              return of([]);
+            },
+            post: () => of({}),
+            put: () => of({}),
+            delete: () => of(undefined)
+          }
+        }
+      ]
+    });
+    const mappedStore = TestBed.inject(OrganizationCustomContentStore);
+    mappedStore.loadAll();
+    const signature = mappedStore.textBlocks().find((item) => item.id === 'sig-1');
+    expect(signature?.content).toBe('Bien cordialement');
+    expect(signature?.imageUrl).toContain('/uploads/signature.png');
+  });
+
   it('upsert et remove de content block sans userId', () => {
     store.upsertTextBlock(null, 'Bloc', 'Contenu', 'text');
-    store.upsertTextBlock('cb-1', 'Bloc', 'Contenu', 'signature');
+    store.upsertSignatureBlock(null, 'Signature', '', 'data:image/png;base64,abc', 'image/png');
+    store.upsertSignatureBlock('cb-1', 'Signature', 'Cordialement', '', '');
     store.removeTextBlock('cb-1');
 
     expect(postUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks'))).toBe(true);
+    expect(postUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks/signature'))).toBe(true);
     expect(putUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks/cb-1'))).toBe(true);
     expect(deleteUrls.some((u) => u.includes('/api/OrganizationCustomContent/content-blocks/cb-1'))).toBe(true);
     expect(`${postUrls}|${putUrls}|${deleteUrls}`).not.toContain('userId=');

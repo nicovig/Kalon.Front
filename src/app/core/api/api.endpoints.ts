@@ -112,6 +112,7 @@ export const API_ENDPOINTS = {
   },
   contentBlock: {
     create: () => toUrl('/api/OrganizationCustomContent/content-blocks'),
+    createSignature: () => toUrl('/api/OrganizationCustomContent/content-blocks/signature'),
     list: () => toUrl('/api/OrganizationCustomContent/content-blocks'),
     getById: ({ id }: { id: string }) =>
       toUrl(`/api/OrganizationCustomContent/content-blocks/${encodeURIComponent(id)}`),

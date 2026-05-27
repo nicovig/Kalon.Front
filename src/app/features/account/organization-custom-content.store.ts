@@ -20,6 +20,8 @@ export type MailTextBlock = {
   id: string;
   label: string;
   content: string;
+  imageUrl: string;
+  imageMimeType: string;
   addedAt: number;
   role: MailTextBlockRole;
 };
@@ -140,6 +142,33 @@ export class OrganizationCustomContentStore {
     const req = id
       ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id }), payload)
       : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.create(), payload);
+    req.subscribe({ next: () => this.loadAll(), error: () => undefined });
+  }
+
+  upsertSignatureBlock(
+    id: string | null,
+    label: string,
+    content: string,
+    imageDataUrl: string,
+    imageMimeType: string
+  ): void {
+    const name = label.trim();
+    const text = content.trim();
+    const image = imageDataUrl.trim();
+    if (!name || (!text && !image) || !this.userStore.isAuthenticated()) return;
+    const mime = image ? (imageMimeType.trim() || this.mimeFromDataUrl(image) || 'image/png') : null;
+    const payload: ContentBlockUpsertRequestApiModel = {
+      name,
+      kind: 'signature',
+      content: text || null,
+      storedPath: image || null,
+      mimeType: mime,
+      usableInEmail: true,
+      usableInReceipt: true
+    };
+    const req = id
+      ? this.http.put<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.update({ id }), payload)
+      : this.http.post<ContentBlockResponseApiModel>(API_ENDPOINTS.contentBlock.createSignature(), payload);
     req.subscribe({ next: () => this.loadAll(), error: () => undefined });
   }
 
@@ -278,6 +307,8 @@ export class OrganizationCustomContentStore {
       const kind = String(item.kind ?? '').toLowerCase();
       const label = String(item.name ?? '').trim() || 'Bloc';
       const content = String(item.content ?? '');
+      const storedPath = String(item.storedPath ?? '').trim();
+      const mimeType = String(item.mimeType ?? '').trim();
       const addedAt = item.createdAt ? new Date(item.createdAt).getTime() : 0;
       if (kind === 'image') {
         continue;
@@ -294,7 +325,16 @@ export class OrganizationCustomContentStore {
         continue;
       }
       const role: MailTextBlockRole = kind === 'signature' ? 'signature' : 'text';
-      textBlocks.push({ id, label, content, role, addedAt });
+      const imageUrl = role === 'signature' ? this.resolveSignatureImageUrl(content, storedPath) : '';
+      textBlocks.push({
+        id,
+        label,
+        content: role === 'signature' && this.isSignatureImageContent(content) ? '' : content,
+        imageUrl,
+        imageMimeType: role === 'signature' && imageUrl ? mimeType : '',
+        role,
+        addedAt
+      });
     }
     this.textBlocksWrite.set(textBlocks);
     this.documentsWrite.set(documents);
@@ -336,6 +376,19 @@ export class OrganizationCustomContentStore {
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
     const base = API_BASE_URL.replace(/\/$/, '');
     return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
+  }
+
+  private resolveSignatureImageUrl(content: string, storedPath: string): string {
+    if (storedPath.startsWith('data:')) return storedPath;
+    if (storedPath) return this.resolveAssetUrl(storedPath);
+    if (this.isSignatureImageContent(content)) return content.trim();
+    return '';
+  }
+
+  private isSignatureImageContent(content: string): boolean {
+    const raw = String(content ?? '').trim();
+    if (!raw) return false;
+    return raw.startsWith('data:image/') || raw.startsWith('http://') || raw.startsWith('https://');
   }
 
   private dataUrlByteLength(dataUrl: string): number {

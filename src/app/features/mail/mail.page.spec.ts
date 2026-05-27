@@ -45,11 +45,13 @@ describe('MailPageComponent filters', () => {
   const mailEditorTagsBase = [
     { id: 'prenom', label: 'Prénom', token: '{{prenom}}' },
     { id: 'nom', label: 'Nom', token: '{{nom}}' },
-    { id: 'totalDonation', label: 'Total des contributions', token: '{{totalDonation}}' },
-    { id: 'firstDonationAt', label: 'Date première contribution', token: '{{firstDonationAt}}' },
-    { id: 'lastDonation', label: 'Date dernière contribution', token: '{{lastDonation}}' },
-    { id: 'averageDonationAmount', label: 'Moyenne des contributions', token: '{{averageDonationAmount}}' },
-    { id: 'donationCount', label: 'Nombre de contributions', token: '{{donationCount}}' }
+    { id: 'totalContributions', label: 'Total des contributions', token: '{{totalContributions}}' },
+    { id: 'premiereContributionLe', label: 'Date première contribution', token: '{{premiereContributionLe}}' },
+    { id: 'derniereContributionLe', label: 'Date dernière contribution', token: '{{derniereContributionLe}}' },
+    { id: 'montantPremiereDonation', label: 'Montant première contribution', token: '{{montantPremiereDonation}}' },
+    { id: 'montantDerniereDonation', label: 'Montant dernière contribution', token: '{{montantDerniereDonation}}' },
+    { id: 'contributionMoyenne', label: 'Moyenne des contributions', token: '{{contributionMoyenne}}' },
+    { id: 'montantDonations', label: 'Montant total des contributions', token: '{{montantDonations}}' }
   ];
 
   beforeEach(() => {
@@ -822,6 +824,24 @@ describe('MailPageComponent filters', () => {
     const cmp = component as any;
     cmp.toggleContact('c1');
     cmp.generatedBody.set(
+      '{{montantDonations}} / {{premiereContributionLe}} / {{derniereContributionLe}} / {{contributionMoyenne}} / {{totalContributions}} / {{montantPremiereDonation}} / {{montantDerniereDonation}}'
+    );
+    cmp.goToPreviewStep();
+    cmp.onPreviewRecipientChange('c1');
+    const preview = String(cmp.previewBodyHtml());
+    expect(preview).toContain('150');
+    expect(preview).toContain('01/06/2022');
+    expect(preview).toContain('15/01/2024');
+    expect(preview).toContain('50');
+    expect(preview).toContain('3');
+    expect(preview).toContain('25');
+    expect(preview).toContain('60');
+  });
+
+  it('interpole encore les anciens jetons de contribution', () => {
+    const cmp = component as any;
+    cmp.toggleContact('c1');
+    cmp.generatedBody.set(
       '{{totalDonation}} / {{firstDonationAt}} / {{lastDonation}} / {{averageDonationAmount}} / {{donationCount}}'
     );
     cmp.goToPreviewStep();
@@ -886,6 +906,7 @@ function buildContacts(): IContact[] {
       status: 'to_remind',
       totalDonation: 150,
       firstDonationAt: new Date('2022-06-01T00:00:00Z'),
+      firstDonationAmount: 25,
       lastDonation: new Date('2024-01-15T00:00:00Z'),
       lastDonationAmount: 60,
       averageDonationAmount: 50,

@@ -421,6 +421,10 @@ export class ContactStoreService {
         row.firstDonationAt && !Number.isNaN(new Date(String(row.firstDonationAt)).getTime())
           ? new Date(String(row.firstDonationAt))
           : undefined,
+      firstDonationAmount:
+        row.firstDonationAmount == null || !Number.isFinite(Number(row.firstDonationAmount))
+          ? undefined
+          : Number(row.firstDonationAmount),
       lastDonation:
         row.lastDonation && !Number.isNaN(new Date(String(row.lastDonation)).getTime())
           ? new Date(String(row.lastDonation))

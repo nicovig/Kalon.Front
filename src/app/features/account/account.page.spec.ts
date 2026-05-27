@@ -9,6 +9,7 @@ import { ToastService } from '../../layout/toast/toast.service';
 describe('AccountPageComponent', () => {
   let component: AccountPageComponent;
   let upsertTextArgs: unknown[] = [];
+  let upsertSignatureArgs: unknown[] = [];
   let upsertLogoArgs: unknown[] = [];
   let updateOrganizationArgs: unknown[] = [];
   let removedTextIds: string[] = [];
@@ -17,6 +18,7 @@ describe('AccountPageComponent', () => {
 
   beforeEach(() => {
     upsertTextArgs = [];
+    upsertSignatureArgs = [];
     upsertLogoArgs = [];
     updateOrganizationArgs = [];
     removedTextIds = [];
@@ -42,6 +44,7 @@ describe('AccountPageComponent', () => {
             images: () => [],
             logo: () => null,
             upsertTextBlock: (...args: unknown[]) => upsertTextArgs.push(args),
+            upsertSignatureBlock: (...args: unknown[]) => upsertSignatureArgs.push(args),
             removeTextBlock: (id: string) => removedTextIds.push(id),
             upsertEmailTemplate: () => of({}),
             removeEmailTemplate: () => of(undefined),
@@ -134,6 +137,16 @@ describe('AccountPageComponent', () => {
     cmp.textContent.set('Contenu');
     cmp.saveTextBlock();
     expect(upsertTextArgs[0]).toEqual([null, 'Bloc', 'Contenu', 'text']);
+  });
+
+  it('sauvegarde une signature avec image sans texte', () => {
+    const cmp = component as any;
+    cmp.signatureLabel.set('Signature bureau');
+    cmp.signatureContent.set('');
+    cmp.signatureImageDataUrl.set('data:image/png;base64,sig');
+    cmp.signatureImageMimeType.set('image/png');
+    cmp.saveSignatureBlock();
+    expect(upsertSignatureArgs[0]).toEqual([null, 'Signature bureau', '', 'data:image/png;base64,sig', 'image/png']);
   });
 
   it('sauvegarde le logo', () => {

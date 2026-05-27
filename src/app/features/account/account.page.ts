@@ -106,11 +106,25 @@ export class AccountPageComponent {
   protected readonly logo = this.store.logo;
 
   protected readonly editorTextBlocks = computed<MailEditorSnippet[]>(() =>
-    this.store.textBlocks().map((block) => ({
-      id: block.id,
-      label: block.label,
-      text: block.content
-    }))
+    this.store
+      .textBlocks()
+      .filter((block) => block.role === 'text')
+      .map((block) => ({
+        id: block.id,
+        label: block.label,
+        text: block.content
+      }))
+  );
+  protected readonly editorSignatureBlocks = computed<MailEditorSnippet[]>(() =>
+    this.store
+      .textBlocks()
+      .filter((block) => block.role === 'signature')
+      .map((block) => ({
+        id: block.id,
+        label: block.label,
+        text: block.content,
+        imageUrl: block.imageUrl?.trim() || undefined
+      }))
   );
   protected readonly editorImages = computed<MailEditorImageAsset[]>(() =>
     this.store.images().map((image) => ({
@@ -120,6 +134,7 @@ export class AccountPageComponent {
     }))
   );
   protected readonly selectedEditorTextBlockId = signal<string | null>(null);
+  protected readonly selectedEditorSignatureBlockId = signal<string | null>(null);
   protected readonly selectedEditorImageId = signal<string | null>(null);
   private readonly editorVariableTagsWrite = signal<MailEditorVariableTag[]>([]);
   protected readonly editorVariableTags = computed(() => this.editorVariableTagsWrite());
@@ -130,6 +145,9 @@ export class AccountPageComponent {
 
   protected readonly signatureLabel = signal('');
   protected readonly signatureContent = signal('');
+  protected readonly signatureImageDataUrl = signal('');
+  protected readonly signatureImageMimeType = signal('image/*');
+  protected readonly signatureImageChosenFileName = signal('');
   protected readonly editingSignatureId = signal<string | null>(null);
 
   protected readonly emailTemplateLabel = signal('');
@@ -160,6 +178,24 @@ export class AccountPageComponent {
     if (draft && server && draft === server) return 'Logo actuel';
     return 'Aucun fichier choisi';
   });
+  protected readonly signatureImagePreviewSrc = computed(() => {
+    const draft = this.signatureImageDataUrl().trim();
+    if (draft) return draft;
+    const editingId = this.editingSignatureId();
+    if (!editingId) return '';
+    const current = this.signatureBlocks().find((item) => item.id === editingId);
+    return current?.imageUrl ?? '';
+  });
+  protected readonly signatureImageFileHint = computed(() => {
+    const name = this.signatureImageChosenFileName().trim();
+    if (name) return name;
+    if (this.signatureImagePreviewSrc()) return 'Image actuelle';
+    return 'Aucun fichier choisi';
+  });
+  protected readonly signatureSaveDisabled = computed(() => {
+    if (!this.signatureLabel().trim()) return true;
+    return !this.signatureContent().trim() && !this.signatureImagePreviewSrc().trim();
+  });
   protected readonly removeTarget = signal<RemoveTarget>(null);
 
   private lastImageFileInput: HTMLInputElement | null = null;
@@ -171,6 +207,9 @@ export class AccountPageComponent {
     effect(() => {
       if (!this.selectedEditorTextBlockId() && this.editorTextBlocks().length) {
         this.selectedEditorTextBlockId.set(this.editorTextBlocks()[0]?.id ?? null);
+      }
+      if (!this.selectedEditorSignatureBlockId() && this.editorSignatureBlocks().length) {
+        this.selectedEditorSignatureBlockId.set(this.editorSignatureBlocks()[0]?.id ?? null);
       }
       if (!this.selectedEditorImageId() && this.editorImages().length) {
         this.selectedEditorImageId.set(this.editorImages()[0]?.id ?? null);
@@ -210,10 +249,19 @@ export class AccountPageComponent {
     this.editingSignatureId.set(row.id);
     this.signatureLabel.set(row.label);
     this.signatureContent.set(row.content);
+    this.signatureImageDataUrl.set('');
+    this.signatureImageMimeType.set(row.imageMimeType || 'image/*');
+    this.signatureImageChosenFileName.set('');
   }
 
   protected saveSignatureBlock(): void {
-    this.store.upsertTextBlock(this.editingSignatureId(), this.signatureLabel(), this.signatureContent(), 'signature');
+    this.store.upsertSignatureBlock(
+      this.editingSignatureId(),
+      this.signatureLabel(),
+      this.signatureContent(),
+      this.signatureImagePreviewSrc(),
+      this.signatureImageMimeType()
+    );
     this.cancelSignatureEdit();
     this.toast.show('Signature enregistrée.', 'success');
   }
@@ -228,6 +276,33 @@ export class AccountPageComponent {
     this.editingSignatureId.set(null);
     this.signatureLabel.set('');
     this.signatureContent.set('');
+    this.signatureImageDataUrl.set('');
+    this.signatureImageMimeType.set('image/*');
+    this.signatureImageChosenFileName.set('');
+  }
+
+  protected pickSignatureImageFile(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  protected async onSignatureImageFileChange(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      this.signatureImageChosenFileName.set('');
+      return;
+    }
+    const dataUrl = await this.readAsDataUrl(file);
+    this.signatureImageChosenFileName.set(file.name);
+    this.signatureImageDataUrl.set(dataUrl);
+    this.signatureImageMimeType.set(file.type || this.mimeFromDataUrl(dataUrl));
+    input.value = '';
+  }
+
+  protected clearSignatureImageSelection(): void {
+    this.signatureImageDataUrl.set('');
+    this.signatureImageMimeType.set('image/*');
+    this.signatureImageChosenFileName.set('');
   }
 
   protected editEmailTemplate(id: string): void {
