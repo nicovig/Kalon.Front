@@ -5,10 +5,13 @@ import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { ButtonLabelComponent } from '../../layout/button/button-label/button-label.component';
 import { UserStore } from '../../core/auth/user.store';
+import { AuthService } from '../../core/auth/auth.service';
 import { OrganizationCustomContentStore } from './organization-custom-content.store';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { ToastService } from '../../layout/toast/toast.service';
 import { firstValueFrom } from 'rxjs';
+import { finalize } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { PopupShellComponent } from '../../layout/popup/popup-shell.component';
 import { ButtonCheckboxComponent } from '../../layout/button/checkbox/button-checkbox.component';
@@ -59,6 +62,7 @@ export class AccountPageComponent {
   private readonly userStore = inject(UserStore);
   private readonly store = inject(OrganizationCustomContentStore);
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
 
   protected readonly organizationInfo = signal<AccountOrganizationInfo>({
@@ -70,6 +74,16 @@ export class AccountPageComponent {
     audienceDescription: ''
   });
   private readonly organizationRaw = signal<Record<string, unknown> | null>(null);
+
+  protected readonly currentPassword = signal('');
+  protected readonly newPassword = signal('');
+  protected readonly confirmPassword = signal('');
+  protected readonly changePasswordSaving = signal(false);
+  protected readonly changePasswordSaveDisabled = computed(() => {
+    if (this.changePasswordSaving()) return true;
+    if (!this.currentPassword().trim() || !this.newPassword().trim()) return true;
+    return this.newPassword() !== this.confirmPassword();
+  });
 
   protected readonly sendingPreferenceCards = [
     {
@@ -490,6 +504,33 @@ export class AccountPageComponent {
     );
   }
 
+  protected saveChangePassword(): void {
+    if (this.changePasswordSaveDisabled()) return;
+    if (this.newPassword() !== this.confirmPassword()) {
+      this.toast.show('Les mots de passe ne correspondent pas.', 'alert');
+      return;
+    }
+    this.changePasswordSaving.set(true);
+    this.authService
+      .changePassword(this.currentPassword(), this.newPassword())
+      .pipe(finalize(() => this.changePasswordSaving.set(false)))
+      .subscribe({
+        next: () => {
+          this.cancelChangePassword();
+          this.toast.show('Mot de passe mis à jour.', 'success');
+        },
+        error: (err: unknown) => {
+          this.toast.show(this.parseChangePasswordError(err), 'alert');
+        }
+      });
+  }
+
+  protected cancelChangePassword(): void {
+    this.currentPassword.set('');
+    this.newPassword.set('');
+    this.confirmPassword.set('');
+  }
+
   protected async saveSendingPreferencesBlock(): Promise<void> {
     await this.persistOrganizationUpdate(
       'Paramètres d’envoi enregistrés.',
@@ -583,6 +624,19 @@ export class AccountPageComponent {
           this.editorVariableTagsWrite.set([]);
         }
       });
+  }
+
+  private parseChangePasswordError(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const body = err.error as { message?: string } | null;
+      if (body && typeof body.message === 'string' && body.message.trim()) {
+        return body.message;
+      }
+      if (err.status === 401) {
+        return 'Mot de passe actuel incorrect.';
+      }
+    }
+    return 'Impossible de mettre à jour le mot de passe.';
   }
 
   private readAsDataUrl(file: File): Promise<string> {

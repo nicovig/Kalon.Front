@@ -32,6 +32,14 @@
         width="100%"
       />
 
+      <div class="login-actions-secondary login-actions-secondary--tight">
+        <a routerLink="/forgot-password" class="login-link">Mot de passe oublié ?</a>
+      </div>
+
+      @if (successMessage) {
+        <p class="login-success" role="status">{{ successMessage }}</p>
+      }
+
       @if (errorMessage) {
         <p class="login-error" role="alert">{{ errorMessage }}</p>
       }

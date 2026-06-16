@@ -137,6 +137,37 @@
   line-height: 1.35;
 }
 
+.login-success {
+  margin: 0;
+  font-size: 13px;
+  color: #027a48;
+  line-height: 1.45;
+}
+
+.login-actions-secondary {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-actions-secondary--tight {
+  margin-top: -4px;
+  align-items: flex-end;
+}
+
+.login-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7C3AED;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
 .login-footer {
   margin-top: 14px;
   font-size: 11.5px;

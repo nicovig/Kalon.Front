@@ -1,48 +1,48 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 
 @Component({
-  selector: 'login-page',
+  selector: 'forgot-password-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, FormTextComponent],
-  templateUrl: './login.page.html',
+  templateUrl: './forgot-password.page.html',
   styleUrls: ['./login.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginPageComponent implements OnInit {
+export class ForgotPasswordPageComponent {
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
   private readonly cd = inject(ChangeDetectorRef);
 
-  email = '';
-  password = '';
+  protected email = '';
   protected submitting = false;
+  protected sent = false;
   protected errorMessage = '';
-  protected successMessage = '';
 
-  ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('reset') === 'success') {
-      this.successMessage = 'Votre mot de passe a été mis à jour. Vous pouvez vous connecter.';
-      this.cd.markForCheck();
+  protected readonly sentMessage =
+    'Si un compte est associé à cette adresse, vous recevrez un e-mail avec un lien de réinitialisation (valable 60 minutes).';
+
+  protected onSubmit(): void {
+    if (this.submitting || this.sent) {
+      return;
     }
-  }
-
-  onSubmit(): void {
-    if (this.submitting) {
+    const normalizedEmail = this.email.trim();
+    if (!normalizedEmail) {
+      this.errorMessage = 'Veuillez saisir votre adresse e-mail.';
+      this.cd.markForCheck();
       return;
     }
     this.errorMessage = '';
     this.submitting = true;
     this.cd.markForCheck();
     this.authService
-      .login(this.email.trim(), this.password)
+      .forgotPassword(normalizedEmail)
       .pipe(
         finalize(() => {
           this.submitting = false;
@@ -50,23 +50,25 @@ export class LoginPageComponent implements OnInit {
         })
       )
       .subscribe({
-        next: () => this.router.navigateByUrl('/'),
+        next: () => {
+          this.sent = true;
+        },
         error: (err: unknown) => {
-          this.errorMessage = this.parseLoginError(err);
+          this.errorMessage = this.parseError(err);
         }
       });
   }
 
-  private parseLoginError(err: unknown): string {
+  private parseError(err: unknown): string {
     if (err instanceof HttpErrorResponse) {
       const body = err.error as { message?: string } | null;
       if (body && typeof body.message === 'string' && body.message.trim()) {
         return body.message;
       }
-      if (err.status === 401) {
-        return 'Identifiants incorrects.';
+      if (err.status === 0) {
+        return 'Impossible de contacter le serveur, réessayez plus tard.';
       }
     }
-    return 'Connexion impossible. Réessayez.';
+    return 'Impossible de contacter le serveur, réessayez plus tard.';
   }
 }

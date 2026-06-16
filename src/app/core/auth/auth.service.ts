@@ -2,7 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, delay, map, of, throwError } from 'rxjs';
 import { AUTH_MOCK_ENABLED } from '../config/api.config';
-import { LoginResponseBody } from './auth-api.model';
+import {
+  ChangePasswordRequestApiModel,
+  ForgotPasswordRequestApiModel,
+  LoginResponseBody,
+  ResetPasswordRequestApiModel
+} from './auth-api.model';
 import { AssociationPlan, AuthUser } from './auth-user.model';
 import { UserStore } from './user.store';
 import { API_ENDPOINTS } from '../api/api.endpoints';
@@ -51,6 +56,59 @@ export class AuthService {
 
   logout(): void {
     this.userStore.clearSession();
+  }
+
+  forgotPassword(email: string): Observable<void> {
+    const normalizedEmail = email.trim();
+    if (AUTH_MOCK_ENABLED) {
+      if (!normalizedEmail) {
+        return throwError(() => ({ status: 400, error: { message: 'Email is required.' } }));
+      }
+      return of(undefined).pipe(delay(300));
+    }
+    const payload: ForgotPasswordRequestApiModel = { email: normalizedEmail };
+    return this.http.post<void>(API_ENDPOINTS.auth.forgotPassword(), payload);
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    const normalizedToken = token.trim();
+    const normalizedPassword = String(newPassword ?? '');
+    if (AUTH_MOCK_ENABLED) {
+      if (!normalizedToken || !normalizedPassword) {
+        return throwError(() => ({ status: 400, error: { message: 'Token and new password are required.' } }));
+      }
+      if (normalizedToken === 'expired') {
+        return throwError(() => ({
+          status: 400,
+          error: { message: 'Lien de réinitialisation invalide ou expiré.' }
+        }));
+      }
+      return of(undefined).pipe(delay(300));
+    }
+    const payload: ResetPasswordRequestApiModel = {
+      token: normalizedToken,
+      newPassword: normalizedPassword
+    };
+    return this.http.post<void>(API_ENDPOINTS.auth.resetPassword(), payload);
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    const current = String(currentPassword ?? '');
+    const next = String(newPassword ?? '');
+    if (AUTH_MOCK_ENABLED) {
+      if (!current || !next) {
+        return throwError(() => ({ status: 400, error: { message: 'Mot de passe actuel et nouveau requis.' } }));
+      }
+      if (current !== 'password') {
+        return throwError(() => ({ status: 401, error: { message: 'Mot de passe actuel incorrect.' } }));
+      }
+      return of(undefined).pipe(delay(300));
+    }
+    const payload: ChangePasswordRequestApiModel = {
+      currentPassword: current,
+      newPassword: next
+    };
+    return this.http.post<void>(API_ENDPOINTS.auth.changePassword(), payload);
   }
 
   private mapApiUserToAuthUser(

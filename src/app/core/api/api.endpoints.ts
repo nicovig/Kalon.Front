@@ -22,7 +22,10 @@ export const API_ENDPOINTS = {
     generateMail: () => toUrl('/api/AIMail/generate-mail')
   },
   auth: {
-    login: () => toUrl('/api/Auth/login')
+    login: () => toUrl('/api/Auth/login'),
+    forgotPassword: () => toUrl('/api/Auth/forgot-password'),
+    resetPassword: () => toUrl('/api/Auth/reset-password'),
+    changePassword: () => toUrl('/api/Auth/change-password')
   },
   contact: {
     create: () => toUrl('/api/Contact'),

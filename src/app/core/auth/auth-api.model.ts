@@ -3,6 +3,20 @@ export interface LoginRequestBody {
   password: string;
 }
 
+export interface ForgotPasswordRequestApiModel {
+  email: string;
+}
+
+export interface ResetPasswordRequestApiModel {
+  token: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordRequestApiModel {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface LoginResponseBody {
   token: string;
   user: {

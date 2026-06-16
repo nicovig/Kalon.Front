@@ -74,6 +74,53 @@
   </section>
 
   <section class="account-card">
+    <h2 class="account-title">Mot de passe</h2>
+    <p class="account-subtitle">Modifiez le mot de passe utilisé pour vous connecter à Kalon.</p>
+    <div class="account-form-grid">
+      <label class="account-form-grid-full">
+        <span>Mot de passe actuel</span>
+        <input
+          type="password"
+          autocomplete="current-password"
+          [ngModel]="currentPassword()"
+          (ngModelChange)="currentPassword.set($event)"
+          placeholder="Mot de passe actuel"
+        />
+      </label>
+      <label>
+        <span>Nouveau mot de passe</span>
+        <input
+          type="password"
+          autocomplete="new-password"
+          [ngModel]="newPassword()"
+          (ngModelChange)="newPassword.set($event)"
+          placeholder="Nouveau mot de passe"
+        />
+      </label>
+      <label>
+        <span>Confirmation</span>
+        <input
+          type="password"
+          autocomplete="new-password"
+          [ngModel]="confirmPassword()"
+          (ngModelChange)="confirmPassword.set($event)"
+          placeholder="Confirmer le mot de passe"
+        />
+      </label>
+    </div>
+    <div class="account-actions">
+      <button-label-component type="ghost" (click)="cancelChangePassword()">Réinitialiser</button-label-component>
+      <button-label-component
+        type="primary"
+        [disabled]="changePasswordSaveDisabled()"
+        (click)="saveChangePassword()"
+      >
+        {{ changePasswordSaving() ? 'Enregistrement…' : 'Mettre à jour le mot de passe' }}
+      </button-label-component>
+    </div>
+  </section>
+
+  <section class="account-card">
     <h2 class="account-title">Modèles de emails</h2>
     <p class="account-subtitle">Préparez des modèles réutilisables dans le tunnel d’envoi (objet, texte enrichi, variables).</p>
     <div class="account-form-grid">
