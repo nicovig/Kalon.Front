@@ -105,6 +105,17 @@ const RULES: Rule[] = [
       /\byearly\b/.test(n)
   },
   {
+    field: 'fullName',
+    weight: 10,
+    test: (n) =>
+      /\bnom\s+et\s+prenom\b/.test(n) ||
+      /\bnom\s+prenom\b/.test(n) ||
+      /\bprenom\s+nom\b/.test(n) ||
+      /\bnom\s+complet\b/.test(n) ||
+      /\bfull\s*name\b/.test(n) ||
+      (/\bnom\b/.test(n) && /\bprenom\b/.test(n))
+  },
+  {
     field: 'lastname',
     weight: 9,
     test: (n) =>
@@ -120,8 +131,7 @@ const RULES: Rule[] = [
     test: (n) =>
       /\bprenom\b/.test(n) ||
       /\bfirst\s*name\b/.test(n) ||
-      /\bgiven\s*name\b/.test(n) ||
-      /\bprenom\b/.test(n)
+      /\bgiven\s*name\b/.test(n)
   },
   {
     field: 'postalCode',

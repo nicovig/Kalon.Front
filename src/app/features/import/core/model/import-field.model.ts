@@ -8,6 +8,7 @@ export type ImportFieldKey =
   | 'contactLastname'
   | 'lastname'
   | 'firstname'
+  | 'fullName'
   | 'email'
   | 'phone'
   | 'jobTitle'
@@ -31,6 +32,7 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'contactFirstname', label: 'Entreprise - Prénom contact' },
   { key: 'lastname', label: 'Particulier - Nom' },
   { key: 'firstname', label: 'Particulier - Prénom' },
+  { key: 'fullName', label: 'Particulier - Nom et prénom' },
   { key: 'email', label: 'Particulier - Email' },
   { key: 'phone', label: 'Particulier - Téléphone' },
   { key: 'jobTitle', label: 'Particulier - Métier' },

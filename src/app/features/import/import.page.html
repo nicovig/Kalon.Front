@@ -43,13 +43,23 @@
     <div class="imp-toolbar">
       <div class="imp-file-pill">
         <span class="imp-file-name">{{ fileName() }}</span>
-        @if (sheetName()) {
+        @if (showSheetSelector()) {
+          <div class="imp-sheet-select">
+            <form-select-component
+              label="Feuille Excel"
+              [options]="sheetSelectOptions()"
+              [ngModel]="sheetName() ?? ''"
+              (ngModelChange)="onExcelSheetChange($event)"
+            />
+          </div>
+        } @else if (sheetName()) {
           <span class="imp-sheet">Feuille : {{ sheetName() }}</span>
         }
         <span class="imp-rows">{{ rowCount() }} ligne(s) de données</span>
         <span class="imp-mode-pill">{{ modeShortLabel(importMode()) }}</span>
       </div>
       <div class="imp-toolbar-actions">
+        <import-business-rules-tooltip [mode]="importMode()" />
         <button-label-component type="ghost" (click)="reapplyGuess()"
           >Ré-détecter les colonnes</button-label-component
         >
@@ -84,17 +94,80 @@
           </div>
         }
 
+        @if (contactDatasetAnalysis(); as analysis) {
+          @if (datasetBlockingIssues().length) {
+            <div class="imp-dataset-alert imp-dataset-alert--error" role="alert">
+              <span class="imp-dup-alert-icon" aria-hidden="true">⛔</span>
+              <div class="imp-dup-alert-body">
+                <strong>Problèmes bloquants dans le fichier</strong>
+                <ul class="imp-dup-list">
+                  @for (issue of datasetBlockingIssues(); track issue.code + (issue.columnIndex ?? '')) {
+                    <li>{{ issue.message }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+          @if (datasetWarningIssues().length) {
+            <div class="imp-dataset-alert imp-dataset-alert--warning" role="status">
+              <span class="imp-dup-alert-icon" aria-hidden="true">⚠️</span>
+              <div class="imp-dup-alert-body">
+                <strong>Points d’attention</strong>
+                <ul class="imp-dup-list">
+                  @for (issue of datasetWarningIssues(); track issue.code + (issue.columnIndex ?? '')) {
+                    <li>{{ issue.message }}</li>
+                  }
+                </ul>
+                @if (analysis.duplicateEmails.length) {
+                  <p class="imp-dataset-summary">
+                    Emails en double :
+                    @for (dup of analysis.duplicateEmails; track dup.key) {
+                      <span class="imp-dup-pill">{{ dup.label }} (l. {{ dup.rowNumbers.join(', ') }})</span>
+                    }
+                  </p>
+                }
+                @if (analysis.duplicateNames.length) {
+                  <p class="imp-dataset-summary">
+                    Profils potentiellement dupliqués :
+                    @for (dup of analysis.duplicateNames; track dup.key) {
+                      <span class="imp-dup-pill">l. {{ dup.rowNumbers.join(', ') }}</span>
+                    }
+                  </p>
+                }
+                <p class="imp-dataset-stats">
+                  {{ analysis.validRowCount }} ligne(s) importable(s),
+                  {{ analysis.invalidRowCount }} ignorée(s) si vous lancez maintenant.
+                </p>
+              </div>
+            </div>
+          }
+        }
+
         <card
           title="Relier vos colonnes à Kalon"
           [subtitle]="
             importMode() === 'donations'
               ? 'Champs obligatoires : Date de la contribution + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon - à droite : colonne du fichier (détection automatique).'
               : importMode() === 'combined'
-                ? 'Champs obligatoires : email + (Nom ou Prénom). Si contribution sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
-                : 'Champs obligatoires : Email + (Nom ou Prénom). À gauche : champ Kalon - à droite : colonne du fichier détectée automatiquement.'
+                ? 'Champs obligatoires : email ou adresse + (nom, prénom ou nom complet). Si contribution sur la même ligne : date + montant. Mapping automatique : ajustez chaque ligne si besoin.'
+                : 'Champs obligatoires : email ou adresse postale + (nom, prénom ou nom complet). À gauche : champ Kalon - à droite : colonne du fichier détectée automatiquement.'
           "
           paddingClass="advanced"
         >
+          @if (showFullNameOrderChoice()) {
+            <div class="imp-name-order">
+              <form-select-component
+                label="Ordre nom / prénom dans le fichier"
+                [options]="fullNameOrderOptions"
+                [ngModel]="fullNameOrder()"
+                (ngModelChange)="fullNameOrder.set($event)"
+              />
+              <p class="imp-name-order-hint">
+                Vos colonnes contiennent nom et prénom sur la même ligne. Indiquez si le format
+                est « Prénom Nom » ou « Nom Prénom » — l’aperçu se met à jour immédiatement.
+              </p>
+            </div>
+          }
           <div class="imp-map-grid">
             @for (row of mappedFieldRows(); track row.fieldKey) {
               <div

@@ -77,37 +77,41 @@ function padRow(row: string[], len: number): string[] {
   return r.slice(0, len);
 }
 
-export async function parseImportFile(file: File): Promise<{
+export function resolveExcelSheetName(sheetNames: string[], preferredSheetName?: string): string {
+  if (!sheetNames.length) {
+    throw new Error('Excel workbook has no sheets');
+  }
+  if (preferredSheetName && sheetNames.includes(preferredSheetName)) {
+    return preferredSheetName;
+  }
+  return sheetNames[0];
+}
+
+export function matrixFromExcelSheet(workbook: XLSX.WorkBook, sheetName: string): string[][] {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) {
+    return [];
+  }
+  const raw = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: '',
+    raw: false
+  }) as unknown[][];
+  return trimMatrix(
+    raw.map((row) => (Array.isArray(row) ? row.map((c) => String(c ?? '')) : []))
+  );
+}
+
+export function parseImportMatrix(
+  matrix: string[][],
+  sheetName?: string
+): {
   headers: string[];
   rows: string[][];
   sheetName?: string;
-}> {
-  const name = file.name.toLowerCase();
-  const isCsv = name.endsWith('.csv') || file.type === 'text/csv';
-
-  let matrix: string[][];
-  let sheetNameOut: string | undefined;
-
-  if (isCsv) {
-    const text = await file.text();
-    matrix = trimMatrix(parseCsvText(text));
-  } else {
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: 'array' });
-    sheetNameOut = wb.SheetNames[0];
-    const sheet = wb.Sheets[sheetNameOut];
-    const raw = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: '',
-      raw: false
-    }) as unknown[][];
-    matrix = trimMatrix(
-      raw.map((row) => (Array.isArray(row) ? row.map((c) => String(c ?? '')) : []))
-    );
-  }
-
+} {
   if (!matrix.length) {
-    return { headers: [], rows: [] };
+    return { headers: [], rows: [], sheetName };
   }
 
   const headerIdx = detectHeaderRowIndex(matrix);
@@ -121,6 +125,36 @@ export async function parseImportFile(file: File): Promise<{
   return {
     headers,
     rows: body,
-    sheetName: sheetNameOut
+    sheetName
+  };
+}
+
+export async function parseImportFile(
+  file: File,
+  preferredSheetName?: string
+): Promise<{
+  headers: string[];
+  rows: string[][];
+  sheetName?: string;
+  sheetNames?: string[];
+}> {
+  const name = file.name.toLowerCase();
+  const isCsv = name.endsWith('.csv') || file.type === 'text/csv';
+
+  if (isCsv) {
+    const text = await file.text();
+    const parsed = parseImportMatrix(trimMatrix(parseCsvText(text)));
+    return parsed;
+  }
+
+  const buf = await file.arrayBuffer();
+  const workbook = XLSX.read(buf, { type: 'array' });
+  const sheetNames = workbook.SheetNames;
+  const sheetNameOut = resolveExcelSheetName(sheetNames, preferredSheetName);
+  const matrix = matrixFromExcelSheet(workbook, sheetNameOut);
+  const parsed = parseImportMatrix(matrix, sheetNameOut);
+  return {
+    ...parsed,
+    sheetNames
   };
 }

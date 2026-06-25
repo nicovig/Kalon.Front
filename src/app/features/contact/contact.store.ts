@@ -6,6 +6,7 @@ import { ContactSettingsStore } from './settings/contact-settings.store';
 import { UserStore } from '../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel } from '../../core/api/backend-api.model';
+import { contactMatchesIdentityAndAddress } from '../../core/utils/contact-match.util';
 
 export interface NewContactInputIndividual {
   kind: 'donor' | 'member' | 'helper';
@@ -91,6 +92,27 @@ export class ContactStoreService {
       const b = `${d.lastname} ${d.firstname}`.trim().toLowerCase().replace(/\s+/g, ' ');
       return a === s || b === s;
     });
+  }
+
+  findContactByNameAndAddress(
+    firstname: string,
+    lastname: string,
+    address: IContactAddress
+  ): IContact | undefined {
+    return this.contactsSignal().find((contact) =>
+      contactMatchesIdentityAndAddress(contact, firstname, lastname, address)
+    );
+  }
+
+  findExistingContactForImport(input: NewContactInput): IContact | undefined {
+    const email = input.email?.trim();
+    if (email) {
+      return this.findContactByEmail(email);
+    }
+    if (input.kind === 'company') {
+      return undefined;
+    }
+    return this.findContactByNameAndAddress(input.firstname, input.lastname, input.address);
   }
 
   createContact(input: NewContactInput): IContact {

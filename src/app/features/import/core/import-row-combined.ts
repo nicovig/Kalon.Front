@@ -2,13 +2,15 @@ import { NewContactInput } from '../../contact/contact.store';
 import { ImportFieldKey } from './model/import-field.model';
 import { CombinedImportFieldKey } from './model/import-combined-field.model';
 import { mapRowToNewContactInput } from './import-row-to-contact';
+import { ContactImportParseOptions } from './import-contact-validation';
 import { parseDonationTypeFromCell, parsePaymentMethodFromCell } from './import-row-donation';
 import { parseAmountFromCell, parseDateFromCell } from './import-parse-cells';
 import { DonationPaymentMethod, DonationType } from '../../../core/models/donation.model';
 
 export function mapCombinedRowToActions(
   row: string[],
-  bindings: CombinedImportFieldKey[]
+  bindings: CombinedImportFieldKey[],
+  options?: ContactImportParseOptions
 ): {
   contactInput: NewContactInput | null;
   donation: {
@@ -23,7 +25,7 @@ export function mapCombinedRowToActions(
       ? ('skip' as ImportFieldKey)
       : (b as ImportFieldKey)
   );
-  const contactInput = mapRowToNewContactInput(row, contactBindings);
+  const contactInput = mapRowToNewContactInput(row, contactBindings, undefined, options);
   let donationDateStr = '';
   let donationAmountStr = '';
   let donationTypeStr = '';

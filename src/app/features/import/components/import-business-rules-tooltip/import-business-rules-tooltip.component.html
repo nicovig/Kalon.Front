@@ -1,0 +1,33 @@
+<div class="imp-rules-tip">
+  <button
+    type="button"
+    class="imp-rules-tip-btn"
+    [attr.aria-expanded]="open()"
+    aria-controls="imp-rules-tip-panel"
+    (click)="toggle()"
+  >
+    <span class="imp-rules-tip-icon" aria-hidden="true">ℹ️</span>
+    Règles d’import
+  </button>
+
+  @if (open()) {
+    <div id="imp-rules-tip-panel" class="imp-rules-tip-panel" role="dialog" aria-label="Règles métier de l’import">
+      <div class="imp-rules-tip-head">
+        <strong>Pourquoi certaines colonnes ou lignes ne correspondent pas ?</strong>
+        <button type="button" class="imp-rules-tip-close" aria-label="Fermer" (click)="close()">×</button>
+      </div>
+      <div class="imp-rules-tip-body">
+        @for (section of sections(); track section.title) {
+          <section class="imp-rules-tip-section">
+            <h4 class="imp-rules-tip-section-title">{{ section.title }}</h4>
+            <ul class="imp-rules-tip-list">
+              @for (item of section.items; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</div>

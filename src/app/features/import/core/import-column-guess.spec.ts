@@ -19,4 +19,13 @@ describe('guessMappingForHeaders', () => {
     expect(guessFieldForHeader('Prénom')).toBe('firstname');
     expect(guessFieldForHeader('Email')).toBe('email');
   });
+
+  it('detects combined full name headers', () => {
+    expect(guessFieldForHeader('Nom et prénom')).toBe('fullName');
+    expect(guessFieldForHeader('Nom Prenom')).toBe('fullName');
+    const headers = ['Nom et prénom', 'Email'];
+    const m = guessMappingForHeaders(headers);
+    expect(m[0]).toBe('fullName');
+    expect(m[1]).toBe('email');
+  });
 });

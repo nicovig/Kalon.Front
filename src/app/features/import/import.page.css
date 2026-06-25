@@ -53,9 +53,14 @@
   color: var(--ink-70);
 }
 
+.imp-sheet-select {
+  min-width: 180px;
+}
+
 .imp-toolbar-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
@@ -85,6 +90,51 @@
   background: var(--yellow-lt);
   border: 2px solid var(--yellow);
   border-radius: var(--r-md);
+}
+
+.imp-dataset-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  margin-top: 12px;
+}
+
+.imp-dataset-alert--error {
+  background: #fde8e8;
+  border: 2px solid #e57373;
+}
+
+.imp-dataset-alert--warning {
+  background: var(--yellow-lt);
+  border: 2px solid var(--yellow);
+}
+
+.imp-dataset-summary {
+  margin: 10px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ink-70);
+}
+
+.imp-dataset-stats {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-70);
+}
+
+.imp-name-order {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ink-10);
+}
+
+.imp-name-order-hint {
+  margin: 8px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-70);
 }
 
 .imp-dup-alert-icon {

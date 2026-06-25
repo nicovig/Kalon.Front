@@ -1,5 +1,6 @@
 import { ImportFieldKey } from './model/import-field.model';
 import { CombinedImportFieldKey } from './model/import-combined-field.model';
+import { buildContactImportBag, ContactImportParseOptions } from './import-contact-validation';
 
 export type ImportPreviewRow = {
   kind: 'individual' | 'company';
@@ -42,8 +43,12 @@ export function collectImportFieldBag(
   return bag;
 }
 
-export function mapDataRowToPreview(row: string[], bindings: ImportFieldKey[]): ImportPreviewRow {
-  const bag = collectImportFieldBag(row, bindings);
+export function mapDataRowToPreview(
+  row: string[],
+  bindings: ImportFieldKey[],
+  options?: ContactImportParseOptions
+): ImportPreviewRow {
+  const bag = buildContactImportBag(row, bindings, undefined, options);
 
   let address = '';
   if (bag.addressLine) {
@@ -78,9 +83,10 @@ export function mapDataRowToPreview(row: string[], bindings: ImportFieldKey[]): 
 
 export function mapDataRowToCombinedPreview(
   row: string[],
-  bindings: CombinedImportFieldKey[]
+  bindings: CombinedImportFieldKey[],
+  options?: ContactImportParseOptions
 ): CombinedPreviewRow {
-  const base = mapDataRowToPreview(row, contactBindingsFromCombined(bindings));
+  const base = mapDataRowToPreview(row, contactBindingsFromCombined(bindings), options);
   let donationDate = '';
   let donationAmount = '';
   const len = Math.min(row.length, bindings.length);

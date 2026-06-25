@@ -3,6 +3,13 @@ import { EnterpriseSupportKind, IContact } from '../../../core/models/contact.mo
 import { ImportFieldKey } from './model/import-field.model';
 import { collectImportFieldBag } from './import-map-preview';
 import { parseDateFromCell } from './import-parse-cells';
+import {
+  assessContactImportRowSkipReason,
+  buildContactImportBag,
+  ContactImportParseOptions,
+  isValidEmail,
+  resolveAddressFromBag
+} from './import-contact-validation';
 
 function normalizeCell(value: string): string {
   return value
@@ -95,15 +102,14 @@ function parseSupportKind(value: string): EnterpriseSupportKind {
 export function mapRowToNewContactInput(
   row: string[],
   bindings: ImportFieldKey[],
-  overrides?: Partial<Record<ImportFieldKey, string>>
+  overrides?: Partial<Record<ImportFieldKey, string>>,
+  options?: ContactImportParseOptions
 ): NewContactInput | null {
-  const bag = collectImportFieldBag(row, bindings);
-  if (overrides) {
-    for (const [k, v] of Object.entries(overrides) as [ImportFieldKey, string][]) {
-      bag[k] = v;
-    }
+  const bag = buildContactImportBag(row, bindings, overrides, options);
+  if (assessContactImportRowSkipReason(bag, options)) {
+    return null;
   }
-  const email = (bag.email ?? '').trim();
+  const email = isValidEmail(bag.email) ? String(bag.email ?? '').trim() : '';
   const firstname = (bag.firstname ?? '').trim();
   const lastname = (bag.lastname ?? '').trim();
 
@@ -122,22 +128,13 @@ export function mapRowToNewContactInput(
   const contactFirstname = (bag.contactFirstname ?? '').trim();
   const contactLastname = (bag.contactLastname ?? '').trim();
 
-  if (!email) {
-    return null;
-  }
-
   const intendedKind = enterpriseName || siret ? 'company' : 'donor';
 
-  let street = (bag.street ?? '').trim();
-  if (bag.addressLine?.trim() && !street) {
-    street = bag.addressLine.trim();
-  }
-  const postalCode = (bag.postalCode ?? '').trim() || '-';
-  const city = (bag.city ?? '').trim() || '-';
-  const country = (bag.country ?? '').trim() || 'France';
-  if (!street) {
-    street = '-';
-  }
+  const resolvedAddress = resolveAddressFromBag(bag);
+  let street = resolvedAddress.street;
+  const postalCode = resolvedAddress.postalCode;
+  const city = resolvedAddress.city;
+  const country = resolvedAddress.country;
 
   if (intendedKind === 'company') {
     if (!enterpriseName) {

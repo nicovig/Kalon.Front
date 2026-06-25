@@ -31,7 +31,6 @@ import { guessCombinedMappingForHeaders } from './core/import-combined-guess';
 import { ImportMode, IMPORT_MODE_OPTIONS } from './core/model/import-mode.model';
 import { ImportFlowService } from './core/import-flow.service';
 import {
-  collectImportFieldBag,
   mapDataRowToCombinedPreview,
   mapDataRowToPreview
 } from './core/import-map-preview';
@@ -39,6 +38,7 @@ import { ImportFieldKey } from './core/model/import-field.model';
 import { parseAmountFromCell, parseDateFromCell } from './core/import-parse-cells';
 import { parseImportFile } from './core/import-file-parse';
 import { mapRowToNewContactInput } from './core/import-row-to-contact';
+import type { NewContactInput } from '../contact/contact.store';
 import {
   mapRowToDonationImport,
   collectDonationImportBag,
@@ -46,6 +46,15 @@ import {
   parsePaymentMethodFromCell
 } from './core/import-row-donation';
 import { mapCombinedRowToActions } from './core/import-row-combined';
+import {
+  analyzeContactImportDataset,
+  assessContactImportRowSkipReason,
+  buildContactImportBag,
+  contactsImportMappingReady,
+  ContactImportParseOptions,
+  FullNameOrder,
+  needsCombinedNameOrderChoice
+} from './core/import-contact-validation';
 import { ImportStepTrailComponent } from './components/import-step-trail/import-step-trail.component';
 import {
   IgnoredLinesPopupComponent
@@ -57,6 +66,7 @@ import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { contactDisplayName } from '../../core/models/contact.model';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
+import { ImportBusinessRulesTooltipComponent } from './components/import-business-rules-tooltip/import-business-rules-tooltip.component';
 
 @Component({
   selector: 'import-page',
@@ -73,7 +83,8 @@ import { DashboardNotificationStore } from '../../core/notification/dashboard-no
     ImportStepTrailComponent,
     IgnoredLinesPopupComponent,
     PopupShellComponent,
-    FormSelectComponent
+    FormSelectComponent,
+    ImportBusinessRulesTooltipComponent
   ],
   templateUrl: './import.page.html',
   styleUrls: ['./import.page.css'],
@@ -121,6 +132,8 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly fileName = signal<string | null>(null);
   protected readonly sheetName = signal<string | null>(null);
+  protected readonly excelSheetNames = signal<string[]>([]);
+  private currentFile: File | null = null;
   protected readonly rowCount = signal(0);
   protected readonly headers = signal<string[]>([]);
   protected readonly bindings = signal<string[]>([]);
@@ -133,13 +146,33 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly donationsImportPromptOpen = signal(false);
 
+  protected readonly fullNameOrder = signal<FullNameOrder>('firstname-lastname');
+
+  protected readonly fullNameOrderOptions: FormSelectOption[] = [
+    { value: 'firstname-lastname', label: 'Prénom puis nom (ex. Jean Dupont)' },
+    { value: 'lastname-firstname', label: 'Nom puis prénom (ex. Dupont Jean)' }
+  ];
+
+  protected readonly showSheetSelector = computed(() => this.excelSheetNames().length > 1);
+
+  protected readonly sheetSelectOptions = computed((): FormSelectOption[] =>
+    this.excelSheetNames().map((name) => ({ value: name, label: name }))
+  );
+
+  protected readonly contactImportOptions = computed(
+    (): ContactImportParseOptions => ({
+      fullNameOrder: this.fullNameOrder()
+    })
+  );
+
   protected readonly previewRows = computed(() => {
     if (this.importMode() !== 'contacts') {
       return [];
     }
     const rows = this.sampleRows();
     const b = this.bindings();
-    return rows.map((r) => mapDataRowToPreview(r, b as ImportFieldKey[]));
+    const options = this.contactImportOptions();
+    return rows.map((r) => mapDataRowToPreview(r, b as ImportFieldKey[], options));
   });
 
   protected readonly combinedPreviewRows = computed(() => {
@@ -148,7 +181,8 @@ export class ImportPageComponent implements OnInit {
     }
     const rows = this.sampleRows();
     const b = this.bindings();
-    return rows.map((r) => mapDataRowToCombinedPreview(r, b as CombinedImportFieldKey[]));
+    const options = this.contactImportOptions();
+    return rows.map((r) => mapDataRowToCombinedPreview(r, b as CombinedImportFieldKey[], options));
   });
 
   protected readonly donationPreviewRows = computed(() => {
@@ -292,6 +326,46 @@ export class ImportPageComponent implements OnInit {
     );
   });
 
+  protected readonly contactsMappingComplete = computed(() => {
+    if (this.importMode() !== 'contacts' && this.importMode() !== 'combined') {
+      return true;
+    }
+    return contactsImportMappingReady(this.bindings() as ImportFieldKey[]);
+  });
+
+  protected readonly contactDatasetAnalysis = computed(() => {
+    if (this.importMode() !== 'contacts' && this.importMode() !== 'combined') {
+      return null;
+    }
+    if (!this.allRows().length) {
+      return null;
+    }
+    return analyzeContactImportDataset(
+      this.headers(),
+      this.bindings() as ImportFieldKey[],
+      this.allRows(),
+      this.contactImportOptions()
+    );
+  });
+
+  protected readonly showFullNameOrderChoice = computed(() => {
+    if (this.importMode() !== 'contacts' && this.importMode() !== 'combined') {
+      return false;
+    }
+    return needsCombinedNameOrderChoice(
+      this.bindings() as ImportFieldKey[],
+      this.contactDatasetAnalysis()?.issues ?? []
+    );
+  });
+
+  protected readonly datasetBlockingIssues = computed(() =>
+    (this.contactDatasetAnalysis()?.issues ?? []).filter((issue) => issue.severity === 'error')
+  );
+
+  protected readonly datasetWarningIssues = computed(() =>
+    (this.contactDatasetAnalysis()?.issues ?? []).filter((issue) => issue.severity === 'warning')
+  );
+
   protected labelForMappedField(key: string): string {
     return (
       IMPORT_FIELD_OPTIONS.find((o) => o.key === key)?.label ??
@@ -305,8 +379,14 @@ export class ImportPageComponent implements OnInit {
     if (this.duplicateFieldSummaries().length > 0) {
       return true;
     }
+    if (this.datasetBlockingIssues().length > 0) {
+      return true;
+    }
     const hasAnyMappedField = this.bindings().some((b) => b !== 'skip');
     if (!hasAnyMappedField) {
+      return true;
+    }
+    if (!this.contactsMappingComplete()) {
       return true;
     }
     if (!this.donationsMappingComplete()) {
@@ -322,9 +402,15 @@ export class ImportPageComponent implements OnInit {
     if (this.duplicateFieldSummaries().length > 0) {
       return 'Corrigez les doublons dans le champ Kalon pour continuer';
     }
+    if (this.datasetBlockingIssues().length > 0) {
+      return 'Corrigez les colonnes vides ou le mapping avant d’importer';
+    }
     const hasAnyMappedField = this.bindings().some((b) => b !== 'skip');
     if (!hasAnyMappedField) {
       return 'Associez au moins une colonne du fichier à un champ Kalon pour continuer';
+    }
+    if (!this.contactsMappingComplete()) {
+      return 'Reliez au minimum un email ou une adresse, et un nom/prénom (ou nom complet)';
     }
     if (!this.donationsMappingComplete()) {
       return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
@@ -375,6 +461,13 @@ export class ImportPageComponent implements OnInit {
 
   protected onDroppedFile(file: File): void {
     void this.loadFile(file);
+  }
+
+  protected onExcelSheetChange(sheetName: string): void {
+    if (!sheetName || !this.currentFile) {
+      return;
+    }
+    void this.loadFile(this.currentFile, sheetName);
   }
 
   protected onKalonFieldColumnChange(fieldKey: string, value: string): void {
@@ -528,95 +621,24 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const bag = collectImportFieldBag(row, bindings);
-
-      const contactKind = line.contactKind ?? (((bag.enterpriseName ?? '').trim() || (bag.siret ?? '').trim()) ? 'company' : 'individual');
-
-      const overrides: Partial<Record<ImportFieldKey, string>> = {};
-      const overrideEmail = line.email?.trim();
-      if (overrideEmail) {
-        overrides.email = overrideEmail;
-      }
-
-      if (contactKind === 'company') {
-        const overrideEnterpriseName = line.enterpriseName?.trim();
-        const overrideSiret = line.siret?.trim();
-        if (overrideEnterpriseName) {
-          overrides.enterpriseName = overrideEnterpriseName;
-        }
-        if (overrideSiret) {
-          overrides.siret = overrideSiret;
-        }
-
-        const overrideContactFirstname = line.firstname?.trim();
-        const overrideContactLastname = line.lastname?.trim();
-        if (overrideContactFirstname) {
-          overrides.contactFirstname = overrideContactFirstname;
-        }
-        if (overrideContactLastname) {
-          overrides.contactLastname = overrideContactLastname;
-        }
-      } else {
-        const overrideFirstname = line.firstname?.trim();
-        const overrideLastname = line.lastname?.trim();
-        if (overrideFirstname) {
-          overrides.firstname = overrideFirstname;
-        }
-        if (overrideLastname) {
-          overrides.lastname = overrideLastname;
-        }
-      }
-
-      const input = mapRowToNewContactInput(row, bindings, overrides);
-      if (!input) {
-        const email = (overrides.email ?? (bag.email ?? '')).trim();
-
-        const enterpriseName = (overrides.enterpriseName ?? (bag.enterpriseName ?? '')).trim();
-        const siret = (overrides.siret ?? (bag.siret ?? '')).trim();
-
-        const intendedKind = enterpriseName || siret ? 'company' : 'individual';
-
-        const firstname =
-          intendedKind === 'company'
-            ? (overrides.contactFirstname ?? bag.contactFirstname ?? '').trim()
-            : (overrides.firstname ?? bag.firstname ?? '').trim();
-        const lastname =
-          intendedKind === 'company'
-            ? (overrides.contactLastname ?? bag.contactLastname ?? '').trim()
-            : (overrides.lastname ?? bag.lastname ?? '').trim();
-
-        const reason = !email
-          ? 'Email manquant'
-          : intendedKind === 'company'
-            ? !enterpriseName
-              ? 'Nom entreprise manquant'
-              : !siret
-                ? 'SIRET manquant'
-                : !firstname && !lastname
-                  ? 'Nom ou prénom contact manquant'
-                  : 'Ligne invalide'
-            : !firstname && !lastname
-              ? 'Nom ou prénom manquant'
-              : 'Ligne invalide';
-
+      const overrides = this.buildContactOverridesFromIgnoredLine(line);
+      const parsed = this.parseContactImportRow(rowIndex, row, bindings, overrides);
+      if (!parsed.input) {
         stillIgnored.push({
           ...line,
-          contactKind: intendedKind,
-          email: email || undefined,
-          enterpriseName: intendedKind === 'company' ? enterpriseName || undefined : undefined,
-          siret: intendedKind === 'company' ? siret || undefined : undefined,
-          firstname: firstname || undefined,
-          lastname: lastname || undefined,
-          reason
+          ...(parsed.ignored ?? {}),
+          rowNumber: line.rowNumber,
+          reason: parsed.ignored?.reason ?? line.reason
         });
         continue;
       }
 
-      const existing = this.contactStore.findContactByEmail(input.email);
+      const existing = this.contactStore.findExistingContactForImport(parsed.input);
       if (existing) {
-        this.contactStore.updateContact(existing.id, input) ?? this.contactStore.createContact(input);
+        this.contactStore.updateContact(existing.id, parsed.input) ??
+          this.contactStore.createContact(parsed.input);
       } else {
-        this.contactStore.createContact(input);
+        this.contactStore.createContact(parsed.input);
       }
 
       importedCount++;
@@ -731,96 +753,23 @@ export class ImportPageComponent implements OnInit {
         continue;
       }
 
-      const bag = collectImportFieldBag(row, contactBindings);
-      const contactKind =
-        line.contactKind ??
-        ((((bag.enterpriseName ?? '').trim() || (bag.siret ?? '').trim()) ? 'company' : 'individual') as
-          | 'company'
-          | 'individual');
-
-      const overrides: Partial<Record<ImportFieldKey, string>> = {};
-
-      const overrideEmail = line.email?.trim();
-      if (overrideEmail) {
-        overrides.email = overrideEmail;
-      }
-
-      if (contactKind === 'company') {
-        const overrideEnterpriseName = line.enterpriseName?.trim();
-        const overrideSiret = line.siret?.trim();
-        if (overrideEnterpriseName) {
-          overrides.enterpriseName = overrideEnterpriseName;
-        }
-        if (overrideSiret) {
-          overrides.siret = overrideSiret;
-        }
-
-        const overrideContactFirstname = line.firstname?.trim();
-        const overrideContactLastname = line.lastname?.trim();
-        if (overrideContactFirstname) {
-          overrides.contactFirstname = overrideContactFirstname;
-        }
-        if (overrideContactLastname) {
-          overrides.contactLastname = overrideContactLastname;
-        }
-      } else {
-        const overrideFirstname = line.firstname?.trim();
-        const overrideLastname = line.lastname?.trim();
-        if (overrideFirstname) {
-          overrides.firstname = overrideFirstname;
-        }
-        if (overrideLastname) {
-          overrides.lastname = overrideLastname;
-        }
-      }
-
-      const contactInput = mapRowToNewContactInput(row, contactBindings, overrides);
-      if (!contactInput) {
-        const email = (overrides.email ?? (bag.email ?? '')).trim();
-        const enterpriseName = (overrides.enterpriseName ?? (bag.enterpriseName ?? '')).trim();
-        const siret = (overrides.siret ?? (bag.siret ?? '')).trim();
-        const intendedKind = enterpriseName || siret ? 'company' : 'individual';
-
-        const firstname =
-          intendedKind === 'company'
-            ? (overrides.contactFirstname ?? bag.contactFirstname ?? '').trim()
-            : (overrides.firstname ?? bag.firstname ?? '').trim();
-        const lastname =
-          intendedKind === 'company'
-            ? (overrides.contactLastname ?? bag.contactLastname ?? '').trim()
-            : (overrides.lastname ?? bag.lastname ?? '').trim();
-
-        const reason = !email
-          ? 'Email manquant'
-          : intendedKind === 'company'
-            ? !enterpriseName
-              ? 'Nom entreprise manquant'
-              : !siret
-                ? 'SIRET manquant'
-                : !firstname && !lastname
-                  ? 'Nom ou prénom contact manquant'
-                  : 'Ligne invalide'
-            : !firstname && !lastname
-              ? 'Nom ou prénom manquant'
-              : 'Ligne invalide';
-
+      const overrides = this.buildContactOverridesFromIgnoredLine(line);
+      const parsed = this.parseContactImportRow(rowIndex, row, contactBindings, overrides);
+      if (!parsed.input) {
         stillIgnored.push({
           ...line,
-          contactKind: intendedKind,
-          email: email || undefined,
-          enterpriseName: intendedKind === 'company' ? enterpriseName || undefined : undefined,
-          siret: intendedKind === 'company' ? siret || undefined : undefined,
-          firstname: firstname || undefined,
-          lastname: lastname || undefined,
-          reason
+          ...(parsed.ignored ?? {}),
+          rowNumber: line.rowNumber,
+          reason: parsed.ignored?.reason ?? line.reason
         });
         continue;
       }
 
-      const existing = this.contactStore.findContactByEmail(contactInput.email);
+      const existing = this.contactStore.findExistingContactForImport(parsed.input);
       const contact = existing
-        ? this.contactStore.updateContact(existing.id, contactInput) ?? this.contactStore.createContact(contactInput)
-        : this.contactStore.createContact(contactInput);
+        ? this.contactStore.updateContact(existing.id, parsed.input) ??
+          this.contactStore.createContact(parsed.input)
+        : this.contactStore.createContact(parsed.input);
 
       let donationDateStr = '';
       let donationAmountStr = '';
@@ -872,11 +821,14 @@ export class ImportPageComponent implements OnInit {
   protected clearAndRestart(nextStep: ImportOnboardingStep = 'type'): void {
     this.fileName.set(null);
     this.sheetName.set(null);
+    this.excelSheetNames.set([]);
+    this.currentFile = null;
     this.rowCount.set(0);
     this.headers.set([]);
     this.bindings.set([]);
     this.sampleRows.set([]);
     this.allRows.set([]);
+    this.fullNameOrder.set('firstname-lastname');
     this.onboardingStep.set(nextStep);
   }
 
@@ -898,74 +850,120 @@ export class ImportPageComponent implements OnInit {
     this.importCombined(rows, b as CombinedImportFieldKey[]);
   }
 
+  private buildContactOverridesFromIgnoredLine(
+    line: IgnoredImportLine
+  ): Partial<Record<ImportFieldKey, string>> {
+    const overrides: Partial<Record<ImportFieldKey, string>> = {};
+    const contactKind =
+      line.contactKind ??
+      (line.enterpriseName?.trim() || line.siret?.trim() ? 'company' : 'individual');
+
+    const overrideEmail = line.email?.trim();
+    if (overrideEmail) {
+      overrides.email = overrideEmail;
+    }
+
+    if (contactKind === 'company') {
+      const overrideEnterpriseName = line.enterpriseName?.trim();
+      const overrideSiret = line.siret?.trim();
+      if (overrideEnterpriseName) {
+        overrides.enterpriseName = overrideEnterpriseName;
+      }
+      if (overrideSiret) {
+        overrides.siret = overrideSiret;
+      }
+      const overrideContactFirstname = line.firstname?.trim();
+      const overrideContactLastname = line.lastname?.trim();
+      if (overrideContactFirstname) {
+        overrides.contactFirstname = overrideContactFirstname;
+      }
+      if (overrideContactLastname) {
+        overrides.contactLastname = overrideContactLastname;
+      }
+    } else {
+      const overrideFirstname = line.firstname?.trim();
+      const overrideLastname = line.lastname?.trim();
+      if (overrideFirstname) {
+        overrides.firstname = overrideFirstname;
+      }
+      if (overrideLastname) {
+        overrides.lastname = overrideLastname;
+      }
+    }
+
+    return overrides;
+  }
+
+  private parseContactImportRow(
+    index: number,
+    row: string[],
+    bindings: ImportFieldKey[],
+    overrides?: Partial<Record<ImportFieldKey, string>>
+  ): { input: NewContactInput | null; ignored: IgnoredImportLine | null } {
+    const options = this.contactImportOptions();
+    const bag = buildContactImportBag(row, bindings, overrides, options);
+    const skipReason = assessContactImportRowSkipReason(bag, options);
+    const input = mapRowToNewContactInput(row, bindings, overrides, options);
+    if (input) {
+      return { input, ignored: null };
+    }
+    const enterpriseName = String(bag.enterpriseName ?? '').trim();
+    const siret = String(bag.siret ?? '').trim();
+    const intendedKind = enterpriseName || siret ? 'company' : 'individual';
+    const firstname =
+      intendedKind === 'company'
+        ? String(bag.contactFirstname ?? '').trim()
+        : String(bag.firstname ?? '').trim();
+    const lastname =
+      intendedKind === 'company'
+        ? String(bag.contactLastname ?? '').trim()
+        : String(bag.lastname ?? '').trim();
+    return {
+      input: null,
+      ignored: {
+        rowNumber: index + 1,
+        contactKind: intendedKind,
+        reason: skipReason ?? 'Ligne invalide',
+        email: String(bag.email ?? '').trim() || undefined,
+        enterpriseName: intendedKind === 'company' ? enterpriseName || undefined : undefined,
+        siret: intendedKind === 'company' ? siret || undefined : undefined,
+        firstname: firstname || undefined,
+        lastname: lastname || undefined
+      }
+    };
+  }
+
   private importContacts(rows: string[][], bindings: ImportFieldKey[]): void {
     let created = 0;
     let updated = 0;
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
     for (const [index, row] of rows.entries()) {
-      const bag = collectImportFieldBag(row, bindings);
-      const email = (bag.email ?? '').trim();
-      const enterpriseName = (bag.enterpriseName ?? '').trim();
-      const siret = (bag.siret ?? '').trim();
-
-      const intendedKind = enterpriseName || siret ? 'company' : 'individual';
-
-      const firstname =
-        intendedKind === 'company'
-          ? (bag.contactFirstname ?? '').trim()
-          : (bag.firstname ?? '').trim();
-      const lastname =
-        intendedKind === 'company'
-          ? (bag.contactLastname ?? '').trim()
-          : (bag.lastname ?? '').trim();
-
-      const reason = !email
-        ? 'Email manquant'
-        : intendedKind === 'company'
-          ? !enterpriseName
-            ? 'Nom entreprise manquant'
-            : !siret
-              ? 'SIRET manquant'
-              : !firstname && !lastname
-                ? 'Nom ou prénom contact manquant'
-                : 'Ligne invalide'
-          : !firstname && !lastname
-            ? 'Nom ou prénom manquant'
-            : 'Ligne invalide';
-
-      const input = mapRowToNewContactInput(row, bindings);
-      if (!input) {
+      const parsed = this.parseContactImportRow(index, row, bindings);
+      if (!parsed.input) {
         skipped++;
-        ignored.push({
-          rowNumber: index + 1,
-          contactKind: intendedKind,
-          reason,
-          email: email || undefined,
-          enterpriseName: intendedKind === 'company' ? (enterpriseName || undefined) : undefined,
-          siret: intendedKind === 'company' ? (siret || undefined) : undefined,
-          firstname,
-          lastname
-        });
+        if (parsed.ignored) {
+          ignored.push(parsed.ignored);
+        }
         continue;
       }
-      const existing = this.contactStore.findContactByEmail(input.email);
+      const existing = this.contactStore.findExistingContactForImport(parsed.input);
       if (existing) {
-        const updatedContact = this.contactStore.updateContact(existing.id, input);
+        const updatedContact = this.contactStore.updateContact(existing.id, parsed.input);
         if (updatedContact) {
           updated++;
         } else {
-          this.contactStore.createContact(input);
+          this.contactStore.createContact(parsed.input);
           created++;
         }
       } else {
-        this.contactStore.createContact(input);
+        this.contactStore.createContact(parsed.input);
         created++;
       }
     }
     if (created === 0 && updated === 0) {
       this.toast.show(
-        'Aucun profil importé : chaque ligne doit avoir au moins un email et un nom ou un prénom.',
+        'Aucun profil importé : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
         'alert',
         6500
       );
@@ -1077,51 +1075,17 @@ export class ImportPageComponent implements OnInit {
     );
 
     for (const [index, row] of rows.entries()) {
-      const bag = collectImportFieldBag(row, contactBindings);
-      const email = (bag.email ?? '').trim();
-      const enterpriseName = (bag.enterpriseName ?? '').trim();
-      const siret = (bag.siret ?? '').trim();
-      const intendedKind = enterpriseName || siret ? 'company' : 'individual';
-
-      const firstname =
-        intendedKind === 'company'
-          ? (bag.contactFirstname ?? '').trim()
-          : (bag.firstname ?? '').trim();
-      const lastname =
-        intendedKind === 'company'
-          ? (bag.contactLastname ?? '').trim()
-          : (bag.lastname ?? '').trim();
-
-      const reason = !email
-        ? 'Email manquant'
-        : intendedKind === 'company'
-          ? !enterpriseName
-            ? 'Nom entreprise manquant'
-            : !siret
-              ? 'SIRET manquant'
-              : !firstname && !lastname
-                ? 'Nom ou prénom contact manquant'
-                : 'Ligne invalide'
-          : !firstname && !lastname
-            ? 'Nom ou prénom manquant'
-            : 'Ligne invalide';
-
-      const { contactInput, donation } = mapCombinedRowToActions(row, bindings);
+      const options = this.contactImportOptions();
+      const { contactInput, donation } = mapCombinedRowToActions(row, bindings, options);
       if (!contactInput) {
         skipped++;
-        ignored.push({
-          rowNumber: index + 1,
-          contactKind: intendedKind,
-          reason,
-          email: email || undefined,
-          enterpriseName: intendedKind === 'company' ? (enterpriseName || undefined) : undefined,
-          siret: intendedKind === 'company' ? (siret || undefined) : undefined,
-          firstname,
-          lastname
-        });
+        const parsed = this.parseContactImportRow(index, row, contactBindings);
+        if (parsed.ignored) {
+          ignored.push(parsed.ignored);
+        }
         continue;
       }
-      const existing = this.contactStore.findContactByEmail(contactInput.email);
+      const existing = this.contactStore.findExistingContactForImport(contactInput);
       const contact = existing
         ? this.contactStore.updateContact(existing.id, contactInput) ?? this.contactStore.createContact(contactInput)
         : this.contactStore.createContact(contactInput);
@@ -1143,7 +1107,7 @@ export class ImportPageComponent implements OnInit {
     }
     if (contactsCreated === 0 && contactsUpdated === 0) {
       this.toast.show(
-        'Aucune ligne importée : chaque ligne doit avoir au moins un email et un nom ou un prénom.',
+        'Aucune ligne importée : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
         'alert',
         6500
       );
@@ -1167,16 +1131,23 @@ export class ImportPageComponent implements OnInit {
     );
   }
 
-  private async loadFile(file: File): Promise<void> {
+  private async loadFile(file: File, preferredSheetName?: string): Promise<void> {
     this.importFlow.setParsing(true);
+    this.currentFile = file;
     try {
-      const parsed = await parseImportFile(file);
+      const parsed = await parseImportFile(file, preferredSheetName ?? this.sheetName() ?? undefined);
       if (!parsed.headers.length) {
-        this.toast.show('Aucune colonne détectée dans ce fichier.', 'alert');
+        this.toast.show(
+          parsed.sheetNames && parsed.sheetNames.length > 1
+            ? 'Aucune colonne détectée sur cette feuille. Essayez une autre feuille Excel.'
+            : 'Aucune colonne détectée dans ce fichier.',
+          'alert'
+        );
         this.allRows.set([]);
         return;
       }
       this.fileName.set(file.name);
+      this.excelSheetNames.set(parsed.sheetNames ?? []);
       this.sheetName.set(parsed.sheetName ?? null);
       this.rowCount.set(parsed.rows.length);
       this.headers.set(parsed.headers);

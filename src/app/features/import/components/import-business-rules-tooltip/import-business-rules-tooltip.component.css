@@ -1,0 +1,99 @@
+.imp-rules-tip {
+  position: relative;
+}
+
+.imp-rules-tip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-md);
+  background: white;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-70);
+  cursor: pointer;
+}
+
+.imp-rules-tip-btn:hover,
+.imp-rules-tip-btn:focus-visible {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+.imp-rules-tip-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.imp-rules-tip-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding: 14px 16px;
+  background: white;
+  border: 2px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+}
+
+.imp-rules-tip-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.imp-rules-tip-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--ink-05);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink-70);
+}
+
+.imp-rules-tip-close:hover {
+  background: var(--ink-10);
+  color: var(--ink);
+}
+
+.imp-rules-tip-section + .imp-rules-tip-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink-10);
+}
+
+.imp-rules-tip-section-title {
+  margin: 0 0 6px;
+  font-family: var(--font-title);
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.imp-rules-tip-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.imp-rules-tip-list li + li {
+  margin-top: 4px;
+}
