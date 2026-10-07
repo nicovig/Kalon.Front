@@ -1,374 +1,455 @@
 <toast-component position="center-third"></toast-component>
-<topbar [title]="'Paramètres'" [subtitle]="'Gérez votre bibliothèque de contenus et vos informations d’envoi'"></topbar>
+<topbar [title]="'Paramètres'" [subtitle]="'Gérez vos contacts, vos emails et votre compte'"></topbar>
 
 <div class="account-page">
-  <section class="account-card">
-    <h2 class="account-title">Informations de compte</h2>
-    <div class="account-form-grid">
-      <label>
-        <span>Nom de l’association</span>
-        <input
-          type="text"
-          [ngModel]="organizationInfo().associationName"
-          (ngModelChange)="onOrganizationFieldChange('associationName', $event)"
-          placeholder="Ex: Association Kalon"
-        />
-      </label>
-      <label>
-        <span>Email mailing</span>
-        <input
-          type="email"
-          [ngModel]="organizationInfo().senderEmail"
-          (ngModelChange)="onOrganizationFieldChange('senderEmail', $event)"
-          placeholder="contact@association.fr"
-        />
-      </label>
-      <label>
-        <span>Année de fondation</span>
-        <input
-          type="number"
-          min="1800"
-          max="2100"
-          [ngModel]="organizationInfo().foundedYear"
-          (ngModelChange)="onOrganizationFieldChange('foundedYear', $event)"
-          placeholder="Ex: 1998"
-        />
-      </label>
-      <label>
-        <span>Secteur d’activité</span>
-        <input
-          type="text"
-          [ngModel]="organizationInfo().activitySector"
-          (ngModelChange)="onOrganizationFieldChange('activitySector', $event)"
-          placeholder="Ex: Sport, solidarité, culture"
-        />
-      </label>
-      <label class="account-form-grid-full">
-        <span>Description</span>
-        <textarea
-          rows="3"
-          [ngModel]="organizationInfo().description"
-          (ngModelChange)="onOrganizationFieldChange('description', $event)"
-          placeholder="Description de l’association"
-        ></textarea>
-      </label>
-      <label class="account-form-grid-full">
-        <span>Audience visée</span>
-        <textarea
-          rows="3"
-          [ngModel]="organizationInfo().audienceDescription"
-          (ngModelChange)="onOrganizationFieldChange('audienceDescription', $event)"
-          placeholder="Public concerné, bénéficiaires, membres..."
-        ></textarea>
-      </label>
-    </div>
-    <div class="account-actions">
-      <button-label-component
-        type="primary"
-        [disabled]="!organizationInfo().associationName.trim()"
-        (click)="saveAccountDetailsBlock()"
+  <nav class="account-tabs" role="tablist" aria-label="Sections des paramètres">
+    @for (tab of accountTabs; track tab.id) {
+      <button
+        type="button"
+        role="tab"
+        class="account-tab"
+        [class.account-tab--active]="activeTab() === tab.id"
+        [attr.aria-selected]="activeTab() === tab.id"
+        [attr.aria-controls]="'account-panel-' + tab.id"
+        (click)="selectTab(tab.id)"
       >
-        Enregistrer les informations
-      </button-label-component>
-    </div>
-  </section>
-
-  <section class="account-card">
-    <h2 class="account-title">Mot de passe</h2>
-    <p class="account-subtitle">Modifiez le mot de passe utilisé pour vous connecter à Kalon.</p>
-    <div class="account-form-grid">
-      <label class="account-form-grid-full">
-        <span>Mot de passe actuel</span>
-        <input
-          type="password"
-          autocomplete="current-password"
-          [ngModel]="currentPassword()"
-          (ngModelChange)="currentPassword.set($event)"
-          placeholder="Mot de passe actuel"
-        />
-      </label>
-      <label>
-        <span>Nouveau mot de passe</span>
-        <input
-          type="password"
-          autocomplete="new-password"
-          [ngModel]="newPassword()"
-          (ngModelChange)="newPassword.set($event)"
-          placeholder="Nouveau mot de passe"
-        />
-      </label>
-      <label>
-        <span>Confirmation</span>
-        <input
-          type="password"
-          autocomplete="new-password"
-          [ngModel]="confirmPassword()"
-          (ngModelChange)="confirmPassword.set($event)"
-          placeholder="Confirmer le mot de passe"
-        />
-      </label>
-    </div>
-    <div class="account-actions">
-      <button-label-component type="ghost" (click)="cancelChangePassword()">Réinitialiser</button-label-component>
-      <button-label-component
-        type="primary"
-        [disabled]="changePasswordSaveDisabled()"
-        (click)="saveChangePassword()"
-      >
-        {{ changePasswordSaving() ? 'Enregistrement…' : 'Mettre à jour le mot de passe' }}
-      </button-label-component>
-    </div>
-  </section>
-
-  <section class="account-card">
-    <h2 class="account-title">Modèles de emails</h2>
-    <p class="account-subtitle">Préparez des modèles réutilisables dans le tunnel d’envoi (objet, texte enrichi, variables).</p>
-    <div class="account-form-grid">
-      <label>
-        <span>Nom du modèle</span>
-        <input
-          type="text"
-          [ngModel]="emailTemplateLabel()"
-          (ngModelChange)="emailTemplateLabel.set($event)"
-          placeholder="Ex: Relance douce profils"
-        />
-      </label>
-      <div class="account-form-grid-full account-template-editor">
-        <span>Contenu du message</span>
-        <mail-editor
-          [showSubject]="true"
-          [showSidePanel]="true"
-          [subject]="emailTemplateSubject()"
-          (subjectChange)="emailTemplateSubject.set($event)"
-          [body]="emailTemplateBody()"
-          (bodyChange)="emailTemplateBody.set($event)"
-          [textBlocks]="editorTextBlocks()"
-          [selectedTextBlockId]="selectedEditorTextBlockId()"
-          (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
-          [signatureBlocks]="editorSignatureBlocks()"
-          [selectedSignatureBlockId]="selectedEditorSignatureBlockId()"
-          (selectedSignatureBlockIdChange)="selectedEditorSignatureBlockId.set($event)"
-          [images]="editorImages()"
-          [selectedImageId]="selectedEditorImageId()"
-          (selectedImageIdChange)="selectedEditorImageId.set($event)"
-          [variableTags]="editorVariableTags()"
-        ></mail-editor>
-      </div>
-    </div>
-    <div class="account-actions">
-      <button-label-component type="ghost" (click)="cancelEmailTemplateEdit()">Réinitialiser</button-label-component>
-      <button-label-component
-        type="primary"
-        [disabled]="emailTemplateSaveDisabled()"
-        (click)="saveEmailTemplate()"
-      >
-        {{ editingEmailTemplateId() ? 'Mettre à jour' : 'Créer le modèle' }}
-      </button-label-component>
-    </div>
-    @if (emailTemplates().length) {
-      <div class="account-saved-list">
-        <h4 class="account-saved-list-title">Liste des modèles enregistrés</h4>
-        @for (item of emailTemplates(); track item.id) {
-          <div class="account-list">
-            <div class="account-list-row">
-              <div class="account-list-main">
-                <div class="account-list-title">{{ item.label }}</div>
-                @if (item.subject) {
-                  <div class="account-list-meta">Objet : {{ item.subject }}</div>
-                }
-                <div class="account-list-content">{{ emailTemplatePreviewText(item.body) }}</div>
-              </div>
-              <div class="account-list-actions">
-                <button-label-component type="ghost" (click)="editEmailTemplate(item.id)">Modifier</button-label-component>
-                <button-label-component type="ghost" (click)="requestRemoveEmailTemplate(item.id)">Supprimer</button-label-component>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
+        {{ tab.label }}
+      </button>
     }
-  </section>
+  </nav>
 
-  <section class="account-card">
-    <h2 class="account-title">Paramètres d’envoi</h2>
-    <p class="account-subtitle">
-      Choisissez les cartes proposées dans le tunnel « Envois » (première étape). Au moins un type doit rester coché.
-    </p>
-    <div class="account-send-type-grid" role="group" aria-label="Types d’envoi disponibles">
-      @for (card of sendingPreferenceCards; track card.key) {
-        <button
-          type="button"
-          class="account-send-type-card"
-          [class.account-send-type-card--on]="sendingPreferenceChecked(card.key)"
-          (click)="toggleSendingPreference(card.key)"
-        >
-          <div class="account-send-type-card-head">
-            <button-checkbox [checked]="sendingPreferenceChecked(card.key)" />
-            <span class="account-send-type-icon" aria-hidden="true">{{ card.icon }}</span>
-          </div>
-          <div class="account-send-type-body">
-            <span class="account-send-type-title">{{ card.title }}</span>
-            <span class="account-send-type-hint">{{ card.hint }}</span>
-          </div>
-        </button>
-      }
-    </div>
-    <div class="account-actions">
-      <button-label-component type="primary" (click)="saveSendingPreferencesBlock()">
-        Enregistrer les paramètres d’envoi
-      </button-label-component>
-    </div>
-  </section>
-
-  <section class="account-card">
-    <h2 class="account-title">Bibliothèque de textes</h2>
-    <p class="account-subtitle">Créez vos encarts réutilisables pour les mails et documents.</p>
-    <div class="account-form-grid">
-      <label>
-        <span>Nom du bloc</span>
-        <input type="text" [ngModel]="textLabel()" (ngModelChange)="textLabel.set($event)" placeholder="Ex: Introduction profils" />
-      </label>
-      <label class="account-form-grid-full">
-        <span>Contenu</span>
-        <textarea rows="5" [ngModel]="textContent()" (ngModelChange)="textContent.set($event)" placeholder="Texte réutilisable..."></textarea>
-      </label>
-    </div>
-    <div class="account-actions">
-      <button-label-component type="ghost" (click)="cancelTextEdit()">Réinitialiser</button-label-component>
-      <button-label-component type="primary" [disabled]="!textLabel().trim() || !textContent().trim()" (click)="saveTextBlock()">
-        {{ editingTextId() ? 'Mettre à jour' : 'Créer le bloc' }}
-      </button-label-component>
-    </div>
-    @if (textBlocks().length) {
-      <div class="account-saved-list">
-        <h4 class="account-saved-list-title">Liste des blocs enregistrés</h4>
-        @for (item of textBlocks(); track item.id) {
-          <div class="account-list">
-            <div class="account-list-row">
-              <div class="account-list-main">
-                <div class="account-list-title">{{ item.label }}</div>
-                <div class="account-list-content">{{ item.content }}</div>
-              </div>
-              <div class="account-list-actions">
-                <button-label-component type="ghost" (click)="editTextBlock(item.id)">Modifier</button-label-component>
-                <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
-              </div>
+  @if (activeTab() === 'contacts') {
+    <div class="account-tab-panel" id="account-panel-contacts" role="tabpanel">
+      <section class="account-card">
+        <h2 class="account-title">Tags des profils</h2>
+        <p class="account-subtitle">
+          Créez des labels réutilisables pour classer vos contacts (ex. bénévoles, partenaires, VIP).
+        </p>
+        <div class="account-form-grid">
+          <label>
+            <span>Nom du tag</span>
+            <input
+              type="text"
+              [ngModel]="tagName()"
+              (ngModelChange)="tagName.set($event)"
+              placeholder="Ex: Bénévole"
+              maxlength="100"
+            />
+          </label>
+          <label class="account-tag-color-field">
+            <span>Couleur</span>
+            <div class="account-tag-color-row">
+              <input type="color" [ngModel]="tagColor()" (ngModelChange)="tagColor.set($event)" />
+              <span class="account-tag-swatch" [style.background]="tagColor()"></span>
             </div>
-          </div>
-        }
-      </div>
-    }
-  </section>
-
-  <section class="account-card">
-    <h2 class="account-title">Signatures</h2>
-    <p class="account-subtitle">Préparez des signatures prêtes à insérer en un clic.</p>
-    <div class="account-form-grid">
-      <label>
-        <span>Nom de la signature</span>
-        <input type="text" [ngModel]="signatureLabel()" (ngModelChange)="signatureLabel.set($event)" placeholder="Ex: Signature trésorière" />
-      </label>
-      <label class="account-form-grid-full">
-        <span>Contenu</span>
-        <textarea
-          rows="4"
-          [ngModel]="signatureContent()"
-          (ngModelChange)="signatureContent.set($event)"
-          placeholder="Ex: Bien cordialement, Le bureau de l’association"
-        ></textarea>
-      </label>
-      <label class="account-file-field account-form-grid-full">
-        <input
-          #signatureImageFileInput
-          type="file"
-          class="account-file-input-hidden"
-          accept="image/*"
-          (change)="onSignatureImageFileChange($event)"
-        />
-        <div class="account-file-picker">
-          <button-label-component type="ghost" (click)="pickSignatureImageFile(signatureImageFileInput)">
-            Choisir une image de signature
+          </label>
+        </div>
+        <div class="account-actions">
+          <button-label-component type="ghost" (click)="cancelTagEdit()">Réinitialiser</button-label-component>
+          <button-label-component type="primary" [disabled]="tagSaveDisabled()" (click)="saveTag()">
+            {{ editingTagId() ? 'Mettre à jour' : 'Créer le tag' }}
           </button-label-component>
-          <span class="account-file-hint">{{ signatureImageFileHint() }}</span>
-          @if (signatureImagePreviewSrc()) {
-            <button-label-component type="ghost" (click)="clearSignatureImageSelection()">Retirer l’image</button-label-component>
+        </div>
+        @if (organizationTags().length) {
+          <div class="account-saved-list">
+            <h4 class="account-saved-list-title">Liste des tags</h4>
+            @for (item of organizationTags(); track item.id) {
+              <div class="account-list">
+                <div class="account-list-row">
+                  <div class="account-list-main account-tag-list-main">
+                    <span
+                      class="account-tag-chip"
+                      [style.background]="item.color || '#5b6cff'"
+                    >{{ item.name }}</span>
+                  </div>
+                  <div class="account-list-actions">
+                    <button-label-component type="ghost" (click)="editTag(item.id)">Modifier</button-label-component>
+                    <button-label-component type="ghost" (click)="requestRemoveTag(item.id)">Supprimer</button-label-component>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (activeTab() === 'emails') {
+    <div class="account-tab-panel" id="account-panel-emails" role="tabpanel">
+      <section class="account-card">
+        <h2 class="account-title">Modèles de emails</h2>
+        <p class="account-subtitle">Préparez des modèles réutilisables dans le tunnel d’envoi (objet, texte enrichi, variables).</p>
+        <div class="account-form-grid">
+          <label>
+            <span>Nom du modèle</span>
+            <input
+              type="text"
+              [ngModel]="emailTemplateLabel()"
+              (ngModelChange)="emailTemplateLabel.set($event)"
+              placeholder="Ex: Relance douce profils"
+            />
+          </label>
+          <div class="account-form-grid-full account-template-editor">
+            <span>Contenu du message</span>
+            <mail-editor
+              [showSubject]="true"
+              [showSidePanel]="true"
+              [subject]="emailTemplateSubject()"
+              (subjectChange)="emailTemplateSubject.set($event)"
+              [body]="emailTemplateBody()"
+              (bodyChange)="emailTemplateBody.set($event)"
+              [textBlocks]="editorTextBlocks()"
+              [selectedTextBlockId]="selectedEditorTextBlockId()"
+              (selectedTextBlockIdChange)="selectedEditorTextBlockId.set($event)"
+              [signatureBlocks]="editorSignatureBlocks()"
+              [selectedSignatureBlockId]="selectedEditorSignatureBlockId()"
+              (selectedSignatureBlockIdChange)="selectedEditorSignatureBlockId.set($event)"
+              [images]="editorImages()"
+              [selectedImageId]="selectedEditorImageId()"
+              (selectedImageIdChange)="selectedEditorImageId.set($event)"
+              [variableTags]="editorVariableTags()"
+            ></mail-editor>
+          </div>
+        </div>
+        <div class="account-actions">
+          <button-label-component type="ghost" (click)="cancelEmailTemplateEdit()">Réinitialiser</button-label-component>
+          <button-label-component
+            type="primary"
+            [disabled]="emailTemplateSaveDisabled()"
+            (click)="saveEmailTemplate()"
+          >
+            {{ editingEmailTemplateId() ? 'Mettre à jour' : 'Créer le modèle' }}
+          </button-label-component>
+        </div>
+        @if (emailTemplates().length) {
+          <div class="account-saved-list">
+            <h4 class="account-saved-list-title">Liste des modèles enregistrés</h4>
+            @for (item of emailTemplates(); track item.id) {
+              <div class="account-list">
+                <div class="account-list-row">
+                  <div class="account-list-main">
+                    <div class="account-list-title">{{ item.label }}</div>
+                    @if (item.subject) {
+                      <div class="account-list-meta">Objet : {{ item.subject }}</div>
+                    }
+                    <div class="account-list-content">{{ emailTemplatePreviewText(item.body) }}</div>
+                  </div>
+                  <div class="account-list-actions">
+                    <button-label-component type="ghost" (click)="editEmailTemplate(item.id)">Modifier</button-label-component>
+                    <button-label-component type="ghost" (click)="requestRemoveEmailTemplate(item.id)">Supprimer</button-label-component>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="account-card">
+        <h2 class="account-title">Paramètres d’envoi</h2>
+        <p class="account-subtitle">
+          Choisissez les cartes proposées dans le tunnel « Envois » (première étape). Au moins un type doit rester coché.
+        </p>
+        <div class="account-send-type-grid" role="group" aria-label="Types d’envoi disponibles">
+          @for (card of sendingPreferenceCards; track card.key) {
+            <button
+              type="button"
+              class="account-send-type-card"
+              [class.account-send-type-card--on]="sendingPreferenceChecked(card.key)"
+              (click)="toggleSendingPreference(card.key)"
+            >
+              <div class="account-send-type-card-head">
+                <button-checkbox [checked]="sendingPreferenceChecked(card.key)" />
+                <span class="account-send-type-icon" aria-hidden="true">{{ card.icon }}</span>
+              </div>
+              <div class="account-send-type-body">
+                <span class="account-send-type-title">{{ card.title }}</span>
+                <span class="account-send-type-hint">{{ card.hint }}</span>
+              </div>
+            </button>
           }
         </div>
-      </label>
-      @if (signatureImagePreviewSrc()) {
-        <div class="account-image-preview account-form-grid-full">
-          <img [src]="signatureImagePreviewSrc()" alt="Image de signature" />
+        <div class="account-actions">
+          <button-label-component type="primary" (click)="saveSendingPreferencesBlock()">
+            Enregistrer les paramètres d’envoi
+          </button-label-component>
         </div>
-      }
-    </div>
-    <div class="account-actions">
-      <button-label-component type="ghost" (click)="cancelSignatureEdit()">Réinitialiser</button-label-component>
-      <button-label-component
-        type="primary"
-        [disabled]="signatureSaveDisabled()"
-        (click)="saveSignatureBlock()"
-      >
-        {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
-      </button-label-component>
-    </div>
-    @if (signatureBlocks().length) {
-      <div class="account-saved-list">
-        <h4 class="account-saved-list-title">Liste des signatures enregistrées</h4>
-        @for (item of signatureBlocks(); track item.id) {
-          <div class="account-list">
-            <div class="account-list-row">
-              <div class="account-list-main">
-                <div class="account-list-title">{{ item.label }}</div>
-                @if (item.content) {
-                  <div class="account-list-content">{{ item.content }}</div>
-                }
-                @if (item.imageUrl) {
-                  <div class="account-list-signature-image">
-                    <img [src]="item.imageUrl" [alt]="item.label" />
+      </section>
+
+      <section class="account-card">
+        <h2 class="account-title">Bibliothèque de textes</h2>
+        <p class="account-subtitle">Créez vos encarts réutilisables pour les mails et documents.</p>
+        <div class="account-form-grid">
+          <label>
+            <span>Nom du bloc</span>
+            <input type="text" [ngModel]="textLabel()" (ngModelChange)="textLabel.set($event)" placeholder="Ex: Introduction profils" />
+          </label>
+          <label class="account-form-grid-full">
+            <span>Contenu</span>
+            <textarea rows="5" [ngModel]="textContent()" (ngModelChange)="textContent.set($event)" placeholder="Texte réutilisable..."></textarea>
+          </label>
+        </div>
+        <div class="account-actions">
+          <button-label-component type="ghost" (click)="cancelTextEdit()">Réinitialiser</button-label-component>
+          <button-label-component type="primary" [disabled]="!textLabel().trim() || !textContent().trim()" (click)="saveTextBlock()">
+            {{ editingTextId() ? 'Mettre à jour' : 'Créer le bloc' }}
+          </button-label-component>
+        </div>
+        @if (textBlocks().length) {
+          <div class="account-saved-list">
+            <h4 class="account-saved-list-title">Liste des blocs enregistrés</h4>
+            @for (item of textBlocks(); track item.id) {
+              <div class="account-list">
+                <div class="account-list-row">
+                  <div class="account-list-main">
+                    <div class="account-list-title">{{ item.label }}</div>
+                    <div class="account-list-content">{{ item.content }}</div>
                   </div>
-                }
+                  <div class="account-list-actions">
+                    <button-label-component type="ghost" (click)="editTextBlock(item.id)">Modifier</button-label-component>
+                    <button-label-component type="ghost" (click)="requestRemoveTextBlock(item.id)">Supprimer</button-label-component>
+                  </div>
+                </div>
               </div>
-              <div class="account-list-actions">
-                <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>
-                <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
-              </div>
-            </div>
+            }
           </div>
         }
-      </div>
-    }
-  </section>
+      </section>
 
-  <section class="account-card">
-    <h2 class="account-title">Logo de l'association</h2>
-    <p class="account-subtitle">Un seul logo, réutilisable dans les mails et documents.</p>
-    <div class="account-form-grid">
-      <label class="account-file-field account-form-grid-full">
-        <input
-          #imageFileInput
-          type="file"
-          class="account-file-input-hidden"
-          accept="image/*"
-          (change)="onImageFileChange($event)"
-        />
-        <div class="account-file-picker">
-          <button-label-component type="ghost" (click)="pickImageFile(imageFileInput)">Choisir le logo</button-label-component>
-          <span class="account-file-hint">{{ imageFileHint() }}</span>
+      <section class="account-card">
+        <h2 class="account-title">Signatures</h2>
+        <p class="account-subtitle">Préparez des signatures prêtes à insérer en un clic.</p>
+        <div class="account-form-grid">
+          <label>
+            <span>Nom de la signature</span>
+            <input type="text" [ngModel]="signatureLabel()" (ngModelChange)="signatureLabel.set($event)" placeholder="Ex: Signature trésorière" />
+          </label>
+          <label class="account-form-grid-full">
+            <span>Contenu</span>
+            <textarea
+              rows="4"
+              [ngModel]="signatureContent()"
+              (ngModelChange)="signatureContent.set($event)"
+              placeholder="Ex: Bien cordialement, Le bureau de l’association"
+            ></textarea>
+          </label>
+          <label class="account-file-field account-form-grid-full">
+            <input
+              #signatureImageFileInput
+              type="file"
+              class="account-file-input-hidden"
+              accept="image/*"
+              (change)="onSignatureImageFileChange($event)"
+            />
+            <div class="account-file-picker">
+              <button-label-component type="ghost" (click)="pickSignatureImageFile(signatureImageFileInput)">
+                Choisir une image de signature
+              </button-label-component>
+              <span class="account-file-hint">{{ signatureImageFileHint() }}</span>
+              @if (signatureImagePreviewSrc()) {
+                <button-label-component type="ghost" (click)="clearSignatureImageSelection()">Retirer l’image</button-label-component>
+              }
+            </div>
+          </label>
+          @if (signatureImagePreviewSrc()) {
+            <div class="account-image-preview account-form-grid-full">
+              <img [src]="signatureImagePreviewSrc()" alt="Image de signature" />
+            </div>
+          }
         </div>
-      </label>
-      @if (logoPreviewSrc()) {
-        <div class="account-image-preview account-form-grid-full">
-          <img [src]="logoPreviewSrc()" [alt]="imageChosenFileName() || logo()?.fileName || 'Logo'" />
+        <div class="account-actions">
+          <button-label-component type="ghost" (click)="cancelSignatureEdit()">Réinitialiser</button-label-component>
+          <button-label-component
+            type="primary"
+            [disabled]="signatureSaveDisabled()"
+            (click)="saveSignatureBlock()"
+          >
+            {{ editingSignatureId() ? 'Mettre à jour' : 'Créer la signature' }}
+          </button-label-component>
         </div>
-      }
+        @if (signatureBlocks().length) {
+          <div class="account-saved-list">
+            <h4 class="account-saved-list-title">Liste des signatures enregistrées</h4>
+            @for (item of signatureBlocks(); track item.id) {
+              <div class="account-list">
+                <div class="account-list-row">
+                  <div class="account-list-main">
+                    <div class="account-list-title">{{ item.label }}</div>
+                    @if (item.content) {
+                      <div class="account-list-content">{{ item.content }}</div>
+                    }
+                    @if (item.imageUrl) {
+                      <div class="account-list-signature-image">
+                        <img [src]="item.imageUrl" [alt]="item.label" />
+                      </div>
+                    }
+                  </div>
+                  <div class="account-list-actions">
+                    <button-label-component type="ghost" (click)="editSignatureBlock(item.id)">Modifier</button-label-component>
+                    <button-label-component type="ghost" (click)="requestRemoveSignatureBlock(item.id)">Supprimer</button-label-component>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="account-card">
+        <h2 class="account-title">Logo de l'association</h2>
+        <p class="account-subtitle">Un seul logo, réutilisable dans les mails et documents.</p>
+        <div class="account-form-grid">
+          <label class="account-file-field account-form-grid-full">
+            <input
+              #imageFileInput
+              type="file"
+              class="account-file-input-hidden"
+              accept="image/*"
+              (change)="onImageFileChange($event)"
+            />
+            <div class="account-file-picker">
+              <button-label-component type="ghost" (click)="pickImageFile(imageFileInput)">Choisir le logo</button-label-component>
+              <span class="account-file-hint">{{ imageFileHint() }}</span>
+            </div>
+          </label>
+          @if (logoPreviewSrc()) {
+            <div class="account-image-preview account-form-grid-full">
+              <img [src]="logoPreviewSrc()" [alt]="imageChosenFileName() || logo()?.fileName || 'Logo'" />
+            </div>
+          }
+        </div>
+        <div class="account-actions">
+          @if (logo()) {
+            <button-label-component type="ghost" (click)="requestRemoveLogo()">Supprimer le logo</button-label-component>
+          }
+          <button-label-component type="primary" [disabled]="saveLogoDisabled()" (click)="saveLogo()">Enregistrer le logo</button-label-component>
+        </div>
+      </section>
     </div>
-    <div class="account-actions">
-      @if (logo()) {
-        <button-label-component type="ghost" (click)="requestRemoveLogo()">Supprimer le logo</button-label-component>
-      }
-      <button-label-component type="primary" [disabled]="saveLogoDisabled()" (click)="saveLogo()">Enregistrer le logo</button-label-component>
+  }
+
+  @if (activeTab() === 'account') {
+    <div class="account-tab-panel" id="account-panel-account" role="tabpanel">
+      <section class="account-card">
+        <h2 class="account-title">Informations de compte</h2>
+        <div class="account-form-grid">
+          <label>
+            <span>Nom de l’association</span>
+            <input
+              type="text"
+              [ngModel]="organizationInfo().associationName"
+              (ngModelChange)="onOrganizationFieldChange('associationName', $event)"
+              placeholder="Ex: Association Kalon"
+            />
+          </label>
+          <label>
+            <span>Email mailing</span>
+            <input
+              type="email"
+              [ngModel]="organizationInfo().senderEmail"
+              (ngModelChange)="onOrganizationFieldChange('senderEmail', $event)"
+              placeholder="contact@association.fr"
+            />
+          </label>
+          <label>
+            <span>Année de fondation</span>
+            <input
+              type="number"
+              min="1800"
+              max="2100"
+              [ngModel]="organizationInfo().foundedYear"
+              (ngModelChange)="onOrganizationFieldChange('foundedYear', $event)"
+              placeholder="Ex: 1998"
+            />
+          </label>
+          <label>
+            <span>Secteur d’activité</span>
+            <input
+              type="text"
+              [ngModel]="organizationInfo().activitySector"
+              (ngModelChange)="onOrganizationFieldChange('activitySector', $event)"
+              placeholder="Ex: Sport, solidarité, culture"
+            />
+          </label>
+          <label class="account-form-grid-full">
+            <span>Description</span>
+            <textarea
+              rows="3"
+              [ngModel]="organizationInfo().description"
+              (ngModelChange)="onOrganizationFieldChange('description', $event)"
+              placeholder="Description de l’association"
+            ></textarea>
+          </label>
+          <label class="account-form-grid-full">
+            <span>Audience visée</span>
+            <textarea
+              rows="3"
+              [ngModel]="organizationInfo().audienceDescription"
+              (ngModelChange)="onOrganizationFieldChange('audienceDescription', $event)"
+              placeholder="Public concerné, bénéficiaires, membres..."
+            ></textarea>
+          </label>
+        </div>
+        <div class="account-actions">
+          <button-label-component
+            type="primary"
+            [disabled]="!organizationInfo().associationName.trim()"
+            (click)="saveAccountDetailsBlock()"
+          >
+            Enregistrer les informations
+          </button-label-component>
+        </div>
+      </section>
+
+      <section class="account-card">
+        <h2 class="account-title">Mot de passe</h2>
+        <p class="account-subtitle">Modifiez le mot de passe utilisé pour vous connecter à Kalon.</p>
+        <div class="account-form-grid">
+          <label class="account-form-grid-full">
+            <span>Mot de passe actuel</span>
+            <input
+              type="password"
+              autocomplete="current-password"
+              [ngModel]="currentPassword()"
+              (ngModelChange)="currentPassword.set($event)"
+              placeholder="Mot de passe actuel"
+            />
+          </label>
+          <label>
+            <span>Nouveau mot de passe</span>
+            <input
+              type="password"
+              autocomplete="new-password"
+              [ngModel]="newPassword()"
+              (ngModelChange)="newPassword.set($event)"
+              placeholder="Nouveau mot de passe"
+            />
+          </label>
+          <label>
+            <span>Confirmation</span>
+            <input
+              type="password"
+              autocomplete="new-password"
+              [ngModel]="confirmPassword()"
+              (ngModelChange)="confirmPassword.set($event)"
+              placeholder="Confirmer le mot de passe"
+            />
+          </label>
+        </div>
+        <div class="account-actions">
+          <button-label-component type="ghost" (click)="cancelChangePassword()">Réinitialiser</button-label-component>
+          <button-label-component
+            type="primary"
+            [disabled]="changePasswordSaveDisabled()"
+            (click)="saveChangePassword()"
+          >
+            {{ changePasswordSaving() ? 'Enregistrement…' : 'Mettre à jour le mot de passe' }}
+          </button-label-component>
+        </div>
+      </section>
     </div>
-  </section>
+  }
 </div>
 
 @if (removeTarget(); as target) {

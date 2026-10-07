@@ -10,8 +10,8 @@ describe('mapRowToNewContactInput', () => {
       emailNameBindings
     );
     expect(input).not.toBeNull();
-    expect(input?.kind).toBe('donor');
-    if (input?.kind !== 'donor') {
+    expect(input?.isEnterprise).toBe(false);
+    if (!input || input.isEnterprise) {
       return;
     }
     expect(input.email).toBe('jean@example.com');
@@ -26,7 +26,7 @@ describe('mapRowToNewContactInput', () => {
       bindings
     );
     expect(input).not.toBeNull();
-    if (input?.kind !== 'donor') {
+    if (!input || input.isEnterprise) {
       return;
     }
     expect(input.email).toBe('');
@@ -51,7 +51,7 @@ describe('mapRowToNewContactInput', () => {
       bindings
     );
     expect(input).not.toBeNull();
-    if (input?.kind !== 'donor') {
+    if (!input || input.isEnterprise) {
       return;
     }
     expect(input.firstname).toBe('Jean');
@@ -67,7 +67,7 @@ describe('mapRowToNewContactInput', () => {
       { fullNameOrder: 'lastname-firstname' }
     );
     expect(input).not.toBeNull();
-    if (input?.kind !== 'donor') {
+    if (!input || input.isEnterprise) {
       return;
     }
     expect(input.firstname).toBe('Jean');
@@ -86,8 +86,8 @@ describe('mapRowToNewContactInput', () => {
       ['contact@acme.fr', 'ACME', '12345678901234', 'Jean', 'Dupont'],
       bindings
     );
-    expect(input?.kind).toBe('company');
-    if (input?.kind !== 'company') {
+    expect(input?.isEnterprise).toBe(true);
+    if (!input || !input.isEnterprise) {
       return;
     }
     expect(input.enterprise?.name).toBe('ACME');
@@ -101,5 +101,40 @@ describe('mapRowToNewContactInput', () => {
       { email: 'fixed@example.com' }
     );
     expect(input?.email).toBe('fixed@example.com');
+  });
+
+  it('maps family membership, dates and tag names', () => {
+    const bindings: ImportFieldKey[] = [
+      'email',
+      'firstname',
+      'lastname',
+      'isFamilyMembership',
+      'lastMembershipDate',
+      'membershipEndDate',
+      'tags'
+    ];
+    const input = mapRowToNewContactInput(
+      [
+        'jean@example.com',
+        'Jean',
+        'Dupont',
+        'oui',
+        '01/01/2024',
+        '31/12/2024',
+        'VIP; Bénévole'
+      ],
+      bindings,
+      undefined,
+      undefined,
+      (names) => names.map((name) => `id:${name.toLowerCase()}`)
+    );
+    expect(input).not.toBeNull();
+    if (!input) {
+      return;
+    }
+    expect(input.isFamilyMembership).toBe(true);
+    expect(input.lastMembershipDate).toBeInstanceOf(Date);
+    expect(input.membershipEndDate).toBeInstanceOf(Date);
+    expect(input.tagIds).toEqual(['id:vip', 'id:bénévole']);
   });
 });

@@ -16,6 +16,7 @@ import { ContactSettingsStore } from './settings/contact-settings.store';
 import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { FormNumberComponent } from '../../layout/forms/number/form-number.component';
+import { TagStoreService } from '../account/tag.store';
 
 @Component({
   selector: 'contact-page',
@@ -43,13 +44,19 @@ import { FormNumberComponent } from '../../layout/forms/number/form-number.compo
 export class ContactListPageComponent {
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly tagStore = inject(TagStoreService);
   protected readonly filterName = signal('');
   protected readonly filterKind = signal('all');
+  protected readonly filterTag = signal('all');
   protected readonly filterEmail = signal('');
   protected readonly filterPhone = signal('');
   protected readonly filterStatus = signal('all');
   protected readonly filterTotalDonationMin = signal('');
   protected readonly filterTotalDonationMax = signal('');
+
+  constructor() {
+    this.tagStore.ensureLoaded();
+  }
 
   private readonly contactsWithStatus = computed(() => {
     const now = new Date();
@@ -61,6 +68,7 @@ export class ContactListPageComponent {
   protected readonly contactsComputed = computed(() => {
     const name = this.filterName().trim().toLowerCase();
     const kind = this.filterKind();
+    const tagId = this.filterTag();
     const email = this.filterEmail().trim().toLowerCase();
     const phone = this.filterPhone().trim().toLowerCase();
     const status = this.filterStatus();
@@ -69,7 +77,13 @@ export class ContactListPageComponent {
     return this.contactsWithStatus().filter((row) => {
       const fullName = `${row.lastname ?? ''} ${row.firstname ?? ''}`.trim().toLowerCase();
       if (name && !fullName.includes(name)) return false;
-      if (kind !== 'all' && row.kind !== kind) return false;
+      if (kind === 'company' && !row.isEnterprise) return false;
+      if (kind === 'individual' && row.isEnterprise) return false;
+      if (tagId === 'none') {
+        if ((row.tags ?? []).length > 0) return false;
+      } else if (tagId !== 'all' && !(row.tags ?? []).some((tag) => tag.id === tagId)) {
+        return false;
+      }
       if (email && !String(row.email ?? '').toLowerCase().includes(email)) return false;
       const phoneValue = String(row.phone ?? row.enterprise?.contactPhone ?? '').toLowerCase();
       if (phone && !phoneValue.includes(phone)) return false;
@@ -82,12 +96,16 @@ export class ContactListPageComponent {
   });
 
   protected readonly kindFilterOptions: FormSelectOption[] = [
-    { value: 'all', label: 'Tous les types' },
-    { value: 'donor', label: 'Donateur' },
-    { value: 'member', label: 'Membre' },
-    { value: 'helper', label: 'Bénévole' },
-    { value: 'company', label: 'Entreprise' }
+    { value: 'all', label: 'Tous les profils' },
+    { value: 'individual', label: 'Particuliers' },
+    { value: 'company', label: 'Entreprises' }
   ];
+
+  protected readonly tagFilterOptions = computed<FormSelectOption[]>(() => [
+    { value: 'all', label: 'Tous les tags' },
+    { value: 'none', label: 'Pas de tags' },
+    ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
+  ]);
 
   protected readonly statusFilterOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les statuts' },
@@ -131,7 +149,7 @@ export class ContactListPageComponent {
   protected readonly contactColumns: TableColumn[] = [
     { key: 'firstname', header: 'Prénom', searchable: true, sortable: true },
     { key: 'lastname', header: 'Nom', searchable: true, sortable: true },
-    { key: 'kind', header: 'Type', type: 'contactKind', searchable: true, sortable: true },
+    { key: 'isEnterprise', header: 'Type', type: 'contactKind', searchable: true, sortable: true },
     { key: 'email', header: 'Email', searchable: true, sortable: true },
     { key: 'phone', header: 'Téléphone', searchable: true, sortable: true },
     { key: 'status', header: 'Statut', type: 'badge', sortable: true },
@@ -148,6 +166,10 @@ export class ContactListPageComponent {
 
   protected onFilterKindChange(value: string): void {
     this.filterKind.set(value ?? 'all');
+  }
+
+  protected onFilterTagChange(value: string): void {
+    this.filterTag.set(value ?? 'all');
   }
 
   protected onFilterEmailChange(value: string): void {

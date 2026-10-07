@@ -105,6 +105,40 @@ const RULES: Rule[] = [
       /\byearly\b/.test(n)
   },
   {
+    field: 'isFamilyMembership',
+    weight: 9,
+    test: (n) =>
+      /\bfamiliale\b/.test(n) ||
+      /\bfamily\s*membership\b/.test(n) ||
+      (/\badhesion\b/.test(n) && /\bfamille\b/.test(n)) ||
+      (/\bmembership\b/.test(n) && /\bfamily\b/.test(n))
+  },
+  {
+    field: 'lastMembershipDate',
+    weight: 9,
+    test: (n) =>
+      (/\bdebut\b/.test(n) && /\badhesion\b/.test(n)) ||
+      (/\bstart\b/.test(n) && /\bmembership\b/.test(n)) ||
+      /\blast\s*membership\b/.test(n) ||
+      (/\bdate\b/.test(n) && /\badhesion\b/.test(n) && !/\bfin\b/.test(n) && !/\bend\b/.test(n))
+  },
+  {
+    field: 'membershipEndDate',
+    weight: 9,
+    test: (n) =>
+      (/\bfin\b/.test(n) && /\badhesion\b/.test(n)) ||
+      (/\bend\b/.test(n) && /\bmembership\b/.test(n)) ||
+      /\bmembership\s*end\b/.test(n)
+  },
+  {
+    field: 'tags',
+    weight: 8,
+    test: (n) =>
+      /\btags?\b/.test(n) ||
+      /\betiquettes?\b/.test(n) ||
+      /\blabels?\b/.test(n)
+  },
+  {
     field: 'fullName',
     weight: 10,
     test: (n) =>

@@ -27,6 +27,7 @@ import {
   parseAllowedSendTypesFromOrganization,
   serializeAllowedSendTypes
 } from '../../core/organization-sending-preferences';
+import { TagStoreService } from './tag.store';
 
 type AccountOrganizationInfo = {
   associationName: string;
@@ -37,9 +38,11 @@ type AccountOrganizationInfo = {
   audienceDescription: string;
 };
 type RemoveTarget =
-  | { id: string; type: 'text' | 'signature' | 'emailTemplate'; label: string }
+  | { id: string; type: 'text' | 'signature' | 'emailTemplate' | 'tag'; label: string }
   | { type: 'logo'; label: string }
   | null;
+
+type AccountTabId = 'contacts' | 'emails' | 'account';
 
 @Component({
   selector: 'account-page',
@@ -61,6 +64,7 @@ type RemoveTarget =
 export class AccountPageComponent {
   private readonly userStore = inject(UserStore);
   private readonly store = inject(OrganizationCustomContentStore);
+  private readonly tagStore = inject(TagStoreService);
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
@@ -113,6 +117,17 @@ export class AccountPageComponent {
   ] as const;
 
   protected readonly sendingPreferencesSelected = signal<ReadonlySet<string>>(new Set(ALL_ORGANIZATION_SEND_TYPES));
+
+  protected readonly activeTab = signal<AccountTabId>('contacts');
+  protected readonly accountTabs: ReadonlyArray<{ id: AccountTabId; label: string }> = [
+    { id: 'contacts', label: 'Contacts' },
+    { id: 'emails', label: 'Emails' },
+    { id: 'account', label: 'Compte' }
+  ];
+
+  protected selectTab(tabId: AccountTabId): void {
+    this.activeTab.set(tabId);
+  }
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
@@ -212,10 +227,20 @@ export class AccountPageComponent {
   });
   protected readonly removeTarget = signal<RemoveTarget>(null);
 
+  protected readonly organizationTags = computed(() => this.tagStore.tags());
+  protected readonly tagName = signal('');
+  protected readonly tagColor = signal('#5b6cff');
+  protected readonly editingTagId = signal<string | null>(null);
+  protected readonly tagSaving = signal(false);
+  protected readonly tagSaveDisabled = computed(
+    () => this.tagSaving() || !this.tagName().trim()
+  );
+
   private lastImageFileInput: HTMLInputElement | null = null;
 
   constructor() {
     this.store.ensureLoaded();
+    this.tagStore.ensureLoaded();
     void this.loadOrganizationInfo();
     this.loadMailEditorTags();
     effect(() => {
@@ -255,6 +280,52 @@ export class AccountPageComponent {
     this.editingTextId.set(null);
     this.textLabel.set('');
     this.textContent.set('');
+  }
+
+  protected editTag(id: string): void {
+    const row = this.organizationTags().find((item) => item.id === id);
+    if (!row) return;
+    this.editingTagId.set(row.id);
+    this.tagName.set(row.name);
+    this.tagColor.set(row.color?.trim() || '#5b6cff');
+  }
+
+  protected cancelTagEdit(): void {
+    this.editingTagId.set(null);
+    this.tagName.set('');
+    this.tagColor.set('#5b6cff');
+  }
+
+  protected saveTag(): void {
+    if (this.tagSaveDisabled()) return;
+    const name = this.tagName().trim();
+    const color = this.tagColor().trim() || null;
+    const editingId = this.editingTagId();
+    this.tagSaving.set(true);
+    const request$ = editingId
+      ? this.tagStore.updateTag(editingId, name, color)
+      : this.tagStore.createTag(name, color);
+    request$.subscribe({
+      next: () => {
+        this.tagSaving.set(false);
+        this.cancelTagEdit();
+        this.toast.show(editingId ? 'Tag mis à jour.' : 'Tag créé.', 'success');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.tagSaving.set(false);
+        const conflict = err.status === 409;
+        this.toast.show(
+          conflict ? 'Un tag avec ce nom existe déjà.' : 'Impossible d’enregistrer le tag.',
+          'alert'
+        );
+      }
+    });
+  }
+
+  protected requestRemoveTag(id: string): void {
+    const row = this.organizationTags().find((item) => item.id === id);
+    if (!row) return;
+    this.removeTarget.set({ id, type: 'tag', label: row.name });
   }
 
   protected editSignatureBlock(id: string): void {
@@ -381,6 +452,7 @@ export class AccountPageComponent {
     if (target.type === 'logo') return 'Supprimer le logo ?';
     if (target.type === 'emailTemplate') return `Supprimer le modèle « ${target.label} » ?`;
     if (target.type === 'signature') return `Supprimer la signature « ${target.label} » ?`;
+    if (target.type === 'tag') return `Supprimer le tag « ${target.label} » ?`;
     return `Supprimer le bloc « ${target.label} » ?`;
   }
 
@@ -463,6 +535,19 @@ export class AccountPageComponent {
         },
         error: () => {
           this.toast.show('Impossible de supprimer le modèle d’email.', 'alert');
+        }
+      });
+      return;
+    }
+    if (target.type === 'tag') {
+      this.tagStore.removeTag(target.id).subscribe({
+        next: () => {
+          if (this.editingTagId() === target.id) this.cancelTagEdit();
+          this.toast.show('Tag supprimé.', 'success');
+          this.removeTarget.set(null);
+        },
+        error: () => {
+          this.toast.show('Impossible de supprimer le tag.', 'alert');
         }
       });
       return;

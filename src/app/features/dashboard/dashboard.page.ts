@@ -183,16 +183,7 @@ export class DashboardPageComponent {
     if (!contact) {
       return '-';
     }
-    switch (contact.kind) {
-      case 'company':
-        return 'Mécène';
-      case 'member':
-        return 'Cotisation';
-      case 'donor':
-      case 'helper':
-      default:
-        return 'Donateur';
-    }
+    return contact.isEnterprise ? 'Mécène' : 'Donateur';
   }
 
   private paymentMethodLabel(paymentMethod: DonationPaymentMethod | null): string {

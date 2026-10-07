@@ -35,6 +35,15 @@
             (ngModelChange)="kindFilterChange.emit($event)"
           />
         }
+        @if (tagOptions.length > 0) {
+          <form-select-component
+            class="filter-select"
+            label="Tag"
+            [ngModel]="tagFilter"
+            [options]="tagOptions"
+            (ngModelChange)="tagFilterChange.emit($event)"
+          />
+        }
         @if (departmentOptions.length > 0) {
           <form-select-component
             class="filter-select"

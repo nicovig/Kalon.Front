@@ -36,10 +36,29 @@ export interface ContactApiEnterprise {
   contactPhone?: string | null;
 }
 
+export interface TagResponseApiModel {
+  id?: string;
+  organizationId?: string;
+  name?: string | null;
+  color?: string | null;
+  createdAt?: string;
+  updatedAt?: string | null;
+}
+
+export interface TagCreateRequestApiModel {
+  name?: string | null;
+  color?: string | null;
+}
+
+export interface TagUpdateRequestApiModel {
+  name?: string | null;
+  color?: string | null;
+}
+
 export interface ContactApiModel {
   id?: string;
   organizationId?: string;
-  kind?: string | null;
+  isEnterprise?: boolean;
   status?: string | null;
   isOut?: boolean;
   firstname?: string | null;
@@ -52,8 +71,12 @@ export interface ContactApiModel {
   notes?: string | null;
   department?: string | null;
   preferredFrequencySendingReceipt?: string | null;
+  lastMembershipDate?: string | null;
+  membershipEndDate?: string | null;
+  isFamilyMembership?: boolean;
   address?: ContactApiAddress | null;
   enterprise?: ContactApiEnterprise | null;
+  tags?: TagResponseApiModel[] | null;
   createdAt?: string;
   updatedAt?: string | null;
   totalDonation?: number;
@@ -66,7 +89,7 @@ export interface ContactApiModel {
 }
 
 export interface ContactCreateRequestApiModel {
-  kind?: string | null;
+  isEnterprise?: boolean;
   firstname?: string | null;
   lastname?: string | null;
   email?: string | null;
@@ -77,8 +100,12 @@ export interface ContactCreateRequestApiModel {
   notes?: string | null;
   department?: string | null;
   preferredFrequencySendingReceipt?: string | null;
+  lastMembershipDate?: string | null;
+  membershipEndDate?: string | null;
+  isFamilyMembership?: boolean;
   address?: ContactApiAddress | null;
   enterprise?: ContactApiEnterprise | null;
+  tagIds?: string[] | null;
 }
 
 export interface GeneratedDocumentSummaryApiModel {

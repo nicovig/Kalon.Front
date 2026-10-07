@@ -64,9 +64,9 @@ export type MailTemplate = {
 
 const DEFAULT_RECEIPT_REQUIRED_MENTIONS = [
   "Identité de l'association bénéficiaire",
-  'Coordonnées du donateur',
-  'Date et nature du don',
-  'Montant du don (ou valorisation)',
+  'Coordonnées',
+  'Date et nature de la contribution',
+  'Montant de la contribution (ou valorisation)',
   'Référence fiscale / article applicable'
 ];
 

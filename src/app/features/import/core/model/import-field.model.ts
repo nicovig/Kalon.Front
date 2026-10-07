@@ -16,6 +16,10 @@ export type ImportFieldKey =
   | 'gender'
   | 'out'
   | 'preferredFrequencySendingReceipt'
+  | 'isFamilyMembership'
+  | 'lastMembershipDate'
+  | 'membershipEndDate'
+  | 'tags'
   | 'addressLine'
   | 'street'
   | 'postalCode'
@@ -40,6 +44,10 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'gender', label: 'Particulier - Genre' },
   { key: 'out', label: 'Particulier - Sorti (décédé)' },
   { key: 'preferredFrequencySendingReceipt', label: 'Particulier - Fréquence d\'envoi des reçus fiscaux' },
+  { key: 'isFamilyMembership', label: 'Particulier - Adhésion familiale (oui/non)' },
+  { key: 'lastMembershipDate', label: 'Particulier - Date de début d’adhésion' },
+  { key: 'membershipEndDate', label: 'Particulier - Date de fin d’adhésion' },
+  { key: 'tags', label: 'Particulier - Tags (séparés par , ou ;)' },
   { key: 'addressLine', label: 'Particulier - Adresse (tout en une colonne)' },
   { key: 'street', label: 'Particulier - Rue / voie' },
   { key: 'postalCode', label: 'Particulier - Code postal' },

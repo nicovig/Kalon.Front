@@ -1,6 +1,6 @@
 <topbar
   [title]="'Analyse des contributions'"
-  [subtitle]="'Vue 360 des contributions par type et statut de profils, sur la période de votre choix'"
+  [subtitle]="'Vue 360° des contributions avec les différents filtres, sur la période de votre choix'"
 ></topbar>
 
 <div class="st-shell">
@@ -89,6 +89,16 @@
           [options]="contactKindOptions"
           [ngModel]="contactKindFilter()"
           (ngModelChange)="contactKindFilter.set($event)"
+        ></form-select-component>
+      </div>
+
+      <div class="st-filter">
+        <span class="st-label">Tag</span>
+        <form-select-component
+          [label]="null"
+          [options]="contactTagOptions()"
+          [ngModel]="contactTagFilter()"
+          (ngModelChange)="contactTagFilter.set($event)"
         ></form-select-component>
       </div>
 

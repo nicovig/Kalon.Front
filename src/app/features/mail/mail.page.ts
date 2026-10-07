@@ -30,7 +30,7 @@ import {
 } from './mail-contact-selector/mail-contact-selector.component';
 import { ContactStoreService } from '../contact/contact.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
-import { ContactStatus, IContact, contactDisplayName } from '../../core/models/contact.model';
+import { ContactStatus, IContact, contactDisplayName, contactNatureLabel } from '../../core/models/contact.model';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { FormDateComponent } from '../../layout/forms/date/form-date.component';
 import { IDonation } from '../../core/models/donation.model';
@@ -53,6 +53,7 @@ import { DashboardNotificationStore } from '../../core/notification/dashboard-no
 import { AiMailStore } from '../../core/ai-mail/ai-mail.store';
 import { SendingApiService } from '../../core/api/sending-api.service';
 import { MAX_EMAIL_ATTACHMENTS } from '../../core/config/api.config';
+import { TagStoreService } from '../account/tag.store';
 
 type SendTypeKey =
   | 'choix_type'
@@ -139,6 +140,7 @@ export class MailPageComponent {
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly donationStore = inject(DonationStoreService);
   private readonly customContentStore = inject(OrganizationCustomContentStore);
+  private readonly tagStore = inject(TagStoreService);
   private readonly userStore = inject(UserStore);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly aiMailStore = inject(AiMailStore);
@@ -167,6 +169,7 @@ export class MailPageComponent {
   protected readonly searchQuery = signal('');
   protected readonly statusFilter = signal('all');
   protected readonly kindFilter = signal('all');
+  protected readonly tagFilter = signal('all');
   protected readonly departmentFilter = signal('all');
   protected readonly availabilityMode = signal<MailAvailabilityMode>('with_email');
   protected readonly monthsSinceLastDonationMin = signal(0);
@@ -239,12 +242,16 @@ export class MailPageComponent {
   ];
 
   protected readonly kindOptions: FormSelectOption[] = [
-    { value: 'all', label: 'Tous les types' },
-    { value: 'donor', label: 'Donateur' },
-    { value: 'member', label: 'Membre' },
-    { value: 'helper', label: 'Bénévole' },
-    { value: 'company', label: 'Entreprise' }
+    { value: 'all', label: 'Tous les profils' },
+    { value: 'individual', label: 'Particuliers' },
+    { value: 'company', label: 'Entreprises' }
   ];
+
+  protected readonly tagOptions = computed<FormSelectOption[]>(() => [
+    { value: 'all', label: 'Tous les tags' },
+    { value: 'none', label: 'Pas de tags' },
+    ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
+  ]);
 
   protected readonly departmentOptions = computed<FormSelectOption[]>(() => {
     const codes = new Set<string>();
@@ -297,6 +304,7 @@ export class MailPageComponent {
     const q = this.searchQuery().trim().toLowerCase();
     const status = this.statusFilter();
     const kind = this.kindFilter();
+    const tagId = this.tagFilter();
     const dept = this.departmentFilter();
     const availabilityMode = this.availabilityMode();
     const taxReceiptPendingIds = this.dashboardNotificationStore.taxReceiptContactIds();
@@ -309,7 +317,13 @@ export class MailPageComponent {
       const hasEmail = this.hasEmailChannel(c);
       const computedStatus = this.contactSettings.statusOf(c);
       if (status !== 'all' && computedStatus !== status) return false;
-      if (kind !== 'all' && c.kind !== kind) return false;
+      if (kind === 'company' && !c.isEnterprise) return false;
+      if (kind === 'individual' && c.isEnterprise) return false;
+      if (tagId === 'none') {
+        if ((c.tags ?? []).length > 0) return false;
+      } else if (tagId !== 'all' && !(c.tags ?? []).some((tag) => tag.id === tagId)) {
+        return false;
+      }
       if (dept !== 'all' && this.departmentOf(c) !== dept) return false;
       if (availabilityMode === 'pending_tax_receipt') {
         if (!taxReceiptPendingIds.has(c.id)) return false;
@@ -339,7 +353,7 @@ export class MailPageComponent {
         c.address?.postalCode,
         c.enterprise?.address?.city,
         c.enterprise?.address?.postalCode,
-        this.contactKindLabel(c.kind),
+        contactNatureLabel(c),
         this.formatAmount(c.totalDonation),
         c.lastDonationAmount == null ? '' : this.formatAmount(c.lastDonationAmount),
         c.averageDonationAmount == null ? '' : this.formatAmount(c.averageDonationAmount)
@@ -487,6 +501,7 @@ export class MailPageComponent {
     this.contactStore.loadContactsFromApi().subscribe({ error: () => undefined });
     this.donationStore.loadDonationsFromApi().subscribe({ error: () => undefined });
     this.customContentStore.ensureLoaded();
+    this.tagStore.ensureLoaded();
     this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()).subscribe({
       next: (res) => {
         this.organizationSendTypeFilter.set(parseAllowedSendTypesFromOrganization(res?.['sendingPreferences']));
@@ -740,7 +755,7 @@ export class MailPageComponent {
     this.hasDocumentPayload() ? ['message', 'document'] : ['message']
   );
   protected readonly hasCompanyRecipient = computed(() =>
-    this.selectedRecipientContacts().some((contact) => contact.kind === 'company')
+    this.selectedRecipientContacts().some((contact) => contact.isEnterprise)
   );
   protected readonly editorVariableTags = computed<MailEditorVariableTag[]>(() => {
     const hasCompanyRecipient = this.hasCompanyRecipient();
@@ -1238,6 +1253,7 @@ export class MailPageComponent {
     this.searchQuery.set('');
     this.statusFilter.set('all');
     this.kindFilter.set('all');
+    this.tagFilter.set('all');
     this.departmentFilter.set('all');
     this.availabilityMode.set('with_email');
     this.monthsSinceLastDonationMin.set(0);
@@ -1276,6 +1292,11 @@ export class MailPageComponent {
 
   protected onKindFilterChange(value: string): void {
     this.kindFilter.set(value);
+    this.pageIndex.set(0);
+  }
+
+  protected onTagFilterChange(value: string): void {
+    this.tagFilter.set(value);
     this.pageIndex.set(0);
   }
 
@@ -1481,7 +1502,7 @@ export class MailPageComponent {
 
   private contactInfoLine(c: IContact): string {
     const summary = this.contactContributionSummary(c);
-    const pieces = [this.contactKindLabel(c.kind)];
+    const pieces = [contactNatureLabel(c)];
     const department = this.departmentOf(c);
     if (department) pieces.push(`Département ${department}`);
     pieces.push(`${summary.count} contribution${summary.count > 1 ? 's' : ''}`);
@@ -1511,7 +1532,7 @@ export class MailPageComponent {
   }
 
   private initials(c: IContact): string {
-    if (c.kind === 'company' && c.enterprise?.name) {
+    if (c.isEnterprise && c.enterprise?.name) {
       const parts = c.enterprise.name.trim().split(/\s+/).filter(Boolean);
       const a = parts[0]?.[0] ?? '';
       const b = parts[1]?.[0] ?? parts[0]?.[1] ?? '';
@@ -1546,13 +1567,6 @@ export class MailPageComponent {
       lastAmount: contactLastAmount ?? aggregated?.lastAmount ?? null,
       averageAmount: contactAverageAmount ?? aggregated?.averageAmount ?? null
     };
-  }
-
-  private contactKindLabel(kind: IContact['kind']): string {
-    if (kind === 'company') return 'Entreprise';
-    if (kind === 'member') return 'Membre';
-    if (kind === 'helper') return 'Bénévole';
-    return 'Donateur';
   }
 
   private parseOptionalNumber(value: string): number | null {

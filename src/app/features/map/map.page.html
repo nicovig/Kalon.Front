@@ -1,6 +1,16 @@
 <empty-contacts-welcome />
 <topbar [title]="'Où se trouvent vos soutiens ?'" [subtitle]="'Répartition de vos profils par département'"></topbar>
 
+<div class="map-filters">
+  <form-select-component
+    class="map-filter"
+    label="Tag"
+    [options]="tagFilterOptions()"
+    [ngModel]="filterTag()"
+    (ngModelChange)="onFilterTagChange($event)"
+  />
+</div>
+
 <div class="map-grid">
   
   <div class="map-left">

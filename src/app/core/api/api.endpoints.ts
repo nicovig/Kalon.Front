@@ -162,5 +162,12 @@ export const API_ENDPOINTS = {
     print: () => toUrl('/api/Sending/print'),
     confirmMailed: ({ mailLogId }: { mailLogId: string }) =>
       toUrl(`/api/Sending/confirm-mailed/${encodeURIComponent(mailLogId)}`)
+  },
+  tag: {
+    list: () => toUrl('/api/Tag'),
+    create: () => toUrl('/api/Tag'),
+    getById: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`),
+    update: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`),
+    remove: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`)
   }
 };

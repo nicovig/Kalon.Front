@@ -1,3 +1,16 @@
+.map-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 20px 12px;
+  max-width: 320px;
+}
+
+.map-filter {
+  width: 100%;
+  min-width: 0;
+}
+
 .map-grid {
   display: flex;
   gap: 16px;

@@ -28,4 +28,11 @@ describe('guessMappingForHeaders', () => {
     expect(m[0]).toBe('fullName');
     expect(m[1]).toBe('email');
   });
+
+  it('detects membership and tags headers', () => {
+    expect(guessFieldForHeader('Adhésion familiale')).toBe('isFamilyMembership');
+    expect(guessFieldForHeader('Date début adhésion')).toBe('lastMembershipDate');
+    expect(guessFieldForHeader('Date fin adhésion')).toBe('membershipEndDate');
+    expect(guessFieldForHeader('Tags')).toBe('tags');
+  });
 });

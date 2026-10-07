@@ -1,7 +1,6 @@
 import { NewContactInput } from '../../contact/contact.store';
 import { EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
 import { ImportFieldKey } from './model/import-field.model';
-import { collectImportFieldBag } from './import-map-preview';
 import { parseDateFromCell } from './import-parse-cells';
 import {
   assessContactImportRowSkipReason,
@@ -99,11 +98,40 @@ function parseSupportKind(value: string): EnterpriseSupportKind {
   return 'other';
 }
 
+function parseOptionalBoolean(value: string | undefined): boolean | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const n = normalizeCell(value);
+  if (!n) {
+    return undefined;
+  }
+  if (/\b(oui|yes|true|1|y)\b/.test(n)) {
+    return true;
+  }
+  if (/\b(non|no|false|0|n)\b/.test(n)) {
+    return false;
+  }
+  return undefined;
+}
+
+export function parseTagNamesFromCell(value: string | undefined): string[] {
+  const raw = String(value ?? '').trim();
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(/[,;|/]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 export function mapRowToNewContactInput(
   row: string[],
   bindings: ImportFieldKey[],
   overrides?: Partial<Record<ImportFieldKey, string>>,
-  options?: ContactImportParseOptions
+  options?: ContactImportParseOptions,
+  resolveTagIds?: (tagNames: string[]) => string[]
 ): NewContactInput | null {
   const bag = buildContactImportBag(row, bindings, overrides, options);
   if (assessContactImportRowSkipReason(bag, options)) {
@@ -120,6 +148,15 @@ export function mapRowToNewContactInput(
   const preferredFrequencySendingReceipt = parseOptionalPreferredFrequency(
     bag.preferredFrequencySendingReceipt
   );
+  const isFamilyMembership = parseOptionalBoolean(bag.isFamilyMembership) ?? false;
+  const lastMembershipDate = bag.lastMembershipDate
+    ? parseDateFromCell(bag.lastMembershipDate) ?? null
+    : null;
+  const membershipEndDate = bag.membershipEndDate
+    ? parseDateFromCell(bag.membershipEndDate) ?? null
+    : null;
+  const tagNames = parseTagNamesFromCell(bag.tags);
+  const tagIds = resolveTagIds ? resolveTagIds(tagNames) : [];
 
   const enterpriseName = (bag.enterpriseName ?? '').trim();
   const siret = (bag.siret ?? '').trim();
@@ -128,7 +165,7 @@ export function mapRowToNewContactInput(
   const contactFirstname = (bag.contactFirstname ?? '').trim();
   const contactLastname = (bag.contactLastname ?? '').trim();
 
-  const intendedKind = enterpriseName || siret ? 'company' : 'donor';
+  const isEnterprise = Boolean(enterpriseName || siret);
 
   const resolvedAddress = resolveAddressFromBag(bag);
   let street = resolvedAddress.street;
@@ -136,7 +173,14 @@ export function mapRowToNewContactInput(
   const city = resolvedAddress.city;
   const country = resolvedAddress.country;
 
-  if (intendedKind === 'company') {
+  const membershipFields = {
+    isFamilyMembership,
+    lastMembershipDate,
+    membershipEndDate,
+    tagIds
+  };
+
+  if (isEnterprise) {
     if (!enterpriseName) {
       return null;
     }
@@ -148,7 +192,7 @@ export function mapRowToNewContactInput(
     }
 
     return {
-      kind: 'company',
+      isEnterprise: true,
       email,
       phone: (bag.phone ?? '').trim() || undefined,
       enterprise: {
@@ -167,7 +211,8 @@ export function mapRowToNewContactInput(
         contactLastname: contactLastname || undefined
       },
       out,
-      preferredFrequencySendingReceipt
+      preferredFrequencySendingReceipt,
+      ...membershipFields
     };
   }
 
@@ -176,7 +221,7 @@ export function mapRowToNewContactInput(
   }
 
   return {
-    kind: 'donor',
+    isEnterprise: false,
     firstname: firstname || '-',
     lastname: lastname || '-',
     email,
@@ -191,6 +236,7 @@ export function mapRowToNewContactInput(
       country
     },
     out,
-    preferredFrequencySendingReceipt
+    preferredFrequencySendingReceipt,
+    ...membershipFields
   };
 }

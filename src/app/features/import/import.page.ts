@@ -67,6 +67,7 @@ import { DonationStoreService } from '../donation/donation.store';
 import { contactDisplayName } from '../../core/models/contact.model';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { ImportBusinessRulesTooltipComponent } from './components/import-business-rules-tooltip/import-business-rules-tooltip.component';
+import { TagStoreService } from '../account/tag.store';
 
 @Component({
   selector: 'import-page',
@@ -95,6 +96,7 @@ export class ImportPageComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly contactStore = inject(ContactStoreService);
   private readonly donationStore = inject(DonationStoreService);
+  private readonly tagStore = inject(TagStoreService);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -419,6 +421,7 @@ export class ImportPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.tagStore.ensureLoaded();
     const qp = this.route.snapshot.queryParamMap.get('mode');
     if (qp === 'contacts' || qp === 'donations' || qp === 'combined') {
       this.importMode.set(qp);
@@ -894,6 +897,17 @@ export class ImportPageComponent implements OnInit {
     return overrides;
   }
 
+  private resolveImportTagIds = (tagNames: string[]): string[] => {
+    const ids: string[] = [];
+    for (const name of tagNames) {
+      const tag = this.tagStore.findByName(name);
+      if (tag && !ids.includes(tag.id)) {
+        ids.push(tag.id);
+      }
+    }
+    return ids;
+  };
+
   private parseContactImportRow(
     index: number,
     row: string[],
@@ -903,7 +917,13 @@ export class ImportPageComponent implements OnInit {
     const options = this.contactImportOptions();
     const bag = buildContactImportBag(row, bindings, overrides, options);
     const skipReason = assessContactImportRowSkipReason(bag, options);
-    const input = mapRowToNewContactInput(row, bindings, overrides, options);
+    const input = mapRowToNewContactInput(
+      row,
+      bindings,
+      overrides,
+      options,
+      this.resolveImportTagIds
+    );
     if (input) {
       return { input, ignored: null };
     }
@@ -1076,7 +1096,12 @@ export class ImportPageComponent implements OnInit {
 
     for (const [index, row] of rows.entries()) {
       const options = this.contactImportOptions();
-      const { contactInput, donation } = mapCombinedRowToActions(row, bindings, options);
+      const { contactInput, donation } = mapCombinedRowToActions(
+        row,
+        bindings,
+        options,
+        this.resolveImportTagIds
+      );
       if (!contactInput) {
         skipped++;
         const parsed = this.parseContactImportRow(index, row, contactBindings);

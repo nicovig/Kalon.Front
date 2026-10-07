@@ -91,15 +91,6 @@
           ></form-text-component>
         </div>
 
-        <div class="df-field">
-          <label class="df-label">Type de profil</label>
-          <div class="df-kind-row df-kind-row--nowrap">
-            <button-radio [control]="kindControl" value="donor" [name]="'contact-kind'">Donateur</button-radio>
-            <button-radio [control]="kindControl" value="member" [name]="'contact-kind'">Membre</button-radio>
-            <button-radio [control]="kindControl" value="helper" [name]="'contact-kind'">Aidant</button-radio>
-          </div>
-        </div>
-
         <div class="df-field out-toggle-field">
           <label
             class="df-label df-genre-out-toggle df-out-toggle"
@@ -171,6 +162,39 @@
                 ></form-text-component>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="df-section">
+        <div class="df-section-title">Adhésion</div>
+        <div class="df-row-3">
+          <div class="df-field">
+            <label class="df-label">Adhésion familiale</label>
+            <div class="df-kind-row">
+              <button-radio [control]="isFamilyMembershipControl" value="false" [name]="'contact-family-membership'"
+                >Non</button-radio
+              >
+              <button-radio [control]="isFamilyMembershipControl" value="true" [name]="'contact-family-membership'"
+                >Oui</button-radio
+              >
+            </div>
+          </div>
+          <div class="df-field">
+            <label class="df-label" for="df-lastMembershipDate">Date de début d’adhésion</label>
+            <form-date-component
+              id="df-lastMembershipDate"
+              formControlName="lastMembershipDate"
+              width="100%"
+            ></form-date-component>
+          </div>
+          <div class="df-field">
+            <label class="df-label" for="df-membershipEndDate">Date de fin d’adhésion</label>
+            <form-date-component
+              id="df-membershipEndDate"
+              formControlName="membershipEndDate"
+              width="100%"
+            ></form-date-component>
           </div>
         </div>
       </div>
@@ -354,6 +378,28 @@
       </div>
     </div>
   }
+
+  <div class="df-section">
+    <div class="df-section-title">Tags</div>
+    @if (availableTags().length) {
+      <div class="df-tag-list" role="group" aria-label="Tags du profil">
+        @for (tag of availableTags(); track tag.id) {
+          <button
+            type="button"
+            class="df-tag-chip"
+            [class.df-tag-chip--on]="isTagSelected(tag.id)"
+            [style.--tag-color]="tag.color || '#5b6cff'"
+            (click)="toggleTag(tag.id)"
+          >
+            <button-checkbox [checked]="isTagSelected(tag.id)" />
+            <span>{{ tag.name }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <p class="df-tag-empty">Aucun tag disponible. Créez-en depuis la page Compte.</p>
+    }
+  </div>
 
   <div class="df-subsection">
     <div class="df-subsection-title">Préférence d'envoi des reçus fiscaux</div>

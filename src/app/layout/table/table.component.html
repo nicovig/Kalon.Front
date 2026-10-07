@@ -67,8 +67,8 @@
               <span
                 class="badge"
                 [ngClass]="{
-                  'b-kind-company': getCellValue(row, col) === 'company',
-                  'b-kind-individual': getCellValue(row, col) !== 'company'
+                  'b-kind-company': getCellValue(row, col) === true || getCellValue(row, col) === 'company',
+                  'b-kind-individual': getCellValue(row, col) !== true && getCellValue(row, col) !== 'company'
                 }"
               >
                 {{ getCellValue(row, col) | contactKindLabel }}

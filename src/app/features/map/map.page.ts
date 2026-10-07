@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ContactStoreService } from '../contact/contact.store';
 import { contactDisplayName, IContact } from '../../core/models/contact.model';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
 import { ContactEditPopupComponent } from '../contact/popup/edit-contact/edit-contact-popup.component';
 import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome/empty-contacts-welcome.component';
+import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
+import { TagStoreService } from '../account/tag.store';
 import franceDepartmentsSvg from '@svg-maps/france.departments';
 import worldMapSvg from '@svg-maps/world';
 
@@ -30,12 +33,22 @@ type DeptTooltip = { label: string; x: number; y: number };
   templateUrl: './map.page.html',
   styleUrls: ['./map.page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TopbarComponent, CardComponent, ContactEditPopupComponent, EmptyContactsWelcomeComponent]
+  imports: [
+    CommonModule,
+    FormsModule,
+    TopbarComponent,
+    CardComponent,
+    FormSelectComponent,
+    ContactEditPopupComponent,
+    EmptyContactsWelcomeComponent
+  ]
 })
 export class MapPageComponent {
   private readonly contactStore = inject(ContactStoreService);
+  private readonly tagStore = inject(TagStoreService);
 
   protected readonly selection = signal<Selection>({ kind: 'non_metro' });
+  protected readonly filterTag = signal('all');
 
   protected readonly contactToEdit = signal<IContact | null>(null);
 
@@ -43,6 +56,24 @@ export class MapPageComponent {
 
   protected readonly france = franceDepartmentsSvg as unknown as SvgMap;
   protected readonly world = worldMapSvg as unknown as SvgMap;
+
+  constructor() {
+    this.tagStore.ensureLoaded();
+  }
+
+  protected readonly tagFilterOptions = computed<FormSelectOption[]>(() => [
+    { value: 'all', label: 'Tous les tags' },
+    { value: 'none', label: 'Pas de tags' },
+    ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
+  ]);
+
+  protected readonly scopedContacts = computed(() => {
+    const tagId = this.filterTag();
+    const contacts = this.contactStore.contacts();
+    if (tagId === 'all') return contacts;
+    if (tagId === 'none') return contacts.filter((c) => !(c.tags ?? []).length);
+    return contacts.filter((c) => (c.tags ?? []).some((tag) => tag.id === tagId));
+  });
 
   protected readonly franceLocationById = computed(() => {
     const m = new Map<string, SvgLocation>();
@@ -54,7 +85,7 @@ export class MapPageComponent {
 
   protected readonly contactGeoById = computed(() => {
     const map = new Map<string, ContactGeo>();
-    for (const c of this.contactStore.contacts()) {
+    for (const c of this.scopedContacts()) {
       map.set(c.id, this.geoOfContact(c));
     }
     return map;
@@ -68,7 +99,7 @@ export class MapPageComponent {
       else map.set(k, [c]);
     };
 
-    for (const c of this.contactStore.contacts()) {
+    for (const c of this.scopedContacts()) {
       const geo = this.contactGeoById().get(c.id);
       if (!geo || geo.kind !== 'metro') continue;
       add(geo.departmentId, c);
@@ -101,7 +132,7 @@ export class MapPageComponent {
       else map.set(k, [c]);
     };
 
-    for (const c of this.contactStore.contacts()) {
+    for (const c of this.scopedContacts()) {
       const geo = this.contactGeoById().get(c.id);
       if (!geo || geo.kind !== 'domtom') continue;
       add(geo.departmentId, c);
@@ -128,11 +159,11 @@ export class MapPageComponent {
   });
 
   protected readonly unreliableAddressContacts = computed(() => {
-    return this.contactStore.contacts().filter((c) => this.contactGeoById().get(c.id)?.kind === 'unreliable_address');
+    return this.scopedContacts().filter((c) => this.contactGeoById().get(c.id)?.kind === 'unreliable_address');
   });
 
   protected readonly horsFranceContacts = computed(() => {
-    return this.contactStore.contacts().filter((c) => this.contactGeoById().get(c.id)?.kind === 'hors_france');
+    return this.scopedContacts().filter((c) => this.contactGeoById().get(c.id)?.kind === 'hors_france');
   });
 
   protected readonly metroContactsPreview = computed(() => {
@@ -148,7 +179,11 @@ export class MapPageComponent {
     return this.franceLocationById().get(sel.departmentId)?.name ?? null;
   });
 
-  protected readonly totalContacts = computed(() => this.contactStore.contacts().length);
+  protected readonly totalContacts = computed(() => this.scopedContacts().length);
+
+  protected onFilterTagChange(value: string): void {
+    this.filterTag.set(value ?? 'all');
+  }
 
   protected onSelectMetroDepartment(departmentId: string): void {
     this.selection.set({ kind: 'metro', departmentId });

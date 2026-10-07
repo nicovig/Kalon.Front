@@ -12,10 +12,12 @@ import { ButtonLabelComponent } from '../../layout/button/button-label/button-la
 import { ContactStoreService } from '../contact/contact.store';
 import { DonationStoreService } from '../donation/donation.store';
 import { ContactSettingsStore } from '../contact/settings/contact-settings.store';
-import { ContactKind, ContactStatus, contactDisplayName, IContact } from '../../core/models/contact.model';
+import { ContactStatus, contactDisplayName, IContact } from '../../core/models/contact.model';
 import { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
+import { TagStoreService } from '../account/tag.store';
 
 type PeriodPreset = 'all' | 'thisMonth' | 'last3Months' | 'last6Months' | 'last12Months' | 'civilYear' | 'custom';
+type ContactNatureFilter = 'all' | 'individual' | 'company';
 
 type DonationTableRow = {
   id: string;
@@ -23,7 +25,8 @@ type DonationTableRow = {
   contactDisplayName: string;
   contactEmail: string;
   contactPhoneNumber: string;
-  contactKind: ContactKind;
+  isEnterprise: boolean;
+  contactTagIds: string[];
   contactStatus: ContactStatus;
   contactLastName: string;
   contactFirstName: string;
@@ -58,15 +61,21 @@ export class StatisticsPageComponent {
   private readonly contactStore = inject(ContactStoreService);
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
+  private readonly tagStore = inject(TagStoreService);
 
   protected readonly periodPreset = signal<PeriodPreset>('civilYear');
   protected readonly customFromDate = signal('');
   protected readonly customToDate = signal('');
-  protected readonly contactKindFilter = signal<'all' | ContactKind>('all');
+  protected readonly contactKindFilter = signal<ContactNatureFilter>('all');
+  protected readonly contactTagFilter = signal('all');
   protected readonly contactStatusFilter = signal<'all' | ContactStatus>('all');
   protected readonly minAmountInput = signal('');
   protected readonly maxAmountInput = signal('');
   protected readonly searchTerm = signal('');
+
+  constructor() {
+    this.tagStore.ensureLoaded();
+  }
 
   protected readonly todayDateString = new Date().toISOString().split('T')[0];
 
@@ -81,12 +90,16 @@ export class StatisticsPageComponent {
   ];
 
   protected readonly contactKindOptions: FormSelectOption[] = [
-    { value: 'all', label: 'Tous les types' },
-    { value: 'donor', label: 'Donateurs' },
-    { value: 'member', label: 'Membres' },
-    { value: 'helper', label: 'Aidants' },
+    { value: 'all', label: 'Tous les profils' },
+    { value: 'individual', label: 'Particuliers' },
     { value: 'company', label: 'Entreprises / mécènes' }
   ];
+
+  protected readonly contactTagOptions = computed<FormSelectOption[]>(() => [
+    { value: 'all', label: 'Tous les tags' },
+    { value: 'none', label: 'Pas de tags' },
+    ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
+  ]);
 
   protected readonly contactStatusOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les statuts' },
@@ -101,7 +114,7 @@ export class StatisticsPageComponent {
     { key: 'date', header: 'Date', type: 'date' },
     { key: 'contactDisplayName', header: 'Profil', type: 'text', searchable: true },
     { key: 'contactEmail', header: 'Email', type: 'text', searchable: true },
-    { key: 'contactKind', header: 'Type', type: 'contactKind' },
+    { key: 'isEnterprise', header: 'Type', type: 'contactKind' },
     { key: 'contactStatus', header: 'Statut', type: 'badge' },
     { key: 'paymentMethodLabel', header: 'Moyen de paiement', type: 'text', searchable: true },
     { key: 'amount', header: 'Montant (€)', type: 'number', align: 'right' }
@@ -124,7 +137,7 @@ export class StatisticsPageComponent {
         const fallbackName = donation.contactDisplayName?.trim() || 'Profil inconnu';
         const contactName = contact ? contactDisplayName(contact) : fallbackName;
         const contactEmail = contact?.email ?? '-';
-        const contactKind: ContactKind = contact?.kind ?? 'donor';
+        const isEnterprise = Boolean(contact?.isEnterprise);
         const contactStatus = contact ? this.contactSettings.statusOf(contact) : 'inactive';
         const { last, first } = this.contactExportNames(contact, contactName);
         return {
@@ -133,7 +146,8 @@ export class StatisticsPageComponent {
           contactDisplayName: contactName,
           contactEmail,
           contactPhoneNumber: contact?.phone ?? '-',
-          contactKind,
+          isEnterprise,
+          contactTagIds: (contact?.tags ?? []).map((tag) => tag.id),
           contactStatus,
           contactLastName: last,
           contactFirstName: first,
@@ -152,6 +166,7 @@ export class StatisticsPageComponent {
     const rows = this.allDonationRows();
     const period = this.resolveDateWindow(this.periodPreset(), this.customFromDate(), this.customToDate());
     const contactKind = this.contactKindFilter();
+    const contactTag = this.contactTagFilter();
     const contactStatus = this.contactStatusFilter();
     const minAmount = this.parseOptionalNumber(this.minAmountInput());
     const maxAmount = this.parseOptionalNumber(this.maxAmountInput());
@@ -164,7 +179,15 @@ export class StatisticsPageComponent {
       if (period.to && row.date > period.to) {
         return false;
       }
-      if (contactKind !== 'all' && row.contactKind !== contactKind) {
+      if (contactKind === 'company' && !row.isEnterprise) {
+        return false;
+      }
+      if (contactKind === 'individual' && row.isEnterprise) {
+        return false;
+      }
+      if (contactTag === 'none') {
+        if (row.contactTagIds.length > 0) return false;
+      } else if (contactTag !== 'all' && !row.contactTagIds.includes(contactTag)) {
         return false;
       }
       if (contactStatus !== 'all' && row.contactStatus !== contactStatus) {
@@ -217,7 +240,7 @@ export class StatisticsPageComponent {
       return 0;
     }
     const companyAmount = this.filteredDonationRows()
-      .filter((row) => row.contactKind === 'company')
+      .filter((row) => row.isEnterprise)
       .reduce((sum, row) => sum + row.amount, 0);
     return Math.round((companyAmount / total) * 100);
   });
@@ -238,6 +261,7 @@ export class StatisticsPageComponent {
     this.customFromDate.set('');
     this.customToDate.set('');
     this.contactKindFilter.set('all');
+    this.contactTagFilter.set('all');
     this.contactStatusFilter.set('all');
     this.minAmountInput.set('');
     this.maxAmountInput.set('');
@@ -392,7 +416,7 @@ export class StatisticsPageComponent {
     if (!contact) {
       return { last: fallbackDisplay.trim() || '-', first: '-' };
     }
-    if (contact.kind === 'company' && contact.enterprise) {
+    if (contact.isEnterprise && contact.enterprise) {
       const e = contact.enterprise;
       const referent = [e.contactFirstname, e.contactLastname]
         .map((x) => x?.trim())
@@ -410,7 +434,7 @@ export class StatisticsPageComponent {
   }
 
   private contactSiret(contact: IContact | undefined): string {
-    if (contact?.kind === 'company' && contact.enterprise?.siret?.trim()) {
+    if (contact?.isEnterprise && contact.enterprise?.siret?.trim()) {
       return contact.enterprise.siret.trim();
     }
     return '-';
@@ -420,7 +444,7 @@ export class StatisticsPageComponent {
     if (!contact) {
       return '-';
     }
-    if (contact.kind === 'company' && contact.enterprise?.address) {
+    if (contact.isEnterprise && contact.enterprise?.address) {
       const a = contact.enterprise.address;
       const parts = [a.street, a.postalCode, a.city, a.country]
         .map((x) => x?.trim())

@@ -35,7 +35,7 @@ export function contactMatchesIdentityAndAddress(
   lastname: string,
   address: IContactAddress
 ): boolean {
-  if (contact.kind === 'company') {
+  if (contact.isEnterprise) {
     return false;
   }
   const fn = normalizeIdentityPart(firstname);

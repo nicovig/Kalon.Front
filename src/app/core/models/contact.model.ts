@@ -1,9 +1,14 @@
-export type ContactKind = 'donor' | 'company' | 'member' | 'helper';
-export type ContactStatus = 'active' | 'to_remind' | 'new' | 'inactive' | 'out'; //out == dead
+export type ContactStatus = 'active' | 'to_remind' | 'new' | 'inactive' | 'out';
+
+export interface IContactTag {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 export interface IContact {
   id: string;
-  kind: ContactKind;
+  isEnterprise: boolean;
   firstname: string;
   lastname: string;
   email: string;
@@ -11,7 +16,7 @@ export interface IContact {
   jobTitle?: string;
   birthDate?: Date;
   gender?: 'male' | 'female' | 'other';
-  organizationId: string; // id of the organization (Kalon client) this contact belongs to
+  organizationId: string;
   address?: IContactAddress;
   enterprise?: IContactEnterprise;
   creationDate: Date;
@@ -25,6 +30,10 @@ export interface IContact {
   donationCount: number;
   preferredFrequencySendingReceipt?: 'instantly' | 'monthly' | 'quarterly' | 'semesterly' | 'yearly';
   notes?: string;
+  lastMembershipDate?: Date | null;
+  membershipEndDate?: Date | null;
+  isFamilyMembership?: boolean;
+  tags?: IContactTag[];
 }
 
 export interface IContactAddress {
@@ -36,12 +45,7 @@ export interface IContactAddress {
   email?: string;
 }
 
-// export type OrganizationLegalXXXX =
-//   | 'general_interest_66'   // intérêt général - réduction IS 60%
-//   | 'public_utility_66'     // utilité publique - réduction IS 60%
-//   | 'aid_organization_75';  // aide aux personnes - réduction IS 60% (taux particulier differ)
-
- export type EnterpriseSupportKind =
+export type EnterpriseSupportKind =
   | 'patronage'
   | 'sponsoring'
   | 'donation'
@@ -60,8 +64,13 @@ export interface IContactEnterprise {
 }
 
 export function contactDisplayName(c: IContact): string {
-  if (c.kind === 'company' && c.enterprise?.name) {
+  if (c.isEnterprise && c.enterprise?.name) {
     return c.enterprise.name;
   }
   return `${c.firstname} ${c.lastname}`.trim();
+}
+
+export function contactNatureLabel(c: Pick<IContact, 'isEnterprise'> | boolean): string {
+  const isEnterprise = typeof c === 'boolean' ? c : c.isEnterprise;
+  return isEnterprise ? 'Entreprise' : 'Particulier';
 }

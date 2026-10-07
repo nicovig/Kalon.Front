@@ -1,15 +1,16 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, of, tap } from 'rxjs';
-import { ContactKind, IContact, IContactAddress, IContactEnterprise } from '../../core/models/contact.model';
+import { IContact, IContactAddress, IContactEnterprise } from '../../core/models/contact.model';
 import { ContactSettingsStore } from './settings/contact-settings.store';
 import { UserStore } from '../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
-import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel } from '../../core/api/backend-api.model';
+import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel, TagResponseApiModel } from '../../core/api/backend-api.model';
 import { contactMatchesIdentityAndAddress } from '../../core/utils/contact-match.util';
+import { TagStoreService } from '../account/tag.store';
 
 export interface NewContactInputIndividual {
-  kind: 'donor' | 'member' | 'helper';
+  isEnterprise: false;
   firstname: string;
   lastname: string;
   email: string;
@@ -20,15 +21,23 @@ export interface NewContactInputIndividual {
   gender?: 'male' | 'female' | 'other';
   preferredFrequencySendingReceipt?: IContact['preferredFrequencySendingReceipt'];
   out?: boolean;
+  lastMembershipDate?: Date | null;
+  membershipEndDate?: Date | null;
+  isFamilyMembership?: boolean;
+  tagIds?: string[];
 }
 
 export interface NewContactInputCompany {
-  kind: 'company';
+  isEnterprise: true;
   email: string;
   phone?: string;
   enterprise: IContactEnterprise;
   preferredFrequencySendingReceipt?: IContact['preferredFrequencySendingReceipt'];
   out?: boolean;
+  lastMembershipDate?: Date | null;
+  membershipEndDate?: Date | null;
+  isFamilyMembership?: boolean;
+  tagIds?: string[];
 }
 
 export type NewContactInput = NewContactInputIndividual | NewContactInputCompany;
@@ -39,6 +48,7 @@ export class ContactStoreService {
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly userStore = inject(UserStore);
   private readonly http = inject(HttpClient);
+  private readonly tagStore = inject(TagStoreService);
 
   contacts(): IContact[] {
     return this.contactsSignal();
@@ -109,7 +119,7 @@ export class ContactStoreService {
     if (email) {
       return this.findContactByEmail(email);
     }
-    if (input.kind === 'company') {
+    if (input.isEnterprise) {
       return undefined;
     }
     return this.findContactByNameAndAddress(input.firstname, input.lastname, input.address);
@@ -243,10 +253,10 @@ export class ContactStoreService {
       organizationId: string;
     }
   ): IContact {
-    if (input.kind !== 'company') {
+    if (input.isEnterprise === false) {
       return {
         ...meta,
-        kind: input.kind satisfies ContactKind,
+        isEnterprise: false,
         jobTitle: input.jobTitle?.trim() || undefined,
         birthDate: input.birthDate,
         organizationId: meta.organizationId,
@@ -258,7 +268,11 @@ export class ContactStoreService {
         phone: input.phone?.trim() || undefined,
         address: this.normalizeAddress(input.address),
         enterprise: undefined,
-        status: input.out ? 'out' : meta.status
+        status: input.out ? 'out' : meta.status,
+        lastMembershipDate: input.lastMembershipDate ?? null,
+        membershipEndDate: input.membershipEndDate ?? null,
+        isFamilyMembership: Boolean(input.isFamilyMembership),
+        tags: this.resolveTagsFromIds(input.tagIds)
       };
     }
 
@@ -279,7 +293,7 @@ export class ContactStoreService {
 
     return {
       ...meta,
-      kind: 'company' satisfies ContactKind,
+      isEnterprise: true,
       firstname: contactFirst,
       lastname: enterprise.name,
       email: input.email.trim(),
@@ -287,7 +301,11 @@ export class ContactStoreService {
       address: undefined,
       enterprise,
       preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
-      status: input.out ? 'out' : meta.status
+      status: input.out ? 'out' : meta.status,
+      lastMembershipDate: input.lastMembershipDate ?? null,
+      membershipEndDate: input.membershipEndDate ?? null,
+      isFamilyMembership: Boolean(input.isFamilyMembership),
+      tags: this.resolveTagsFromIds(input.tagIds)
     };
   }
 
@@ -335,7 +353,7 @@ export class ContactStoreService {
 
   private toContactCreateBody(contact: IContact): ContactCreateRequestApiModel {
     const address =
-      contact.kind !== 'company' && contact.address
+      !contact.isEnterprise && contact.address
         ? {
             street: contact.address.street ?? null,
             postalCode: contact.address.postalCode ?? null,
@@ -345,7 +363,7 @@ export class ContactStoreService {
             email: contact.address.email ?? null
           }
         : null;
-    const enterprise = contact.kind === 'company' && contact.enterprise
+    const enterprise = contact.isEnterprise && contact.enterprise
       ? {
           name: contact.enterprise.name ?? null,
           siret: contact.enterprise.siret ?? null,
@@ -361,7 +379,7 @@ export class ContactStoreService {
         }
       : null;
     return {
-      kind: contact.kind,
+      isEnterprise: Boolean(contact.isEnterprise),
       firstname: contact.firstname ?? null,
       lastname: contact.lastname ?? null,
       email: contact.email ?? null,
@@ -372,8 +390,16 @@ export class ContactStoreService {
       notes: contact.notes ?? null,
       department: this.departmentFromContact(contact),
       preferredFrequencySendingReceipt: contact.preferredFrequencySendingReceipt ?? null,
+      lastMembershipDate: contact.lastMembershipDate
+        ? new Date(contact.lastMembershipDate).toISOString()
+        : null,
+      membershipEndDate: contact.membershipEndDate
+        ? new Date(contact.membershipEndDate).toISOString()
+        : null,
+      isFamilyMembership: Boolean(contact.isFamilyMembership),
       address,
-      enterprise
+      enterprise,
+      tagIds: (contact.tags ?? []).map((tag) => tag.id)
     };
   }
 
@@ -393,10 +419,8 @@ export class ContactStoreService {
   }
 
   private mapApiContact(row: ContactApiModel, source: 'list' | 'details'): IContact {
-    const kindRaw = String(row.kind ?? 'donor');
     const statusRaw = String(row.status ?? 'new');
-    const kind: ContactKind =
-      kindRaw === 'company' || kindRaw === 'member' || kindRaw === 'helper' ? kindRaw : 'donor';
+    const isEnterprise = Boolean(row.isEnterprise) || Boolean(row.enterprise?.name || row.enterprise?.siret);
     const status: IContact['status'] =
       statusRaw === 'active' ||
       statusRaw === 'to_remind' ||
@@ -413,7 +437,7 @@ export class ContactStoreService {
     return {
       id: String(row.id ?? this.newId()),
       organizationId: String(row.organizationId ?? this.userStore.organizationId),
-      kind,
+      isEnterprise,
       firstname: String(row.firstname ?? ''),
       lastname: String(row.lastname ?? ''),
       email: String(row.email ?? ''),
@@ -429,7 +453,7 @@ export class ContactStoreService {
           : undefined,
       address:
         mappedAddress ??
-        (source === 'details' && department
+        (source === 'details' && department && !isEnterprise
           ? { street: '', postalCode: department, city: '', country: 'France' }
           : undefined),
       enterprise: mappedEnterprise,
@@ -468,8 +492,43 @@ export class ContactStoreService {
         preferredFrequency === 'yearly'
           ? preferredFrequency
           : undefined,
-      notes: row.notes ? String(row.notes) : undefined
+      notes: row.notes ? String(row.notes) : undefined,
+      lastMembershipDate: this.parseOptionalDate(row.lastMembershipDate),
+      membershipEndDate: this.parseOptionalDate(row.membershipEndDate),
+      isFamilyMembership: Boolean(row.isFamilyMembership),
+      tags: this.mapTagsFromApi(row.tags)
     };
+  }
+
+  private parseOptionalDate(value: string | null | undefined): Date | null | undefined {
+    if (value == null || value === '') {
+      return null;
+    }
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private mapTagsFromApi(tags: TagResponseApiModel[] | null | undefined): IContact['tags'] {
+    if (!tags?.length) {
+      return [];
+    }
+    return tags
+      .map((tag) => ({
+        id: String(tag.id ?? ''),
+        name: String(tag.name ?? '').trim(),
+        color: tag.color ? String(tag.color).trim() : undefined
+      }))
+      .filter((tag) => tag.id && tag.name);
+  }
+
+  private resolveTagsFromIds(tagIds: string[] | undefined): IContact['tags'] {
+    if (!tagIds?.length) {
+      return [];
+    }
+    const known = this.tagStore.tags();
+    return tagIds
+      .map((id) => known.find((tag) => tag.id === id))
+      .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag));
   }
 
   private upsertContact(contact: IContact): void {

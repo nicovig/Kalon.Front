@@ -4,7 +4,7 @@ import { IContact } from '../models/contact.model';
 describe('contact-match.util', () => {
   const baseContact: IContact = {
     id: '1',
-    kind: 'donor',
+    isEnterprise: false,
     firstname: 'Jean',
     lastname: 'Dupont',
     email: '',

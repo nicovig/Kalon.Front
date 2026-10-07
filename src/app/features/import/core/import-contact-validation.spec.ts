@@ -156,6 +156,19 @@ describe('import-contact-validation', () => {
       expect(analysis.issues.some((i) => i.code === 'duplicate_emails_in_file')).toBe(true);
     });
 
+    it('does not treat empty or placeholder emails as duplicates', () => {
+      const headers = ['Email', 'Nom', 'Adresse'];
+      const bindings: ImportFieldKey[] = ['email', 'lastname', 'addressLine'];
+      const rows = [
+        ['non renseigné', 'Dupont', '12 rue de la Paix 75002 Paris'],
+        ['', 'Martin', '5 avenue Victor Hugo 75016 Paris'],
+        ['non renseigné', 'Durand', '8 boulevard Haussmann 75009 Paris']
+      ];
+      const analysis = analyzeContactImportDataset(headers, bindings, rows);
+      expect(analysis.duplicateEmails).toHaveLength(0);
+      expect(analysis.issues.some((i) => i.code === 'duplicate_emails_in_file')).toBe(false);
+    });
+
     it('warns when a column looks like combined name', () => {
       const headers = ['Email', 'Identité'];
       const bindings: ImportFieldKey[] = ['email', 'firstname'];
@@ -186,6 +199,26 @@ describe('import-contact-validation', () => {
       });
       expect(bag.firstname).toBe('Jean');
       expect(bag.lastname).toBe('Dupont');
+    });
+
+    it('strips firstname from lastname column when order is lastname-firstname', () => {
+      const bindings: ImportFieldKey[] = ['lastname', 'firstname', 'email'];
+      const row = ['BAUDET FRANCINE', 'FRANCINE', 'francine@example.com'];
+      const bag = buildContactImportBag(row, bindings, undefined, {
+        fullNameOrder: 'lastname-firstname'
+      });
+      expect(bag.lastname).toBe('BAUDET');
+      expect(bag.firstname).toBe('FRANCINE');
+    });
+
+    it('splits lastname-only combined cell with lastname-firstname order', () => {
+      const bindings: ImportFieldKey[] = ['lastname', 'email'];
+      const row = ['BAUDET FRANCINE', 'francine@example.com'];
+      const bag = buildContactImportBag(row, bindings, undefined, {
+        fullNameOrder: 'lastname-firstname'
+      });
+      expect(bag.lastname).toBe('BAUDET');
+      expect(bag.firstname).toBe('FRANCINE');
     });
   });
 });

@@ -100,15 +100,9 @@ export class TableComponent implements OnChanges {
         }
         const text =
           col.type === 'contactKind'
-            ? value === 'company'
+            ? value === true || value === 'company' || value === 'enterprise'
               ? 'entreprise'
-              : value === 'donor'
-                ? 'donateur'
-                : value === 'member'
-                  ? 'membre'
-                  : value === 'helper'
-                    ? 'aidant'
-                    : 'profil'
+              : 'particulier'
             : String(value);
         return text.toLowerCase().includes(term);
       }),

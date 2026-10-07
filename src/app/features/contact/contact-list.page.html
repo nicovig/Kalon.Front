@@ -32,6 +32,13 @@
         [ngModel]="filterKind()"
         (ngModelChange)="onFilterKindChange($event)"
       />
+      <form-select-component
+        class="contact-filter"
+        label="Tag"
+        [options]="tagFilterOptions()"
+        [ngModel]="filterTag()"
+        (ngModelChange)="onFilterTagChange($event)"
+      />
       <div class="contact-filter contact-filter--field contact-filter--recipient">
         <span class="contact-filter-label">Email</span>
         <form-text-component

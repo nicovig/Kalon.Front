@@ -12,9 +12,15 @@ import { DonationStoreService } from '../donation/donation.store';
 import { IDonation } from '../../core/models/donation.model';
 import { IaAgentCore } from '../../core/ia-agent/ia_agent.core';
 import { OrganizationCustomContentStore } from '../account/organization-custom-content.store';
+import { TagStoreService } from '../account/tag.store';
 import { SendingApiService, buildSendingSendFormData } from '../../core/api/sending-api.service';
 import { of as rxOf } from 'rxjs';
 import { SendDocumentDtoApiModel } from '../../core/api/backend-api.model';
+
+const tagStoreMock = {
+  ensureLoaded: () => undefined,
+  tags: () => [{ id: 'tag-vip', name: 'VIP', color: '#5b6cff' }]
+};
 
 describe('MailPageComponent filters', () => {
   const taxReceiptContactIdsMock = signal<ReadonlySet<string>>(new Set());
@@ -125,6 +131,10 @@ describe('MailPageComponent filters', () => {
               }
             ]
           }
+        },
+        {
+          provide: TagStoreService,
+          useValue: tagStoreMock
         },
         {
           provide: IaAgentCore,
@@ -252,11 +262,27 @@ describe('MailPageComponent filters', () => {
     expect(idsOf(cmp.filteredContacts())).toEqual(['c6']);
   });
 
+  it('filtre sur le tag de contact', () => {
+    const cmp = component as any;
+
+    cmp.onTagFilterChange('tag-vip');
+
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c1']);
+  });
+
+  it('filtre les contacts sans tags', () => {
+    const cmp = component as any;
+
+    cmp.onTagFilterChange('none');
+
+    expect(idsOf(cmp.filteredContacts())).toEqual(['c2', 'c3', 'c5', 'c6']);
+  });
+
   it('combine les filtres pour un cas d usage association', () => {
     const cmp = component as any;
 
     cmp.onSearchQueryChange('marie');
-    cmp.onKindFilterChange('donor');
+    cmp.onKindFilterChange('individual');
     cmp.onStatusFilterChange('to_remind');
     cmp.onDepartmentFilterChange('75');
     cmp.onAvailabilityModeChange('with_email');
@@ -556,6 +582,10 @@ describe('MailPageComponent filters', () => {
             emailTemplates: () => [{ id: 'mail1', label: 'Relance standard', subject: 'Objet modèle', body: 'Bonjour {{prenom}}', emailTemplateType: 'reminder', addedAt: 1 }],
             fiscalReceiptTemplates: () => []
           }
+        },
+        {
+          provide: TagStoreService,
+          useValue: tagStoreMock
         },
         {
           provide: IaAgentCore,
@@ -896,7 +926,7 @@ function buildContacts(): IContact[] {
   return [
     {
       id: 'c1',
-      kind: 'donor',
+      isEnterprise: false,
       firstname: 'Marie',
       lastname: 'Dupont',
       email: 'marie@example.org',
@@ -910,11 +940,12 @@ function buildContacts(): IContact[] {
       lastDonation: new Date('2024-01-15T00:00:00Z'),
       lastDonationAmount: 60,
       averageDonationAmount: 50,
-      donationCount: 3
+      donationCount: 3,
+      tags: [{ id: 'tag-vip', name: 'VIP', color: '#5b6cff' }]
     },
     {
       id: 'c2',
-      kind: 'donor',
+      isEnterprise: false,
       firstname: 'Paul',
       lastname: 'Martin',
       email: 'paul@example.org',
@@ -931,7 +962,7 @@ function buildContacts(): IContact[] {
     },
     {
       id: 'c3',
-      kind: 'donor',
+      isEnterprise: false,
       firstname: 'Luc',
       lastname: 'Bernard',
       email: 'luc@example.org',
@@ -948,7 +979,7 @@ function buildContacts(): IContact[] {
     },
     {
       id: 'c4',
-      kind: 'donor',
+      isEnterprise: false,
       firstname: 'Sonia',
       lastname: 'Durand',
       email: '',
@@ -965,7 +996,7 @@ function buildContacts(): IContact[] {
     },
     {
       id: 'c5',
-      kind: 'donor',
+      isEnterprise: false,
       firstname: 'Alice',
       lastname: 'Petit',
       email: 'alice@example.org',
@@ -982,7 +1013,7 @@ function buildContacts(): IContact[] {
     },
     {
       id: 'c6',
-      kind: 'company',
+      isEnterprise: true,
       firstname: '',
       lastname: 'ACME',
       email: 'contact@acme.fr',

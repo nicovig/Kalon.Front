@@ -3,7 +3,9 @@ import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AccountPageComponent } from './account.page';
 import { UserStore } from '../../core/auth/user.store';
+import { AuthService } from '../../core/auth/auth.service';
 import { OrganizationCustomContentStore } from './organization-custom-content.store';
+import { TagStoreService } from './tag.store';
 import { ToastService } from '../../layout/toast/toast.service';
 
 describe('AccountPageComponent', () => {
@@ -32,7 +34,24 @@ describe('AccountPageComponent', () => {
             currentUser: {
               associationName: 'Asso Test',
               email: 'mail@asso.test'
-            }
+            },
+            isAuthenticated: () => true
+          }
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            changePassword: () => of(undefined)
+          }
+        },
+        {
+          provide: TagStoreService,
+          useValue: {
+            ensureLoaded: () => undefined,
+            tags: () => [],
+            createTag: () => of({}),
+            updateTag: () => of({}),
+            deleteTag: () => of(undefined)
           }
         },
         {
@@ -102,6 +121,15 @@ describe('AccountPageComponent', () => {
     expect((component as any).organizationInfo().senderEmail).toBe('api@asso.test');
     expect((component as any).organizationInfo().description).toBe('Description API');
     expect((component as any).organizationInfo().foundedYear).toBe('2001');
+  });
+
+  it('bascule entre les onglets des parametres', () => {
+    const cmp = component as any;
+    expect(cmp.activeTab()).toBe('contacts');
+    cmp.selectTab('emails');
+    expect(cmp.activeTab()).toBe('emails');
+    cmp.selectTab('account');
+    expect(cmp.activeTab()).toBe('account');
   });
 
   it('met a jour les infos organisation via API', async () => {

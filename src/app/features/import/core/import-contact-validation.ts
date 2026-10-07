@@ -78,10 +78,16 @@ function applySplitToField(
     return;
   }
   const split = splitFullNameCell(raw, order);
-  if (!bag.firstname?.trim() && split.firstname) {
+  if (sourceKey === 'fullName' || sourceKey === 'lastname') {
+    bag.lastname = split.lastname;
+  }
+  if (sourceKey === 'fullName' || sourceKey === 'firstname') {
     bag.firstname = split.firstname;
   }
-  if (!bag.lastname?.trim() && split.lastname) {
+  if (sourceKey === 'lastname' && !bag.firstname?.trim() && split.firstname) {
+    bag.firstname = split.firstname;
+  }
+  if (sourceKey === 'firstname' && !bag.lastname?.trim() && split.lastname) {
     bag.lastname = split.lastname;
   }
 }
@@ -95,10 +101,18 @@ export function enrichContactBagFromDerivedFields(
 
   if (next.fullName?.trim()) {
     applySplitToField(next, 'fullName', order);
-  } else if (next.firstname?.trim() && !next.lastname?.trim()) {
-    applySplitToField(next, 'firstname', order);
-  } else if (next.lastname?.trim() && !next.firstname?.trim()) {
+  }
+
+  if (next.lastname?.trim() && next.lastname.trim().split(/\s+/).filter(Boolean).length >= 2) {
     applySplitToField(next, 'lastname', order);
+  }
+
+  if (
+    next.firstname?.trim() &&
+    next.firstname.trim().split(/\s+/).filter(Boolean).length >= 2 &&
+    !next.lastname?.trim()
+  ) {
+    applySplitToField(next, 'firstname', order);
   }
 
   return next;
@@ -361,7 +375,7 @@ export function analyzeContactImportDataset(
     const email = String(bag.email ?? '')
       .trim()
       .toLowerCase();
-    if (email) {
+    if (isValidEmail(email)) {
       const list = emailMap.get(email) ?? [];
       list.push(index + 1);
       emailMap.set(email, list);

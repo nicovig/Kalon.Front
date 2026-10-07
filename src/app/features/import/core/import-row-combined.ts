@@ -10,7 +10,8 @@ import { DonationPaymentMethod, DonationType } from '../../../core/models/donati
 export function mapCombinedRowToActions(
   row: string[],
   bindings: CombinedImportFieldKey[],
-  options?: ContactImportParseOptions
+  options?: ContactImportParseOptions,
+  resolveTagIds?: (tagNames: string[]) => string[]
 ): {
   contactInput: NewContactInput | null;
   donation: {
@@ -25,7 +26,13 @@ export function mapCombinedRowToActions(
       ? ('skip' as ImportFieldKey)
       : (b as ImportFieldKey)
   );
-  const contactInput = mapRowToNewContactInput(row, contactBindings, undefined, options);
+  const contactInput = mapRowToNewContactInput(
+    row,
+    contactBindings,
+    undefined,
+    options,
+    resolveTagIds
+  );
   let donationDateStr = '';
   let donationAmountStr = '';
   let donationTypeStr = '';

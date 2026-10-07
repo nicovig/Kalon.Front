@@ -302,3 +302,34 @@
   }
 }
 
+.df-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.df-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--tag-color) 35%, var(--ink-10));
+  background: color-mix(in srgb, var(--tag-color) 10%, white);
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.df-tag-chip--on {
+  border-color: var(--tag-color);
+  background: color-mix(in srgb, var(--tag-color) 22%, white);
+}
+
+.df-tag-empty {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-70);
+}
+

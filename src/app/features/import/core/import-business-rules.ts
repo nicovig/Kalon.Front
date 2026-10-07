@@ -7,87 +7,96 @@ export type ImportBusinessRuleSection = {
 
 const FILE_RULES: ImportBusinessRuleSection[] = [
   {
-    title: 'Fichier et feuilles Excel',
+    title: 'Votre fichier Excel ou CSV',
     items: [
-      'Les fichiers CSV n’ont qu’un seul onglet de données.',
-      'Pour un Excel multi-feuilles, seule la feuille sélectionnée est importée — vérifiez le sélecteur « Feuille Excel » si vos données ne s’affichent pas.',
-      'Kalon détecte automatiquement la ligne d’en-têtes (première ligne contenant des libellés de colonnes).',
-      'Les lignes entièrement vides sont ignorées.'
+      'Un fichier CSV contient une seule liste de données.',
+      'Si votre Excel a plusieurs onglets, choisissez celui qui contient vos profils avec le sélecteur « Feuille Excel ».',
+      'Kalon repère tout seul la ligne des titres de colonnes (Nom, Email, etc.).',
+      'Les lignes complètement vides sont laissées de côté.'
     ]
   },
   {
-    title: 'Mapping des colonnes',
+    title: 'Relier vos colonnes à Kalon',
     items: [
-      'Chaque champ Kalon ne doit être relié qu’à une seule colonne du fichier.',
-      'Si deux colonnes pointent vers le même champ Kalon, l’import est bloqué.',
-      'Pour l’aperçu uniquement, lorsqu’un doublon de mapping subsiste temporairement, c’est la colonne la plus à droite qui est utilisée.',
-      'Une colonne mappée mais entièrement vide bloque l’import ; une colonne presque vide affiche un avertissement.'
+      'Chaque information Kalon (nom, email, téléphone…) ne doit venir que d’une seule colonne de votre fichier.',
+      'Si deux colonnes pointent vers la même information, l’import s’arrête pour vous laisser corriger.',
+      'Dans l’aperçu, si un doublon reste un moment, Kalon utilise la colonne la plus à droite du fichier.',
+      'Une colonne reliée mais totalement vide bloque l’import ; une colonne presque vide affiche un avertissement.'
     ]
   }
 ];
 
 const CONTACT_RULES: ImportBusinessRuleSection[] = [
   {
-    title: 'Profils — champs obligatoires',
+    title: 'Ce qu’il faut pour chaque profil',
     items: [
-      'Chaque ligne doit avoir un moyen de contact : email valide ou adresse postale complète.',
-      'Adresse postale acceptée : ligne d’adresse (≥ 8 caractères) ou rue + code postal et/ou ville.',
-      'Chaque particulier doit avoir un nom ou un prénom (ou les deux).',
-      'Chaque entreprise doit avoir : nom, SIRET, et nom ou prénom du contact.'
+      'Chaque ligne doit permettre de contacter la personne : un email valide, ou une adresse postale complète.',
+      'Adresse acceptée : tout sur une ligne (au moins 8 caractères), ou bien rue + code postal et/ou ville.',
+      'Pour un particulier : au moins un nom ou un prénom.',
+      'Pour une entreprise : nom, SIRET, et nom ou prénom de la personne de contact.'
     ]
   },
   {
-    title: 'Nom et prénom sur une seule colonne',
+    title: 'Nom et prénom dans la même case',
     items: [
-      'Reliez la colonne à « Nom et prénom » si les deux sont dans la même cellule.',
-      'Indiquez l’ordre : « Prénom Nom » (Jean Dupont) ou « Nom Prénom » (Dupont Jean).',
-      'Les prénoms ou noms composés avec un tiret (Jean-Michel, Dupont-Martin) sont conservés tels quels.',
-      'Si une colonne prénom ou nom seule contient les deux, le même sélecteur d’ordre s’applique.'
+      'Si nom et prénom sont collés dans une seule colonne, reliez-la à « Nom et prénom ».',
+      'Indiquez l’ordre utilisé dans le fichier : « Prénom Nom » (Jean Dupont) ou « Nom Prénom » (Dupont Jean).',
+      'Kalon retire alors le prénom du nom (et inversement) pour ne garder que la bonne information dans chaque champ.',
+      'Les prénoms ou noms avec un tiret (Jean-Michel, Dupont-Martin) restent tels quels.'
     ]
   },
   {
     title: 'Adresse postale',
     items: [
-      'Une adresse peut être sur une seule colonne (« Adresse tout en une colonne ») ou répartie (rue, CP, ville).',
-      'Si une colonne ressemble à une adresse complète mais est mappée sur « Rue » seule, Kalon vous le signale.'
+      'L’adresse peut être dans une seule colonne, ou découpée (rue, code postal, ville).',
+      'Si une colonne ressemble à une adresse complète mais est reliée seulement à « Rue », Kalon vous le signale.'
     ]
   },
   {
-    title: 'Doublons et mise à jour',
+    title: 'Doublons et mises à jour',
     items: [
-      'Même email dans le fichier : la dernière ligne l’emporte à l’import.',
-      'Même prénom + nom + adresse dans le fichier : signalé en avertissement.',
-      'Profil existant avec le même email : mise à jour du profil.',
-      'Sans email : recherche d’un profil existant par prénom + nom + adresse (normalisation casse/accents) ; mise à jour si trouvé, sinon création.'
+      'Si le même email apparaît plusieurs fois dans le fichier, c’est la dernière ligne qui sera prise en compte.',
+      'Un email vide ou du type « non renseigné » n’est pas un doublon : chaque ligne est traitée à part.',
+      'Même prénom + nom + adresse dans le fichier : Kalon vous prévient avant d’importer.',
+      'Si un profil avec le même email existe déjà dans Kalon, il est mis à jour.',
+      'Sans email : Kalon cherche un profil existant avec le même nom et la même adresse ; s’il le trouve, il le met à jour, sinon il en crée un nouveau.'
+    ]
+  },
+  {
+    title: 'Adhésion et tags',
+    items: [
+      'Adhésion familiale : indiquez oui ou non.',
+      'Dates de début et de fin d’adhésion : formats courants du type 01/01/2024 ; ces champs sont facultatifs.',
+      'Tags : listez les noms séparés par une virgule ou un point-virgule. Seuls les tags déjà créés dans Compte seront associés.'
     ]
   }
 ];
 
 const DONATION_RULES: ImportBusinessRuleSection[] = [
   {
-    title: 'Contributions — champs obligatoires',
+    title: 'Ce qu’il faut pour chaque contribution',
     items: [
-      'Chaque ligne doit avoir une date de contribution valide et un montant > 0 (don financier).',
-      'Un lien vers un profil Kalon est requis : email du profil ou nom/prénom reconnu en base.',
-      'Le profil doit déjà exister dans Kalon au moment de l’import des contributions.'
+      'Chaque ligne doit avoir une date valide et, pour un don d’argent, un montant supérieur à 0.',
+      'Il faut pouvoir retrouver le profil dans Kalon (souvent via l’email, parfois le nom/prénom).',
+      'Le profil doit déjà exister dans Kalon avant d’importer les contributions seules.'
     ]
   },
   {
     title: 'Types et montants',
     items: [
       'Don en nature ou mécénat : le montant peut être 0 ou absent.',
-      'Les dates et montants sont interprétés selon les formats courants (JJ/MM/AAAA, virgule ou point décimal).'
+      'Les dates et montants sont lus dans les formats courants (JJ/MM/AAAA, virgule ou point pour les décimales).'
     ]
   }
 ];
 
 const COMBINED_EXTRA: ImportBusinessRuleSection[] = [
   {
-    title: 'Import combiné profils + contributions',
+    title: 'Profils et contributions sur la même ligne',
     items: [
-      'Les règles profils s’appliquent d’abord : une ligne sans contact valide est ignorée.',
-      'Si date et montant de contribution sont présents sur la même ligne, la contribution est associée au profil importé ou mis à jour.',
-      'Contribution invalide (date ou montant) : le profil peut quand même être importé sans la contribution.'
+      'Les règles des profils s’appliquent d’abord : une ligne sans contact valide est ignorée.',
+      'Si date et montant sont présents sur la même ligne, la contribution est liée au profil créé ou mis à jour.',
+      'Si la contribution est invalide (date ou montant), le profil peut quand même être importé sans elle.'
     ]
   }
 ];

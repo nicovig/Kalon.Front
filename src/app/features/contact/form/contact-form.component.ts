@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  computed,
   effect,
   inject,
   input
@@ -13,13 +14,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { ContactKind, EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
+import { EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
 import { ButtonCheckboxComponent } from '../../../layout/button/checkbox/button-checkbox.component';
 import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import type { NewContactInput } from '../contact.store';
+import { TagStoreService } from '../../account/tag.store';
 
 export type NewContactFormValue = NewContactInput;
 
@@ -44,12 +46,12 @@ export type ContactFormUpdatePayload = { contactId: string; value: NewContactInp
 export class ContactFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly tagStore = inject(TagStoreService);
 
   readonly editContact = input<IContact | null>(null);
 
   protected readonly form: FormGroup = this.fb.group({
     category: ['particular', Validators.required],
-    kind: ['donor', Validators.required],
     firstname: [''],
     lastname: [''],
     email: ['', [Validators.required, Validators.email]],
@@ -59,6 +61,10 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     gender: [''],
     preferredFrequencySendingReceipt: ['instantly'],
     out: [false],
+    isFamilyMembership: ['false'],
+    lastMembershipDate: [''],
+    membershipEndDate: [''],
+    tagIds: [[] as string[]],
     address: this.fb.group({
       street: [''],
       postalCode: [''],
@@ -83,11 +89,14 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   });
 
   protected readonly categoryControl = this.form.get('category')! as FormControl<string>;
-  protected readonly kindControl = this.form.get('kind')! as FormControl<string>;
   protected readonly genderControl = this.form.get('gender')! as FormControl<string>;
+  protected readonly isFamilyMembershipControl = this.form.get(
+    'isFamilyMembership'
+  )! as FormControl<string>;
   protected readonly preferredFrequencySendingReceiptControl = this.form.get(
     'preferredFrequencySendingReceipt'
   )! as FormControl<string>;
+  protected readonly availableTags = computed(() => this.tagStore.tags());
 
   protected readonly todayDateString = new Date().toISOString().split('T')[0];
 
@@ -97,50 +106,51 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   protected submitted = false;
   protected errorMessage = '';
 
-  private kindSub?: Subscription;
+  private categorySub?: Subscription;
 
   constructor() {
     effect(() => {
       const d = this.editContact();
       const categoryCtrl = this.form.get('category');
-      const kindCtrl = this.form.get('kind');
       if (d) {
         categoryCtrl?.disable({ emitEvent: false });
-        kindCtrl?.disable({ emitEvent: false });
         this.patchFromContact(d);
       } else {
         categoryCtrl?.enable({ emitEvent: false });
-        kindCtrl?.enable({ emitEvent: false });
       }
     });
   }
 
   ngOnInit(): void {
+    this.tagStore.ensureLoaded();
     this.applyCategory(this.form.get('category')?.value ?? 'particular');
-    this.kindSub = this.form.get('category')?.valueChanges.subscribe((c) => {
+    this.categorySub = this.form.get('category')?.valueChanges.subscribe((c) => {
       this.applyCategory(c);
       this.cdr.markForCheck();
     });
   }
 
   ngOnDestroy(): void {
-    this.kindSub?.unsubscribe();
+    this.categorySub?.unsubscribe();
   }
 
   private patchFromContact(d: IContact): void {
     this.submitted = false;
     this.errorMessage = '';
-    const isCompany = d.kind === 'company';
+    const isCompany = d.isEnterprise;
     this.form.patchValue({
       category: isCompany ? 'company' : 'particular',
-      kind: d.kind,
       email: d.email,
       phone: d.phone ?? '',
       jobTitle: d.jobTitle ?? '',
       birthDate: d.birthDate ? this.dateToInputValue(d.birthDate) : '',
       gender: d.gender ?? '',
       preferredFrequencySendingReceipt: d.preferredFrequencySendingReceipt ?? 'instantly',
-      out: d.status === 'out'
+      out: d.status === 'out',
+      isFamilyMembership: d.isFamilyMembership ? 'true' : 'false',
+      lastMembershipDate: d.lastMembershipDate ? this.dateToInputValue(d.lastMembershipDate) : '',
+      membershipEndDate: d.membershipEndDate ? this.dateToInputValue(d.membershipEndDate) : '',
+      tagIds: (d.tags ?? []).map((tag) => tag.id)
     });
     if (!isCompany) {
       this.form.patchValue({
@@ -187,7 +197,6 @@ export class ContactFormComponent implements OnInit, OnDestroy {
 
     const raw = this.form.getRawValue() as {
       category: 'particular' | 'company';
-      kind: ContactKind;
       firstname: string;
       lastname: string;
       email: string;
@@ -197,6 +206,10 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       gender: 'male' | 'female' | 'other' | '';
       preferredFrequencySendingReceipt: IContact['preferredFrequencySendingReceipt'];
       out: boolean;
+      isFamilyMembership: string;
+      lastMembershipDate: string;
+      membershipEndDate: string;
+      tagIds: string[];
       address: {
         street: string;
         postalCode: string;
@@ -225,10 +238,22 @@ export class ContactFormComponent implements OnInit, OnDestroy {
 
     const edit = this.editContact();
     const birthDate = raw.birthDate?.trim() ? this.dateFromInputValue(raw.birthDate) : undefined;
+    const lastMembershipDate = raw.lastMembershipDate?.trim()
+      ? this.dateFromInputValue(raw.lastMembershipDate) ?? null
+      : null;
+    const membershipEndDate = raw.membershipEndDate?.trim()
+      ? this.dateFromInputValue(raw.membershipEndDate) ?? null
+      : null;
+    const membershipFields = {
+      isFamilyMembership: raw.isFamilyMembership === 'true',
+      lastMembershipDate,
+      membershipEndDate,
+      tagIds: Array.isArray(raw.tagIds) ? raw.tagIds : []
+    };
 
     if (raw.category === 'particular') {
       const value: NewContactInput = {
-        kind: raw.kind as 'donor' | 'member' | 'helper',
+        isEnterprise: false,
         firstname: raw.firstname.trim(),
         lastname: raw.lastname.trim(),
         email: raw.email.trim(),
@@ -243,7 +268,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
         birthDate,
         gender: raw.gender || undefined,
         preferredFrequencySendingReceipt: raw.preferredFrequencySendingReceipt,
-        out: raw.out
+        out: raw.out,
+        ...membershipFields
       };
 
       if (edit) {
@@ -256,11 +282,12 @@ export class ContactFormComponent implements OnInit, OnDestroy {
 
     const en = raw.enterprise;
     const value: NewContactInput = {
-      kind: 'company',
+      isEnterprise: true,
       email: raw.email.trim(),
       phone: raw.phone?.trim() || undefined,
       preferredFrequencySendingReceipt: raw.preferredFrequencySendingReceipt,
       out: raw.out,
+      ...membershipFields,
       enterprise: {
         name: en.name.trim(),
         siret: en.siret.trim(),
@@ -345,19 +372,6 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     const enterpriseGroup = this.form.get('enterprise') as FormGroup;
     const enterpriseAddress = enterpriseGroup.get('address') as FormGroup;
 
-    // "type de profil" (donateur/membre/aidant) ne s'applique que sur les particuliers.
-    // On évite donc toute mutation de valeur incohérente sur `kind`.
-    if (category === 'company') {
-      this.kindControl.disable({ emitEvent: false });
-    } else {
-      if (this.kindControl.disabled) {
-        this.kindControl.enable({ emitEvent: false });
-      }
-      if (!this.kindControl.value) {
-        this.kindControl.setValue('donor', { emitEvent: false });
-      }
-    }
-
     if (category === 'particular') {
       this.form.get('firstname')?.setValidators([Validators.required]);
       this.form.get('lastname')?.setValidators([Validators.required]);
@@ -414,6 +428,25 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     enterpriseAddress.get('country')?.updateValueAndValidity({ emitEvent: false });
 
     this.form.get('email')?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  protected isTagSelected(tagId: string): boolean {
+    const ids = this.form.get('tagIds')?.value as string[] | null;
+    return Array.isArray(ids) && ids.includes(tagId);
+  }
+
+  protected toggleTag(tagId: string): void {
+    const control = this.form.get('tagIds');
+    const current = Array.isArray(control?.value) ? ([...(control!.value as string[])] as string[]) : [];
+    const index = current.indexOf(tagId);
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      current.push(tagId);
+    }
+    control?.setValue(current);
+    control?.markAsDirty();
+    this.cdr.markForCheck();
   }
 
   private dateToInputValue(d: Date): string {
