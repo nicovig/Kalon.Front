@@ -107,6 +107,28 @@
     margin-top: 4px;
     font-weight: 500;
   }
+
+  .kpi-split {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .kpi-split-item {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .kpi-split-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--ink-10);
+    flex-shrink: 0;
+  }
+
+  .kpi-split .kpi-val {
+    font-size: 26px;
+  }
   
   .kpi-chip {
     display: inline-flex;

@@ -21,6 +21,13 @@
   font-weight: 400;
 }
 
+.page-sub :is(strong, .page-sub-count) {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--violet);
+  font-size: 1.05em;
+}
+
 .topbar-right {
   display: flex;
   gap: 10px;

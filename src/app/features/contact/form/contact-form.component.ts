@@ -14,13 +14,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { EnterpriseSupportKind, IContact } from '../../../core/models/contact.model';
+import { EnterpriseSupportKind, IContact, contactDisplayName } from '../../../core/models/contact.model';
 import { ButtonLabelComponent } from '../../../layout/button/button-label/button-label.component';
 import { ButtonRadioComponent } from '../../../layout/button/radio/button-radio.component';
 import { ButtonCheckboxComponent } from '../../../layout/button/checkbox/button-checkbox.component';
 import { FormDateComponent } from '../../../layout/forms/date/form-date.component';
 import { FormTextComponent } from '../../../layout/forms/text/form-text.component';
 import type { NewContactInput } from '../contact.store';
+import { ContactStoreService } from '../contact.store';
 import { TagStoreService } from '../../account/tag.store';
 
 export type NewContactFormValue = NewContactInput;
@@ -47,8 +48,18 @@ export class ContactFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly tagStore = inject(TagStoreService);
+  private readonly contactStore = inject(ContactStoreService);
 
   readonly editContact = input<IContact | null>(null);
+  @Output() openMainContact = new EventEmitter<string>();
+
+  protected readonly mainContactId = computed(() => this.editContact()?.mainContactId?.trim() || '');
+  protected readonly mainContactLabel = computed(() => {
+    const id = this.mainContactId();
+    if (!id) return '';
+    const parent = this.contactStore.contacts().find((c) => c.id === id);
+    return parent ? contactDisplayName(parent) : 'Profil principal';
+  });
 
   protected readonly form: FormGroup = this.fb.group({
     category: ['particular', Validators.required],
@@ -248,6 +259,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       isFamilyMembership: raw.isFamilyMembership === 'true',
       lastMembershipDate,
       membershipEndDate,
+      mainContactId: edit?.mainContactId?.trim() || null,
       tagIds: Array.isArray(raw.tagIds) ? raw.tagIds : []
     };
 

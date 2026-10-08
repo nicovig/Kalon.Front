@@ -1,7 +1,13 @@
 <toast-component position="center-third"></toast-component>
 <topbar [title]="topbarTitle()" [subtitle]="topbarSubtitle()"></topbar>
 
-<div class="import-shell" [class.import-shell--empty]="!fileName()">
+@if (importing()) {
+  <div class="imp-importing-overlay" role="alert" aria-live="assertive">
+    <inline-loader size="lg" label="Import en cours… Ne quittez pas cet écran." />
+  </div>
+}
+
+<div class="import-shell" [class.import-shell--empty]="!fileName()" [class.import-shell--busy]="importing()">
   @if (ignoredPopupOpen()) {
     <import-ignored-lines-popup
       [ignoredLines]="ignoredLines()"
@@ -168,6 +174,46 @@
               </p>
             </div>
           }
+          @if (showContactLinkingSetup()) {
+            <div class="imp-linking">
+              <p class="imp-linking-hint">{{ contactLinkingHint() }}</p>
+              @if (contactLinkingMode() === 'same_id') {
+                <form-select-component
+                  label="Colonne d’identifiant principal"
+                  [options]="linkingColumnOptions()"
+                  [ngModel]="linkingColumnIndex() == null ? '' : '' + linkingColumnIndex()"
+                  (ngModelChange)="onLinkingColumnChange($event)"
+                />
+              }
+              @if (contactLinkingMode() === 'manual') {
+                <div class="imp-linking-manual">
+                  @for (row of manualLinkRows(); track row.index) {
+                    <div class="imp-linking-manual-row">
+                      <span class="imp-linking-manual-label" [title]="row.label">{{ row.label }}</span>
+                      <form-select-component
+                        label="Rôle"
+                        [options]="linkingRoleOptions"
+                        [ngModel]="row.assignment.role"
+                        (ngModelChange)="onManualLinkRoleChange(row.index, $event)"
+                      />
+                      @if (row.assignment.role === 'child') {
+                        <form-select-component
+                          label="Profil principal"
+                          [options]="manualParentOptions()"
+                          [ngModel]="
+                            row.assignment.parentRowIndex == null
+                              ? ''
+                              : '' + row.assignment.parentRowIndex
+                          "
+                          (ngModelChange)="onManualLinkParentChange(row.index, $event)"
+                        />
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
           <div class="imp-map-grid">
             @for (row of mappedFieldRows(); track row.fieldKey) {
               <div
@@ -200,7 +246,7 @@
           @if (ignoredColumnsList().length) {
             <details class="imp-ignored-acc">
               <summary class="imp-ignored-acc-summary">
-                Colonnes ignorées ({{ ignoredColumnsList().length }})
+                Colonnes non prises en compte par Kalon ({{ ignoredColumnsList().length }})
               </summary>
               <ul class="imp-ignored-list">
                 @for (c of ignoredColumnsList(); track c.index) {

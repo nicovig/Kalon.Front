@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  HostListener,
   inject,
   OnInit,
   signal
@@ -11,6 +12,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, finalize, map, of, switchMap } from 'rxjs';
+import type { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
@@ -67,7 +70,25 @@ import { DonationStoreService } from '../donation/donation.store';
 import { contactDisplayName } from '../../core/models/contact.model';
 import { DashboardNotificationStore } from '../../core/notification/dashboard-notification.store';
 import { ImportBusinessRulesTooltipComponent } from './components/import-business-rules-tooltip/import-business-rules-tooltip.component';
+import { InlineLoaderComponent } from '../../layout/inline-loader/inline-loader.component';
 import { TagStoreService } from '../account/tag.store';
+import { OrganizationLinkingStore } from '../account/organization-linking.store';
+import {
+  contactLinkingImportHint,
+  ImportManualLinkAssignment,
+  isManualLinkingReady,
+  planPostImportLinkUpdates,
+  shouldRunPostImportLinking
+} from './core/import-contact-linking';
+
+type PendingImportDonation = {
+  contactId?: string;
+  contactInput?: NewContactInput;
+  amount: number;
+  date: Date;
+  paymentMethod: DonationPaymentMethod | null;
+  donationType: DonationType;
+};
 
 @Component({
   selector: 'import-page',
@@ -85,7 +106,8 @@ import { TagStoreService } from '../account/tag.store';
     IgnoredLinesPopupComponent,
     PopupShellComponent,
     FormSelectComponent,
-    ImportBusinessRulesTooltipComponent
+    ImportBusinessRulesTooltipComponent,
+    InlineLoaderComponent
   ],
   templateUrl: './import.page.html',
   styleUrls: ['./import.page.css'],
@@ -97,6 +119,7 @@ export class ImportPageComponent implements OnInit {
   private readonly contactStore = inject(ContactStoreService);
   private readonly donationStore = inject(DonationStoreService);
   private readonly tagStore = inject(TagStoreService);
+  private readonly linkingStore = inject(OrganizationLinkingStore);
   private readonly dashboardNotificationStore = inject(DashboardNotificationStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -147,13 +170,56 @@ export class ImportPageComponent implements OnInit {
   private ignoredAfterSuccess: (() => void) | null = null;
 
   protected readonly donationsImportPromptOpen = signal(false);
+  protected readonly importing = signal(false);
 
   protected readonly fullNameOrder = signal<FullNameOrder>('firstname-lastname');
+  protected readonly linkingColumnIndex = signal<number | null>(null);
+  protected readonly manualLinkAssignments = signal<Record<number, ImportManualLinkAssignment>>({});
 
   protected readonly fullNameOrderOptions: FormSelectOption[] = [
     { value: 'firstname-lastname', label: 'Prénom puis nom (ex. Jean Dupont)' },
     { value: 'lastname-firstname', label: 'Nom puis prénom (ex. Dupont Jean)' }
   ];
+
+  protected readonly linkingRoleOptions: FormSelectOption[] = [
+    { value: 'independent', label: 'Indépendant' },
+    { value: 'parent', label: 'Profil principal' },
+    { value: 'child', label: 'Profil lié' }
+  ];
+
+  protected readonly contactLinkingMode = computed(() => this.linkingStore.mode());
+  protected readonly showContactLinkingSetup = computed(
+    () =>
+      (this.importMode() === 'contacts' || this.importMode() === 'combined') &&
+      this.linkingStore.isLinkingEnabled()
+  );
+  protected readonly contactLinkingHint = computed(() =>
+    contactLinkingImportHint(this.contactLinkingMode())
+  );
+  protected readonly linkingColumnOptions = computed((): FormSelectOption[] => {
+    const h = this.headers();
+    return h.map((header, index) => ({
+      value: String(index),
+      label: header?.trim() ? header : `(Colonne ${index + 1})`
+    }));
+  });
+  protected readonly manualParentOptions = computed((): FormSelectOption[] => {
+    const assignments = this.manualLinkAssignments();
+    const rows = this.allRows();
+    const opts: FormSelectOption[] = [{ value: '', label: 'Choisir le profil principal' }];
+    for (let i = 0; i < rows.length; i++) {
+      if (assignments[i]?.role !== 'parent') continue;
+      opts.push({ value: String(i), label: this.manualRowLabel(i) });
+    }
+    return opts;
+  });
+  protected readonly manualLinkRows = computed(() =>
+    this.allRows().map((_, index) => ({
+      index,
+      label: this.manualRowLabel(index),
+      assignment: this.manualLinkAssignments()[index] ?? { role: 'independent' as const }
+    }))
+  );
 
   protected readonly showSheetSelector = computed(() => this.excelSheetNames().length > 1);
 
@@ -378,6 +444,9 @@ export class ImportPageComponent implements OnInit {
   }
 
   protected readonly importButtonDisabled = computed(() => {
+    if (this.importing()) {
+      return true;
+    }
     if (this.duplicateFieldSummaries().length > 0) {
       return true;
     }
@@ -396,6 +465,17 @@ export class ImportPageComponent implements OnInit {
     }
     if (!this.fileName() || this.rowCount() === 0) {
       return true;
+    }
+    if (this.showContactLinkingSetup() && this.contactLinkingMode() === 'same_id') {
+      if (this.linkingColumnIndex() == null) {
+        return true;
+      }
+    }
+    if (this.showContactLinkingSetup() && this.contactLinkingMode() === 'manual') {
+      const indexes = this.allRows().map((_, index) => index);
+      if (!isManualLinkingReady(indexes, this.manualLinkAssignments())) {
+        return true;
+      }
     }
     return false;
   });
@@ -417,11 +497,23 @@ export class ImportPageComponent implements OnInit {
     if (!this.donationsMappingComplete()) {
       return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
     }
+    if (this.showContactLinkingSetup() && this.contactLinkingMode() === 'same_id') {
+      if (this.linkingColumnIndex() == null) {
+        return 'Choisissez la colonne d’identifiant pour lier les profils';
+      }
+    }
+    if (this.showContactLinkingSetup() && this.contactLinkingMode() === 'manual') {
+      const indexes = this.allRows().map((_, index) => index);
+      if (!isManualLinkingReady(indexes, this.manualLinkAssignments())) {
+        return 'Vérifiez les rôles parent / lié avant d’importer';
+      }
+    }
     return '';
   });
 
   ngOnInit(): void {
     this.tagStore.ensureLoaded();
+    this.linkingStore.ensureLoaded();
     const qp = this.route.snapshot.queryParamMap.get('mode');
     if (qp === 'contacts' || qp === 'donations' || qp === 'combined') {
       this.importMode.set(qp);
@@ -550,38 +642,41 @@ export class ImportPageComponent implements OnInit {
     const mode = this.importMode();
     const rows = this.allRows();
     const b = this.bindings();
-
-    let stillIgnored: IgnoredImportLine[] = [];
-    let importedCount = 0;
-
-    if (mode === 'contacts') {
-      const res = this.importIgnoredContacts(editedLines, rows, b as ImportFieldKey[]);
-      stillIgnored = res.stillIgnored;
-      importedCount = res.importedCount;
-    } else if (mode === 'donations') {
-      const res = this.importIgnoredDonations(editedLines, rows, b as DonationImportFieldKey[]);
-      stillIgnored = res.stillIgnored;
-      importedCount = res.importedCount;
-    } else {
-      const res = this.importIgnoredCombined(editedLines, rows, b as CombinedImportFieldKey[]);
-      stillIgnored = res.stillIgnored;
-      importedCount = res.importedCount;
-    }
-
-    if (importedCount > 0) {
-      this.toast.show(`${importedCount} ligne(s) corrigée(s) importée(s).`, 'success', 3500);
-      this.dashboardNotificationStore.refresh();
-    }
-
     const next = this.ignoredAfterSuccess;
     this.ignoredPopupOpen.set(false);
     this.ignoredAfterSuccess = null;
 
-    if (stillIgnored.length > 0) {
-      this.toast.show(`${stillIgnored.length} ligne(s) encore ignorée(s).`, 'info', 3500);
-    }
+    const finish = (stillIgnored: IgnoredImportLine[], importedCount: number) => {
+      if (importedCount > 0) {
+        this.toast.show(`${importedCount} ligne(s) corrigée(s) importée(s).`, 'success', 3500);
+        this.dashboardNotificationStore.refresh();
+      }
+      if (stillIgnored.length > 0) {
+        this.toast.show(`${stillIgnored.length} ligne(s) encore ignorée(s).`, 'info', 3500);
+      }
+      next?.();
+    };
 
-    next?.();
+    this.importFlow.setParsing(true);
+    const request$ =
+      mode === 'contacts'
+        ? this.importIgnoredContacts(editedLines, rows, b as ImportFieldKey[])
+        : mode === 'donations'
+          ? this.importIgnoredDonations(editedLines, rows, b as DonationImportFieldKey[])
+          : this.importIgnoredCombined(editedLines, rows, b as CombinedImportFieldKey[]);
+
+    request$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.importFlow.setParsing(false))
+      )
+      .subscribe({
+        next: (res) => finish(res.stillIgnored, res.importedCount),
+        error: () => {
+          this.toast.show("L'import des lignes corrigées a échoué. Réessayez.", 'alert', 5000);
+          next?.();
+        }
+      });
   }
 
   protected onDonationsImportPromptYes(): void {
@@ -613,9 +708,10 @@ export class ImportPageComponent implements OnInit {
     editedLines: IgnoredImportLine[],
     rows: string[][],
     bindings: ImportFieldKey[]
-  ): { stillIgnored: IgnoredImportLine[]; importedCount: number } {
+  ) {
     const stillIgnored: IgnoredImportLine[] = [];
-    let importedCount = 0;
+    const creates: NewContactInput[] = [];
+    const updates: Array<{ id: string; input: NewContactInput }> = [];
 
     for (const line of editedLines) {
       const rowIndex = line.rowNumber - 1;
@@ -638,25 +734,27 @@ export class ImportPageComponent implements OnInit {
 
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
       if (existing) {
-        this.contactStore.updateContact(existing.id, parsed.input) ??
-          this.contactStore.createContact(parsed.input);
+        updates.push({ id: existing.id, input: parsed.input });
       } else {
-        this.contactStore.createContact(parsed.input);
+        creates.push(parsed.input);
       }
-
-      importedCount++;
     }
 
-    return { stillIgnored, importedCount };
+    return this.persistContactsBulk(creates, updates).pipe(
+      map(({ created, updated }) => ({
+        stillIgnored,
+        importedCount: created + updated
+      }))
+    );
   }
 
   private importIgnoredDonations(
     editedLines: IgnoredImportLine[],
     rows: string[][],
     bindings: DonationImportFieldKey[]
-  ): { stillIgnored: IgnoredImportLine[]; importedCount: number } {
+  ) {
     const stillIgnored: IgnoredImportLine[] = [];
-    let importedCount = 0;
+    const donations: PendingImportDonation[] = [];
 
     for (const line of editedLines) {
       const rowIndex = line.rowNumber - 1;
@@ -728,20 +826,32 @@ export class ImportPageComponent implements OnInit {
       }
 
       const amount = donationType === 'financial' ? (amountRaw as number) : (amountRaw && amountRaw > 0 ? amountRaw : 0);
-      this.donationStore.addDonationForContact(contact, amount, date, paymentMethod, donationType);
-      importedCount++;
+      donations.push({
+        contactId: contact.id,
+        amount,
+        date,
+        paymentMethod,
+        donationType
+      });
     }
 
-    return { stillIgnored, importedCount };
+    return this.persistDonationsBulk(donations).pipe(
+      map((createdCount) => ({
+        stillIgnored,
+        importedCount: createdCount
+      }))
+    );
   }
 
   private importIgnoredCombined(
     editedLines: IgnoredImportLine[],
     rows: string[][],
     bindings: CombinedImportFieldKey[]
-  ): { stillIgnored: IgnoredImportLine[]; importedCount: number } {
+  ) {
     const stillIgnored: IgnoredImportLine[] = [];
-    let importedCount = 0;
+    const creates: NewContactInput[] = [];
+    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const pendingDonations: PendingImportDonation[] = [];
 
     const contactBindings = bindings.map((b) =>
       b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod'
@@ -769,10 +879,11 @@ export class ImportPageComponent implements OnInit {
       }
 
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
-      const contact = existing
-        ? this.contactStore.updateContact(existing.id, parsed.input) ??
-          this.contactStore.createContact(parsed.input)
-        : this.contactStore.createContact(parsed.input);
+      if (existing) {
+        updates.push({ id: existing.id, input: parsed.input });
+      } else {
+        creates.push(parsed.input);
+      }
 
       let donationDateStr = '';
       let donationAmountStr = '';
@@ -807,18 +918,36 @@ export class ImportPageComponent implements OnInit {
       const paymentMethod = donationPaymentMethodStr ? parsePaymentMethodFromCell(donationPaymentMethodStr) : null;
 
       if (date && donationType === 'financial' && amountRaw !== null && amountRaw > 0) {
-        this.donationStore.addDonationForContact(contact, amountRaw, date, paymentMethod, donationType);
+        pendingDonations.push({
+          contactId: existing?.id,
+          contactInput: parsed.input,
+          amount: amountRaw,
+          date,
+          paymentMethod,
+          donationType
+        });
+      } else if (date && donationType !== 'financial') {
+        pendingDonations.push({
+          contactId: existing?.id,
+          contactInput: parsed.input,
+          amount: amountRaw && amountRaw > 0 ? amountRaw : 0,
+          date,
+          paymentMethod,
+          donationType
+        });
       }
-
-      if (date && donationType !== 'financial') {
-        const amount = amountRaw && amountRaw > 0 ? amountRaw : 0;
-        this.donationStore.addDonationForContact(contact, amount, date, paymentMethod, donationType);
-      }
-
-      importedCount++;
     }
 
-    return { stillIgnored, importedCount };
+    return this.persistContactsBulk(creates, updates).pipe(
+      switchMap(({ created, updated }) =>
+        this.persistDonationsBulk(pendingDonations).pipe(
+          map(() => ({
+            stillIgnored,
+            importedCount: created + updated
+          }))
+        )
+      )
+    );
   }
 
   protected clearAndRestart(nextStep: ImportOnboardingStep = 'type'): void {
@@ -832,7 +961,82 @@ export class ImportPageComponent implements OnInit {
     this.sampleRows.set([]);
     this.allRows.set([]);
     this.fullNameOrder.set('firstname-lastname');
+    this.linkingColumnIndex.set(null);
+    this.manualLinkAssignments.set({});
     this.onboardingStep.set(nextStep);
+  }
+
+  protected onLinkingColumnChange(value: string): void {
+    const parsed = Number(value);
+    this.linkingColumnIndex.set(Number.isFinite(parsed) ? parsed : null);
+  }
+
+  protected onManualLinkRoleChange(rowIndex: number, role: string): void {
+    const normalized =
+      role === 'parent' || role === 'child' || role === 'independent' ? role : 'independent';
+    this.manualLinkAssignments.update((current) => {
+      const next = { ...current };
+      const previous = next[rowIndex] ?? { role: 'independent' as const };
+      next[rowIndex] = {
+        role: normalized,
+        parentRowIndex: normalized === 'child' ? previous.parentRowIndex ?? null : null
+      };
+      if (normalized !== 'parent') {
+        for (const [key, assignment] of Object.entries(next)) {
+          if (assignment.role === 'child' && Number(assignment.parentRowIndex) === rowIndex) {
+            next[Number(key)] = { role: 'independent' };
+          }
+        }
+      }
+      return next;
+    });
+  }
+
+  protected onManualLinkParentChange(rowIndex: number, parentValue: string): void {
+    const parentRowIndex = parentValue === '' ? null : Number(parentValue);
+    this.manualLinkAssignments.update((current) => ({
+      ...current,
+      [rowIndex]: {
+        role: 'child',
+        parentRowIndex: Number.isFinite(parentRowIndex as number) ? parentRowIndex : null
+      }
+    }));
+  }
+
+  private manualRowLabel(index: number): string {
+    const row = this.allRows()[index] ?? [];
+    const bindings = this.bindings();
+    const pick = (keys: string[]) => {
+      for (const key of keys) {
+        const col = bindings.findIndex((b) => b === key);
+        if (col >= 0 && String(row[col] ?? '').trim()) {
+          return String(row[col]).trim();
+        }
+      }
+      return '';
+    };
+    const name =
+      pick(['fullName']) ||
+      [pick(['firstname', 'contactFirstname']), pick(['lastname', 'contactLastname', 'enterpriseName'])]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      pick(['email']) ||
+      `Ligne ${index + 1}`;
+    return `L.${index + 1} · ${name}`;
+  }
+
+  isImportInProgress(): boolean {
+    return this.importing();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  protected onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.importing()) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = true;
   }
 
   protected importToKalon(): void {
@@ -842,15 +1046,21 @@ export class ImportPageComponent implements OnInit {
     const mode = this.importMode();
     const rows = this.allRows();
     const b = this.bindings();
-    if (mode === 'contacts') {
-      this.importContacts(rows, b as ImportFieldKey[]);
-      return;
-    }
-    if (mode === 'donations') {
-      this.importDonationsOnly(rows, b as DonationImportFieldKey[]);
-      return;
-    }
-    this.importCombined(rows, b as CombinedImportFieldKey[]);
+    this.importing.set(true);
+    const request$ =
+      mode === 'contacts'
+        ? this.importContacts(rows, b as ImportFieldKey[])
+        : mode === 'donations'
+          ? this.importDonationsOnly(rows, b as DonationImportFieldKey[])
+          : this.importCombined(rows, b as CombinedImportFieldKey[]);
+    request$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.importing.set(false))
+      )
+      .subscribe({
+        error: () => this.toast.show("L'import a échoué. Réessayez dans un instant.", 'alert', 5000)
+      });
   }
 
   private buildContactOverridesFromIgnoredLine(
@@ -953,11 +1163,13 @@ export class ImportPageComponent implements OnInit {
     };
   }
 
-  private importContacts(rows: string[][], bindings: ImportFieldKey[]): void {
-    let created = 0;
-    let updated = 0;
+  private importContacts(rows: string[][], bindings: ImportFieldKey[]) {
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
+    const creates: NewContactInput[] = [];
+    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const importedEntries: Array<{ index: number; input: NewContactInput }> = [];
+
     for (const [index, row] of rows.entries()) {
       const parsed = this.parseContactImportRow(index, row, bindings);
       if (!parsed.input) {
@@ -967,49 +1179,53 @@ export class ImportPageComponent implements OnInit {
         }
         continue;
       }
+      importedEntries.push({ index, input: parsed.input });
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
       if (existing) {
-        const updatedContact = this.contactStore.updateContact(existing.id, parsed.input);
-        if (updatedContact) {
-          updated++;
-        } else {
-          this.contactStore.createContact(parsed.input);
-          created++;
-        }
+        updates.push({ id: existing.id, input: parsed.input });
       } else {
-        this.contactStore.createContact(parsed.input);
-        created++;
+        creates.push(parsed.input);
       }
     }
-    if (created === 0 && updated === 0) {
-      this.toast.show(
-        'Aucun profil importé : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
-        'alert',
-        6500
-      );
-      this.openIgnoredLinesPopup(ignored, null);
-      return;
-    }
-    const addedPart = created > 0 ? `${created} profil(s) ajouté(s)` : '';
-    const updatedPart = updated > 0 ? `${updated} profil(s) mis à jour` : '';
-    const counts = [addedPart, updatedPart].filter(Boolean).join(' - ');
-    this.toast.show(
-      `${counts}${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
-      'success',
-      5000
-    );
-    this.dashboardNotificationStore.refresh();
-    this.openIgnoredLinesPopup(
-      ignored,
-      () => this.openDonationsImportPrompt()
+
+    return this.persistContactsBulk(creates, updates).pipe(
+      switchMap((result) =>
+        this.applyImportLinking(importedEntries).pipe(map(() => result))
+      ),
+      map(({ created, updated }) => {
+        if (created === 0 && updated === 0) {
+          this.toast.show(
+            'Aucun profil importé : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
+            'alert',
+            6500
+          );
+          this.openIgnoredLinesPopup(ignored, null);
+          return;
+        }
+        const addedPart = created > 0 ? `${created} profil(s) ajouté(s)` : '';
+        const updatedPart = updated > 0 ? `${updated} profil(s) mis à jour` : '';
+        const counts = [addedPart, updatedPart].filter(Boolean).join(' - ');
+        this.toast.show(
+          `${counts}${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
+          'success',
+          5000
+        );
+        this.dashboardNotificationStore.refresh();
+        this.openIgnoredLinesPopup(ignored, () => this.openDonationsImportPrompt());
+      }),
+      catchError(() => {
+        this.toast.show("L'import des profils a échoué. Réessayez.", 'alert', 5000);
+        return of(undefined);
+      })
     );
   }
 
-  private importDonationsOnly(rows: string[][], bindings: DonationImportFieldKey[]): void {
-    let created = 0;
+  private importDonationsOnly(rows: string[][], bindings: DonationImportFieldKey[]) {
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
     let missingContact = 0;
+    const donations: PendingImportDonation[] = [];
+
     for (const [index, row] of rows.entries()) {
       const bag = collectDonationImportBag(row, bindings);
       const contactEmail = (bag.contactEmail ?? '').trim();
@@ -1052,41 +1268,50 @@ export class ImportPageComponent implements OnInit {
         });
         continue;
       }
-      this.donationStore.addDonationForContact(
-        contact,
-        parsed.amount,
-        parsed.date,
-        parsed.paymentMethod,
-        parsed.donationType
-      );
-      created++;
+      donations.push({
+        contactId: contact.id,
+        amount: parsed.amount,
+        date: parsed.date,
+        paymentMethod: parsed.paymentMethod,
+        donationType: parsed.donationType
+      });
     }
-    if (created === 0) {
-      this.toast.show(
-        `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
-          missingContact > 0 ? ` (${missingContact} email(s) introuvable(s))` : ''
-        }.`,
-        'alert',
-        7500
-      );
-      this.openIgnoredLinesPopup(ignored, null);
-      return;
-    }
-    this.toast.show(
-      `${created} don(s) enregistré(s)${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
-      'success',
-      5000
+
+    return this.persistDonationsBulk(donations).pipe(
+      map((created) => {
+        if (created === 0) {
+          this.toast.show(
+            `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
+              missingContact > 0 ? ` (${missingContact} email(s) introuvable(s))` : ''
+            }.`,
+            'alert',
+            7500
+          );
+          this.openIgnoredLinesPopup(ignored, null);
+          return;
+        }
+        this.toast.show(
+          `${created} don(s) enregistré(s)${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
+          'success',
+          5000
+        );
+        this.dashboardNotificationStore.refresh();
+        this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/profils']));
+      }),
+      catchError(() => {
+        this.toast.show("L'import des dons a échoué. Réessayez.", 'alert', 5000);
+        return of(undefined);
+      })
     );
-    this.dashboardNotificationStore.refresh();
-    this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/profils']));
   }
 
-  private importCombined(rows: string[][], bindings: CombinedImportFieldKey[]): void {
-    let contactsCreated = 0;
-    let contactsUpdated = 0;
-    let donationsCreated = 0;
+  private importCombined(rows: string[][], bindings: CombinedImportFieldKey[]) {
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
+    const creates: NewContactInput[] = [];
+    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const pendingDonations: PendingImportDonation[] = [];
+    const importedEntries: Array<{ index: number; input: NewContactInput }> = [];
 
     const contactBindings = bindings.map((b) =>
       b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod'
@@ -1110,50 +1335,142 @@ export class ImportPageComponent implements OnInit {
         }
         continue;
       }
+      importedEntries.push({ index, input: contactInput });
       const existing = this.contactStore.findExistingContactForImport(contactInput);
-      const contact = existing
-        ? this.contactStore.updateContact(existing.id, contactInput) ?? this.contactStore.createContact(contactInput)
-        : this.contactStore.createContact(contactInput);
       if (existing) {
-        contactsUpdated++;
+        updates.push({ id: existing.id, input: contactInput });
       } else {
-        contactsCreated++;
+        creates.push(contactInput);
       }
       if (donation) {
-        this.donationStore.addDonationForContact(
-          contact,
-          donation.amount,
-          donation.date,
-          donation.paymentMethod,
-          donation.donationType
-        );
-        donationsCreated++;
+        pendingDonations.push({
+          contactId: existing?.id,
+          contactInput,
+          amount: donation.amount,
+          date: donation.date,
+          paymentMethod: donation.paymentMethod,
+          donationType: donation.donationType
+        });
       }
     }
-    if (contactsCreated === 0 && contactsUpdated === 0) {
-      this.toast.show(
-        'Aucune ligne importée : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
-        'alert',
-        6500
-      );
-      this.openIgnoredLinesPopup(ignored, null);
-      return;
+
+    return this.persistContactsBulk(creates, updates).pipe(
+      switchMap((result) =>
+        this.applyImportLinking(importedEntries).pipe(map(() => result))
+      ),
+      switchMap(({ created, updated }) =>
+        this.persistDonationsBulk(pendingDonations).pipe(
+          map((donationsCreated) => ({ created, updated, donationsCreated }))
+        )
+      ),
+      map(({ created, updated, donationsCreated }) => {
+        if (created === 0 && updated === 0) {
+          this.toast.show(
+            'Aucune ligne importée : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
+            'alert',
+            6500
+          );
+          this.openIgnoredLinesPopup(ignored, null);
+          return;
+        }
+        const createdPart =
+          created > 0 ? `${created} ${created === 1 ? 'profil' : 'profils'} créé${created === 1 ? '' : 's'}` : '';
+        const updatedPart =
+          updated > 0
+            ? `${updated} ${updated === 1 ? 'profil' : 'profils'} mis à jour${updated === 1 ? '' : 's'}`
+            : '';
+        const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' - ');
+        this.toast.show(
+          `${contactsPart}${
+            donationsCreated > 0
+              ? `, ${donationsCreated} ${donationsCreated === 1 ? 'contribution' : 'contributions'} associé${
+                  donationsCreated === 1 ? '' : 's'
+                }`
+              : ''
+          }${skipped > 0 ? ` - ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
+          'success',
+          5500
+        );
+        this.dashboardNotificationStore.refresh();
+        this.openIgnoredLinesPopup(ignored, () => void this.router.navigate(['/profils']));
+      }),
+      catchError(() => {
+        this.toast.show("L'import combiné a échoué. Réessayez.", 'alert', 5000);
+        return of(undefined);
+      })
+    );
+  }
+
+  private applyImportLinking(
+    importedEntries: Array<{ index: number; input: NewContactInput }>
+  ) {
+    const mode = this.contactLinkingMode();
+    if (!shouldRunPostImportLinking(mode) || !this.showContactLinkingSetup()) {
+      return of(0);
     }
-    const createdPart = contactsCreated > 0 ? `${contactsCreated} ${contactsCreated === 1 ? 'profil' : 'profils'} créé${contactsCreated === 1 ? '' : 's'}` : '';
-    const updatedPart = contactsUpdated > 0 ? `${contactsUpdated} ${contactsUpdated === 1 ? 'profil' : 'profils'} mis à jour${contactsUpdated === 1 ? '' : 's'}` : '';
-    const contactsPart = [createdPart, updatedPart].filter(Boolean).join(' - ');
-    this.toast.show(
-      `${contactsPart}${
-        donationsCreated > 0 ? `, ${donationsCreated} ${donationsCreated === 1 ? 'contribution' : 'contributions'} associé${donationsCreated === 1 ? '' : 's'}` : ''
-      }${skipped > 0 ? ` - ${skipped} ${skipped === 1 ? 'ligne' : 'lignes'} ignorée${skipped === 1 ? '' : 's'}` : ''}.`,
-      'success',
-      5500
+
+    const plans = planPostImportLinkUpdates({
+      mode,
+      importedEntries,
+      rows: this.allRows(),
+      linkingColumnIndex: this.linkingColumnIndex(),
+      manualAssignments: this.manualLinkAssignments(),
+      resolveContactId: (input) => this.contactStore.findExistingContactForImport(input)?.id
+    });
+
+    if (!plans.length) {
+      return of(0);
+    }
+
+    const linkUpdates = plans.map((plan) => ({
+      id: plan.childContactId,
+      input: { ...plan.childInput, mainContactId: plan.parentContactId }
+    }));
+
+    return this.contactStore.updateContactsSequential(linkUpdates);
+  }
+
+  private persistContactsBulk(
+    creates: NewContactInput[],
+    updates: Array<{ id: string; input: NewContactInput }>
+  ) {
+    return this.contactStore.updateContactsSequential(updates).pipe(
+      switchMap((updated) =>
+        this.contactStore.createContactsBulk(creates).pipe(
+          map((created) => ({
+            created: created.createdCount,
+            updated
+          }))
+        )
+      )
     );
-    this.dashboardNotificationStore.refresh();
-    this.openIgnoredLinesPopup(
-      ignored,
-      () => void this.router.navigate(['/profils'])
-    );
+  }
+
+  private persistDonationsBulk(pending: PendingImportDonation[]) {
+    if (!pending.length) {
+      return of(0);
+    }
+    const items = pending
+      .map((item) => {
+        const contactId =
+          item.contactId ??
+          (item.contactInput
+            ? this.contactStore.findExistingContactForImport(item.contactInput)?.id
+            : undefined);
+        if (!contactId) {
+          return null;
+        }
+        return {
+          contactId,
+          amount: item.amount,
+          date: item.date,
+          paymentMethod: item.paymentMethod,
+          donationType: item.donationType
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item != null);
+
+    return this.donationStore.createDonationsBulk(items).pipe(map((res) => res.createdCount));
   }
 
   private async loadFile(file: File, preferredSheetName?: string): Promise<void> {
@@ -1188,6 +1505,8 @@ export class ImportPageComponent implements OnInit {
       this.bindings.set(this.normalizeBindingsOneColumnPerField(raw));
       this.allRows.set(parsed.rows);
       this.sampleRows.set(parsed.rows.slice(0, 8));
+      this.linkingColumnIndex.set(parsed.headers.length ? 0 : null);
+      this.manualLinkAssignments.set({});
     } catch {
       this.toast.show('Impossible de lire ce fichier. Vérifiez le format (CSV ou Excel).', 'alert');
     } finally {

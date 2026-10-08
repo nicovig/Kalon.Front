@@ -33,7 +33,12 @@ export interface IContact {
   lastMembershipDate?: Date | null;
   membershipEndDate?: Date | null;
   isFamilyMembership?: boolean;
+  mainContactId?: string | null;
   tags?: IContactTag[];
+}
+
+export function isLinkedContact(c: Pick<IContact, 'mainContactId'>): boolean {
+  return Boolean(c.mainContactId?.trim());
 }
 
 export interface IContactAddress {

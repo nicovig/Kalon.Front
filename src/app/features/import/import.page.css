@@ -19,6 +19,23 @@
   min-height: min(70vh, 640px);
 }
 
+.import-shell--busy {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.55;
+}
+
+.imp-importing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+  backdrop-filter: blur(2px);
+}
+
 .imp-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -135,6 +152,56 @@
   font-size: 0.84rem;
   line-height: 1.45;
   color: var(--ink-70);
+}
+
+.imp-linking {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ink-10);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.imp-linking-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+
+.imp-linking-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.imp-linking-manual-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(140px, 1fr) minmax(160px, 1.1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.imp-linking-manual-label {
+  font-size: 0.84rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 720px) {
+  .imp-linking-manual-row {
+    grid-template-columns: 1fr;
+  }
+
+  .imp-linking-manual-label {
+    padding-bottom: 0;
+  }
 }
 
 .imp-dup-alert-icon {

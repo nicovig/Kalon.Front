@@ -1,4 +1,16 @@
 <form class="df-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  @if (mainContactId()) {
+    <div class="df-linked-banner">
+      <div class="df-linked-banner-text">
+        Ce profil est lié au profil principal
+        <strong>{{ mainContactLabel() }}</strong>
+      </div>
+      <button-label-component type="ghost" (click)="openMainContact.emit(mainContactId())">
+        Ouvrir le profil principal
+      </button-label-component>
+    </div>
+  }
+
   <fieldset class="df-kind" [class.df-kind-locked]="editContact()">
     <legend class="df-kind-legend">Nature du profil</legend>
     <div class="df-kind-row">

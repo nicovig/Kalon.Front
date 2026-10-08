@@ -102,6 +102,18 @@
         ></form-select-component>
       </div>
 
+      @if (showLinkedFilter()) {
+        <div class="st-filter">
+          <span class="st-label">Liaison</span>
+          <form-select-component
+            [label]="null"
+            [options]="contactLinkedOptions"
+            [ngModel]="contactLinkedFilter()"
+            (ngModelChange)="contactLinkedFilter.set($event)"
+          ></form-select-component>
+        </div>
+      }
+
       <div class="st-filter">
         <span class="st-label">Statut de profil</span>
         <form-select-component

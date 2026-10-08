@@ -105,6 +105,12 @@
   font-size: 0.86rem;
   color: var(--ink-70);
 }
+.account-subtitle-pt-2 {
+  margin: -4px 0 12px;
+  padding-top: 12px;
+  font-size: 0.86rem;
+  color: var(--ink-70);
+}
 
 .account-send-type-grid {
   display: flex;

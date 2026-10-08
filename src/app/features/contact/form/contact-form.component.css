@@ -5,6 +5,25 @@
   font-size: 15px;
 }
 
+.df-linked-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--violet-lt);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--violet-lt) 55%, white);
+}
+
+.df-linked-banner-text {
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .df-kind-locked {
   opacity: 0.88;
   filter: grayscale(0.06);

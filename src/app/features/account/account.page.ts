@@ -28,6 +28,12 @@ import {
   serializeAllowedSendTypes
 } from '../../core/organization-sending-preferences';
 import { TagStoreService } from './tag.store';
+import { OrganizationLinkingStore } from './organization-linking.store';
+import {
+  CONTACT_LINKING_MODE_OPTIONS,
+  ContactLinkingMode
+} from '../../core/models/contact-linking.model';
+import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 
 type AccountOrganizationInfo = {
   associationName: string;
@@ -58,13 +64,15 @@ type AccountTabId = 'contacts' | 'emails' | 'account';
     ToastComponent,
     PopupShellComponent,
     ButtonCheckboxComponent,
-    MailEditorComponent
+    MailEditorComponent,
+    FormSelectComponent
   ]
 })
 export class AccountPageComponent {
   private readonly userStore = inject(UserStore);
   private readonly store = inject(OrganizationCustomContentStore);
   private readonly tagStore = inject(TagStoreService);
+  private readonly linkingStore = inject(OrganizationLinkingStore);
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
@@ -120,7 +128,7 @@ export class AccountPageComponent {
 
   protected readonly activeTab = signal<AccountTabId>('contacts');
   protected readonly accountTabs: ReadonlyArray<{ id: AccountTabId; label: string }> = [
-    { id: 'contacts', label: 'Contacts' },
+    { id: 'contacts', label: 'Profils' },
     { id: 'emails', label: 'Emails' },
     { id: 'account', label: 'Compte' }
   ];
@@ -128,6 +136,16 @@ export class AccountPageComponent {
   protected selectTab(tabId: AccountTabId): void {
     this.activeTab.set(tabId);
   }
+
+  protected readonly contactLinkingMode = signal<ContactLinkingMode>('none');
+  protected readonly contactLinkingNote = signal('');
+  protected readonly contactLinkingModeOptions: FormSelectOption[] = CONTACT_LINKING_MODE_OPTIONS.map(
+    (item) => ({ value: item.value, label: item.label })
+  );
+  protected readonly contactLinkingModeHint = computed(() => {
+    const mode = this.contactLinkingMode();
+    return CONTACT_LINKING_MODE_OPTIONS.find((item) => item.value === mode)?.hint ?? '';
+  });
 
   protected readonly textBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'text'));
   protected readonly signatureBlocks = computed(() => this.store.textBlocks().filter((item) => item.role === 'signature'));
@@ -241,6 +259,7 @@ export class AccountPageComponent {
   constructor() {
     this.store.ensureLoaded();
     this.tagStore.ensureLoaded();
+    this.linkingStore.ensureLoaded();
     void this.loadOrganizationInfo();
     this.loadMailEditorTags();
     effect(() => {
@@ -623,6 +642,23 @@ export class AccountPageComponent {
     );
   }
 
+  protected onContactLinkingModeChange(value: string): void {
+    this.contactLinkingMode.set((value as ContactLinkingMode) || 'none');
+  }
+
+  protected async saveContactLinkingBlock(): Promise<void> {
+    try {
+      const state = await firstValueFrom(
+        this.linkingStore.save(this.contactLinkingMode(), this.contactLinkingNote())
+      );
+      this.contactLinkingMode.set(state.mode);
+      this.contactLinkingNote.set(state.note);
+      this.toast.show('Paramètres de liaison des profils enregistrés.', 'success');
+    } catch {
+      this.toast.show("Impossible d'enregistrer la liaison des profils.", 'alert');
+    }
+  }
+
   private async persistOrganizationUpdate(successMessage: string, errorMessage: string): Promise<void> {
     const info = this.organizationInfo();
     const base = this.organizationRaw() ?? {};
@@ -637,11 +673,16 @@ export class AccountPageComponent {
       foundedYear: Number.isFinite(parsedFoundedYear) ? parsedFoundedYear : null,
       activitySector: info.activitySector.trim() || null,
       audienceDescription: info.audienceDescription.trim() || null,
-      sendingPreferences: serializeAllowedSendTypes(this.sendingPreferencesSelected())
+      sendingPreferences: serializeAllowedSendTypes(this.sendingPreferencesSelected()),
+      contactLinkingMode: this.contactLinkingMode(),
+      contactLinkingNote: this.contactLinkingNote().trim() || null
     };
     try {
       const response = await firstValueFrom(this.http.put<Record<string, unknown>>(API_ENDPOINTS.organization.update(), payload));
       this.organizationRaw.set(response ?? payload);
+      this.linkingStore.hydrateFromOrganization(response ?? payload);
+      this.contactLinkingMode.set(this.linkingStore.mode());
+      this.contactLinkingNote.set(this.linkingStore.note());
       this.organizationInfo.set({
         associationName: String(response?.['name'] ?? payload['name'] ?? info.associationName).trim() || 'Association',
         senderEmail: String(response?.['senderEmail'] ?? response?.['email'] ?? payload['senderEmail'] ?? '').trim(),
@@ -663,6 +704,9 @@ export class AccountPageComponent {
     try {
       const response = await firstValueFrom(this.http.get<Record<string, unknown>>(API_ENDPOINTS.organization.get()));
       this.organizationRaw.set(response ?? null);
+      this.linkingStore.hydrateFromOrganization(response);
+      this.contactLinkingMode.set(this.linkingStore.mode());
+      this.contactLinkingNote.set(this.linkingStore.note());
       const associationName = String(response?.['name'] ?? this.organizationInfo().associationName).trim() || 'Association';
       const senderEmail = String(response?.['senderEmail'] ?? response?.['email'] ?? this.organizationInfo().senderEmail).trim();
       const description = String(response?.['description'] ?? '').trim();

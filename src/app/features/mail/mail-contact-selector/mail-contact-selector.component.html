@@ -44,6 +44,15 @@
             (ngModelChange)="tagFilterChange.emit($event)"
           />
         }
+        @if (linkedOptions.length > 0) {
+          <form-select-component
+            class="filter-select"
+            label="Liaison"
+            [ngModel]="linkedFilter"
+            [options]="linkedOptions"
+            (ngModelChange)="linkedFilterChange.emit($event)"
+          />
+        }
         @if (departmentOptions.length > 0) {
           <form-select-component
             class="filter-select"

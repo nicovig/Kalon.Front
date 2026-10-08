@@ -15,6 +15,7 @@ import { ContactSettingsStore } from '../contact/settings/contact-settings.store
 import { ContactStatus, contactDisplayName, IContact } from '../../core/models/contact.model';
 import { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
 import { TagStoreService } from '../account/tag.store';
+import { OrganizationLinkingStore } from '../account/organization-linking.store';
 
 type PeriodPreset = 'all' | 'thisMonth' | 'last3Months' | 'last6Months' | 'last12Months' | 'civilYear' | 'custom';
 type ContactNatureFilter = 'all' | 'individual' | 'company';
@@ -27,6 +28,7 @@ type DonationTableRow = {
   contactPhoneNumber: string;
   isEnterprise: boolean;
   contactTagIds: string[];
+  isLinked: boolean;
   contactStatus: ContactStatus;
   contactLastName: string;
   contactFirstName: string;
@@ -62,12 +64,14 @@ export class StatisticsPageComponent {
   private readonly donationStore = inject(DonationStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly tagStore = inject(TagStoreService);
+  private readonly linkingStore = inject(OrganizationLinkingStore);
 
   protected readonly periodPreset = signal<PeriodPreset>('civilYear');
   protected readonly customFromDate = signal('');
   protected readonly customToDate = signal('');
   protected readonly contactKindFilter = signal<ContactNatureFilter>('all');
   protected readonly contactTagFilter = signal('all');
+  protected readonly contactLinkedFilter = signal('all');
   protected readonly contactStatusFilter = signal<'all' | ContactStatus>('all');
   protected readonly minAmountInput = signal('');
   protected readonly maxAmountInput = signal('');
@@ -75,6 +79,7 @@ export class StatisticsPageComponent {
 
   constructor() {
     this.tagStore.ensureLoaded();
+    this.linkingStore.ensureLoaded();
   }
 
   protected readonly todayDateString = new Date().toISOString().split('T')[0];
@@ -100,6 +105,14 @@ export class StatisticsPageComponent {
     { value: 'none', label: 'Pas de tags' },
     ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
   ]);
+
+  protected readonly showLinkedFilter = computed(() => this.linkingStore.isLinkingEnabled());
+
+  protected readonly contactLinkedOptions: FormSelectOption[] = [
+    { value: 'all', label: 'Tous (liés inclus)' },
+    { value: 'hide_linked', label: 'Principaux seulement' },
+    { value: 'linked_only', label: 'Profils liés seulement' }
+  ];
 
   protected readonly contactStatusOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les statuts' },
@@ -148,6 +161,7 @@ export class StatisticsPageComponent {
           contactPhoneNumber: contact?.phone ?? '-',
           isEnterprise,
           contactTagIds: (contact?.tags ?? []).map((tag) => tag.id),
+          isLinked: Boolean(contact?.mainContactId?.trim()),
           contactStatus,
           contactLastName: last,
           contactFirstName: first,
@@ -167,6 +181,7 @@ export class StatisticsPageComponent {
     const period = this.resolveDateWindow(this.periodPreset(), this.customFromDate(), this.customToDate());
     const contactKind = this.contactKindFilter();
     const contactTag = this.contactTagFilter();
+    const contactLinked = this.contactLinkedFilter();
     const contactStatus = this.contactStatusFilter();
     const minAmount = this.parseOptionalNumber(this.minAmountInput());
     const maxAmount = this.parseOptionalNumber(this.maxAmountInput());
@@ -188,6 +203,12 @@ export class StatisticsPageComponent {
       if (contactTag === 'none') {
         if (row.contactTagIds.length > 0) return false;
       } else if (contactTag !== 'all' && !row.contactTagIds.includes(contactTag)) {
+        return false;
+      }
+      if (contactLinked === 'hide_linked' && row.isLinked) {
+        return false;
+      }
+      if (contactLinked === 'linked_only' && !row.isLinked) {
         return false;
       }
       if (contactStatus !== 'all' && row.contactStatus !== contactStatus) {
@@ -262,6 +283,7 @@ export class StatisticsPageComponent {
     this.customToDate.set('');
     this.contactKindFilter.set('all');
     this.contactTagFilter.set('all');
+    this.contactLinkedFilter.set('all');
     this.contactStatusFilter.set('all');
     this.minAmountInput.set('');
     this.maxAmountInput.set('');

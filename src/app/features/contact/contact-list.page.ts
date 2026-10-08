@@ -17,6 +17,8 @@ import { FormTextComponent } from '../../layout/forms/text/form-text.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { FormNumberComponent } from '../../layout/forms/number/form-number.component';
 import { TagStoreService } from '../account/tag.store';
+import { OrganizationLinkingStore } from '../account/organization-linking.store';
+import { isLinkedContact } from '../../core/models/contact.model';
 
 @Component({
   selector: 'contact-page',
@@ -45,9 +47,11 @@ export class ContactListPageComponent {
   private readonly contactStore = inject(ContactStoreService);
   private readonly contactSettings = inject(ContactSettingsStore);
   private readonly tagStore = inject(TagStoreService);
+  private readonly linkingStore = inject(OrganizationLinkingStore);
   protected readonly filterName = signal('');
   protected readonly filterKind = signal('all');
   protected readonly filterTag = signal('all');
+  protected readonly filterLinked = signal('all');
   protected readonly filterEmail = signal('');
   protected readonly filterPhone = signal('');
   protected readonly filterStatus = signal('all');
@@ -56,6 +60,7 @@ export class ContactListPageComponent {
 
   constructor() {
     this.tagStore.ensureLoaded();
+    this.linkingStore.ensureLoaded();
   }
 
   private readonly contactsWithStatus = computed(() => {
@@ -65,10 +70,14 @@ export class ContactListPageComponent {
       status: this.contactSettings.statusOf(d, now)
     }));
   });
+
+  protected readonly contactCount = computed(() => this.contactStore.contacts().length);
+
   protected readonly contactsComputed = computed(() => {
     const name = this.filterName().trim().toLowerCase();
     const kind = this.filterKind();
     const tagId = this.filterTag();
+    const linked = this.filterLinked();
     const email = this.filterEmail().trim().toLowerCase();
     const phone = this.filterPhone().trim().toLowerCase();
     const status = this.filterStatus();
@@ -84,6 +93,8 @@ export class ContactListPageComponent {
       } else if (tagId !== 'all' && !(row.tags ?? []).some((tag) => tag.id === tagId)) {
         return false;
       }
+      if (linked === 'hide_linked' && isLinkedContact(row)) return false;
+      if (linked === 'linked_only' && !isLinkedContact(row)) return false;
       if (email && !String(row.email ?? '').toLowerCase().includes(email)) return false;
       const phoneValue = String(row.phone ?? row.enterprise?.contactPhone ?? '').toLowerCase();
       if (phone && !phoneValue.includes(phone)) return false;
@@ -106,6 +117,14 @@ export class ContactListPageComponent {
     { value: 'none', label: 'Pas de tags' },
     ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
   ]);
+
+  protected readonly showLinkedFilter = computed(() => this.linkingStore.isLinkingEnabled());
+
+  protected readonly linkedFilterOptions: FormSelectOption[] = [
+    { value: 'all', label: 'Tous (liés inclus)' },
+    { value: 'hide_linked', label: 'Principaux seulement' },
+    { value: 'linked_only', label: 'Profils liés seulement' }
+  ];
 
   protected readonly statusFilterOptions: FormSelectOption[] = [
     { value: 'all', label: 'Tous les statuts' },
@@ -152,6 +171,7 @@ export class ContactListPageComponent {
     { key: 'isEnterprise', header: 'Type', type: 'contactKind', searchable: true, sortable: true },
     { key: 'email', header: 'Email', searchable: true, sortable: true },
     { key: 'phone', header: 'Téléphone', searchable: true, sortable: true },
+    { key: 'tags', header: 'Tags', type: 'tags', searchable: true, sortable: true },
     { key: 'status', header: 'Statut', type: 'badge', sortable: true },
     { key: 'totalDonation', header: 'Total contributions', type: 'number', align: 'right', sortable: true }
   ];
@@ -170,6 +190,10 @@ export class ContactListPageComponent {
 
   protected onFilterTagChange(value: string): void {
     this.filterTag.set(value ?? 'all');
+  }
+
+  protected onFilterLinkedChange(value: string): void {
+    this.filterLinked.set(value ?? 'all');
   }
 
   protected onFilterEmailChange(value: string): void {

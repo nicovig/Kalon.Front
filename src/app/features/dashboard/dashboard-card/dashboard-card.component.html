@@ -1,6 +1,22 @@
 <div class="kpi k-{{ type }}">
-   <div class="kpi-icon">{{ icon }}</div>
-   <div class="kpi-val">{{ value }}</div>
-   <div class="kpi-lbl">{{ label }}</div>
-   <div class="kpi-chip chip-{{ chip }}">{{ helper }}</div>
+  <div class="kpi-icon">{{ icon }}</div>
+  @if (secondaryLabel) {
+    <div class="kpi-split">
+      <div class="kpi-split-item">
+        <div class="kpi-val">{{ value }}</div>
+        <div class="kpi-lbl">{{ label }}</div>
+      </div>
+      <div class="kpi-split-divider" aria-hidden="true"></div>
+      <div class="kpi-split-item">
+        <div class="kpi-val">{{ secondaryValue }}</div>
+        <div class="kpi-lbl">{{ secondaryLabel }}</div>
+      </div>
+    </div>
+  } @else {
+    <div class="kpi-val">{{ value }}</div>
+    <div class="kpi-lbl">{{ label }}</div>
+  }
+  @if (helper) {
+    <div class="kpi-chip chip-{{ chip }}">{{ helper }}</div>
+  }
 </div>

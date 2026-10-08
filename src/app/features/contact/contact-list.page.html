@@ -1,10 +1,11 @@
 <div class="contact-list-page">
   <toast-component position="center-third"></toast-component>
   <empty-contacts-welcome />
-  <topbar
-    [title]="'Gestion des profils'"
-    [subtitle]="'Gérez vos profils avec facilité'"
-  >
+  <topbar [title]="'Gestion des profils'">
+    <span topbarSubtitle>
+      Gérez vos <strong>{{ contactCount() }}</strong>
+      {{ contactCount() === 1 ? 'profil' : 'profils' }} avec facilité
+    </span>
     <div class="contact-topbar-actions">
       <contact-settings-launcher></contact-settings-launcher>
       <contact-create-launcher></contact-create-launcher>
@@ -39,6 +40,15 @@
         [ngModel]="filterTag()"
         (ngModelChange)="onFilterTagChange($event)"
       />
+      @if (showLinkedFilter()) {
+        <form-select-component
+          class="contact-filter"
+          label="Liaison"
+          [options]="linkedFilterOptions"
+          [ngModel]="filterLinked()"
+          (ngModelChange)="onFilterLinkedChange($event)"
+        />
+      }
       <div class="contact-filter contact-filter--field contact-filter--recipient">
         <span class="contact-filter-label">Email</span>
         <form-text-component

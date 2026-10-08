@@ -4436,6 +4436,21 @@
           "isFamilyMembership": {
             "type": "boolean"
           },
+          "mainContactId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainContact": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "linkedContacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Contact"
+            },
+            "nullable": true
+          },
           "address": {
             "$ref": "#/components/schemas/ContactAddress"
           },
@@ -4624,6 +4639,11 @@
           "isFamilyMembership": {
             "type": "boolean"
           },
+          "mainContactId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "address": {
             "$ref": "#/components/schemas/ContactAddress"
           },
@@ -4685,6 +4705,50 @@
             "nullable": true
           },
           "contactPhone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContactLinkedSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstname": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastname": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContactMainSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstname": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastname": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
             "type": "string",
             "nullable": true
           }
@@ -4761,6 +4825,21 @@
           },
           "isFamilyMembership": {
             "type": "boolean"
+          },
+          "mainContactId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainContact": {
+            "$ref": "#/components/schemas/ContactMainSummary"
+          },
+          "linkedContacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactLinkedSummary"
+            },
+            "nullable": true
           },
           "address": {
             "$ref": "#/components/schemas/ContactAddress"
@@ -6146,6 +6225,14 @@
             },
             "nullable": true
           },
+          "contactLinkingMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactLinkingNote": {
+            "type": "string",
+            "nullable": true
+          },
           "contacts": {
             "type": "array",
             "items": {
@@ -6440,6 +6527,14 @@
             },
             "nullable": true
           },
+          "contactLinkingMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactLinkingNote": {
+            "type": "string",
+            "nullable": true
+          },
           "logo": {
             "$ref": "#/components/schemas/OrganizationLogoResponseDto"
           },
@@ -6555,6 +6650,14 @@
             "items": {
               "type": "string"
             },
+            "nullable": true
+          },
+          "contactLinkingMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactLinkingNote": {
+            "type": "string",
             "nullable": true
           }
         },

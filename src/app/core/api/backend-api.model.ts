@@ -74,6 +74,7 @@ export interface ContactApiModel {
   lastMembershipDate?: string | null;
   membershipEndDate?: string | null;
   isFamilyMembership?: boolean;
+  mainContactId?: string | null;
   address?: ContactApiAddress | null;
   enterprise?: ContactApiEnterprise | null;
   tags?: TagResponseApiModel[] | null;
@@ -103,9 +104,38 @@ export interface ContactCreateRequestApiModel {
   lastMembershipDate?: string | null;
   membershipEndDate?: string | null;
   isFamilyMembership?: boolean;
+  mainContactId?: string | null;
   address?: ContactApiAddress | null;
   enterprise?: ContactApiEnterprise | null;
   tagIds?: string[] | null;
+}
+
+export interface ContactBulkCreateRequestApiModel {
+  items?: ContactCreateRequestApiModel[] | null;
+}
+
+export interface ContactBulkCreateResponseApiModel {
+  createdCount?: number;
+  createdIds?: string[] | null;
+}
+
+export interface DonationCreateRequestApiModel {
+  contactId?: string;
+  amount?: number;
+  date?: string;
+  donationType?: string | null;
+  paymentMethod?: string | null;
+  notes?: string | null;
+  isAnonymous?: boolean;
+}
+
+export interface DonationBulkCreateRequestApiModel {
+  items?: DonationCreateRequestApiModel[] | null;
+}
+
+export interface DonationBulkCreateResponseApiModel {
+  createdCount?: number;
+  createdIds?: string[] | null;
 }
 
 export interface GeneratedDocumentSummaryApiModel {

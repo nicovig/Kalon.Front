@@ -72,6 +72,8 @@ export class MailContactSelectorComponent implements OnChanges {
   @Input() kindOptions: FormSelectOption[] = [];
   @Input() tagFilter = 'all';
   @Input() tagOptions: FormSelectOption[] = [];
+  @Input() linkedFilter = 'all';
+  @Input() linkedOptions: FormSelectOption[] = [];
   @Input() departmentFilter = 'all';
   @Input() departmentOptions: FormSelectOption[] = [];
   @Input() availabilityMode: MailAvailabilityMode = 'with_email';
@@ -89,6 +91,7 @@ export class MailContactSelectorComponent implements OnChanges {
   @Output() statusFilterChange = new EventEmitter<string>();
   @Output() kindFilterChange = new EventEmitter<string>();
   @Output() tagFilterChange = new EventEmitter<string>();
+  @Output() linkedFilterChange = new EventEmitter<string>();
   @Output() departmentFilterChange = new EventEmitter<string>();
   @Output() availabilityModeChange = new EventEmitter<MailAvailabilityMode>();
   @Output() monthsSinceLastDonationMinChange = new EventEmitter<number>();

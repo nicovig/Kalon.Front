@@ -3,11 +3,11 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 0 20px 12px;
-  max-width: 320px;
+  max-width: 640px;
 }
 
 .map-filter {
-  width: 100%;
+  width: min(280px, 100%);
   min-width: 0;
 }
 

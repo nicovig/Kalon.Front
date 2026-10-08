@@ -74,6 +74,23 @@
                 {{ getCellValue(row, col) | contactKindLabel }}
               </span>
             }
+            @case ('tags') {
+              @if (getTags(getCellValue(row, col)).length) {
+                <div class="tbl-tags">
+                  @for (tag of getTags(getCellValue(row, col)); track tag.id) {
+                    <span
+                      class="tbl-tag"
+                      [style.--tag-color]="tag.color || 'var(--violet)'"
+                      [title]="tag.name"
+                    >
+                      {{ tag.name }}
+                    </span>
+                  }
+                </div>
+              } @else {
+                <span class="tbl-tags-empty">-</span>
+              }
+            }
             @default {
               {{ getCellValue(row, col) }}
             }

@@ -9,6 +9,15 @@
     [ngModel]="filterTag()"
     (ngModelChange)="onFilterTagChange($event)"
   />
+  @if (showLinkedFilter()) {
+    <form-select-component
+      class="map-filter"
+      label="Liaison"
+      [options]="linkedFilterOptions"
+      [ngModel]="filterLinked()"
+      (ngModelChange)="onFilterLinkedChange($event)"
+    />
+  }
 </div>
 
 <div class="map-grid">

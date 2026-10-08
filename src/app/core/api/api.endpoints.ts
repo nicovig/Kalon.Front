@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
   },
   contact: {
     create: () => toUrl('/api/Contact'),
+    bulkCreate: () => toUrl('/api/Contact/bulk'),
     list: () => toUrl('/api/Contact'),
     getById: ({ id }: { id: string }) => toUrl(`/api/Contact/${encodeURIComponent(id)}`),
     update: ({ id }: { id: string }) => toUrl(`/api/Contact/${encodeURIComponent(id)}`)
@@ -40,6 +41,7 @@ export const API_ENDPOINTS = {
   },
   donation: {
     create: () => toUrl('/api/Donation'),
+    bulkCreate: () => toUrl('/api/Donation/bulk'),
     list: ({
       fromDate,
       toDate,

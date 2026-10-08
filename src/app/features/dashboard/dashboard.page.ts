@@ -77,6 +77,13 @@ export class DashboardPageComponent {
         .filter((c) => this.contactSettings.statusOf(c) === 'active').length.toString()
   );
 
+  protected readonly kpiNewContacts = computed(
+    () =>
+      this.contactStore
+        .contacts()
+        .filter((c) => this.contactSettings.statusOf(c) === 'new').length.toString()
+  );
+
   protected readonly kpiYearDonationsTotal = computed(() => {
     const y = new Date().getFullYear();
     return this.donationStore

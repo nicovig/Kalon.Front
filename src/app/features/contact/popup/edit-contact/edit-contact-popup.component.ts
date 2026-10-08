@@ -46,6 +46,24 @@ export class ContactEditPopupComponent implements OnInit {
     this.closed.emit();
   }
 
+  protected onOpenMainContact(mainContactId: string): void {
+    const id = mainContactId.trim();
+    if (!id) return;
+    this.loadingDetails.set(true);
+    this.contactStore.getContactByIdAsync(id).subscribe({
+      next: (detailed) => {
+        if (detailed) {
+          this.editableContact.set(detailed);
+        }
+        this.loadingDetails.set(false);
+      },
+      error: () => {
+        this.loadingDetails.set(false);
+        this.toast.show('Impossible d’ouvrir le profil principal.', 'alert');
+      }
+    });
+  }
+
   protected onUpdate(payload: ContactFormUpdatePayload): void {
     if (this.updating) return;
     this.updating = true;

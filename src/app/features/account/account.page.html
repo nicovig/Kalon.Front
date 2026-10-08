@@ -21,6 +21,39 @@
   @if (activeTab() === 'contacts') {
     <div class="account-tab-panel" id="account-panel-contacts" role="tabpanel">
       <section class="account-card">
+        <h2 class="account-title">Liaison des profils</h2>
+        <p class="account-subtitle">
+          Activez les profils liés (ex. adhésion familiale) pour rattacher des profils « enfants » à un profil
+          principal.
+        </p>
+        <div class="account-form-grid">
+          <form-select-component
+            label="Mode de liaison"
+            [options]="contactLinkingModeOptions"
+            [ngModel]="contactLinkingMode()"
+            (ngModelChange)="onContactLinkingModeChange($event)"
+          />
+          <label class="account-form-grid-full">
+            <span>Note interne (optionnel)</span>
+            <textarea
+              rows="2"
+              [ngModel]="contactLinkingNote()"
+              (ngModelChange)="contactLinkingNote.set($event)"
+              placeholder="Ex: Identifiant famille = colonne Adhérent famille"
+            ></textarea>
+          </label>
+        </div>
+        @if (contactLinkingModeHint()) {
+          <p class="account-subtitle-pt-2">{{ contactLinkingModeHint() }}</p>
+        }
+        <div class="account-actions">
+          <button-label-component type="primary" (click)="saveContactLinkingBlock()">
+            Enregistrer la liaison des profils
+          </button-label-component>
+        </div>
+      </section>
+
+      <section class="account-card">
         <h2 class="account-title">Tags des profils</h2>
         <p class="account-subtitle">
           Créez des labels réutilisables pour classer vos contacts (ex. bénévoles, partenaires, VIP).

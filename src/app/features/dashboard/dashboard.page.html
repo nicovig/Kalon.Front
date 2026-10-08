@@ -17,7 +17,9 @@
     [type]="'violet'"
     [value]="kpiActiveContacts()"
     [label]="'Profils actifs'"
-    [helper]="'Statut actif dans Kalon'"
+    [secondaryValue]="kpiNewContacts()"
+    [secondaryLabel]="'Nouveaux profils'"
+    [helper]="'Actifs et nouveaux dans Kalon'"
     [icon]="'👥'"
   ></dashboard-card-component>
   <dashboard-card-component

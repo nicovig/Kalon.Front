@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ContactStoreService } from '../contact/contact.store';
-import { contactDisplayName, IContact } from '../../core/models/contact.model';
+import { contactDisplayName, IContact, isLinkedContact } from '../../core/models/contact.model';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
 import { CardComponent } from '../../layout/card/card.component';
 import { ContactEditPopupComponent } from '../contact/popup/edit-contact/edit-contact-popup.component';
 import { EmptyContactsWelcomeComponent } from '../contact/empty-contacts-welcome/empty-contacts-welcome.component';
 import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select/form-select.component';
 import { TagStoreService } from '../account/tag.store';
+import { OrganizationLinkingStore } from '../account/organization-linking.store';
 import franceDepartmentsSvg from '@svg-maps/france.departments';
 import worldMapSvg from '@svg-maps/world';
 
@@ -46,9 +47,11 @@ type DeptTooltip = { label: string; x: number; y: number };
 export class MapPageComponent {
   private readonly contactStore = inject(ContactStoreService);
   private readonly tagStore = inject(TagStoreService);
+  private readonly linkingStore = inject(OrganizationLinkingStore);
 
   protected readonly selection = signal<Selection>({ kind: 'non_metro' });
   protected readonly filterTag = signal('all');
+  protected readonly filterLinked = signal('all');
 
   protected readonly contactToEdit = signal<IContact | null>(null);
 
@@ -59,6 +62,7 @@ export class MapPageComponent {
 
   constructor() {
     this.tagStore.ensureLoaded();
+    this.linkingStore.ensureLoaded();
   }
 
   protected readonly tagFilterOptions = computed<FormSelectOption[]>(() => [
@@ -67,12 +71,29 @@ export class MapPageComponent {
     ...this.tagStore.tags().map((tag) => ({ value: tag.id, label: tag.name }))
   ]);
 
+  protected readonly showLinkedFilter = computed(() => this.linkingStore.isLinkingEnabled());
+
+  protected readonly linkedFilterOptions: FormSelectOption[] = [
+    { value: 'all', label: 'Tous (liés inclus)' },
+    { value: 'hide_linked', label: 'Principaux seulement' },
+    { value: 'linked_only', label: 'Profils liés seulement' }
+  ];
+
   protected readonly scopedContacts = computed(() => {
     const tagId = this.filterTag();
-    const contacts = this.contactStore.contacts();
-    if (tagId === 'all') return contacts;
-    if (tagId === 'none') return contacts.filter((c) => !(c.tags ?? []).length);
-    return contacts.filter((c) => (c.tags ?? []).some((tag) => tag.id === tagId));
+    const linked = this.filterLinked();
+    let contacts = this.contactStore.contacts();
+    if (tagId === 'none') {
+      contacts = contacts.filter((c) => !(c.tags ?? []).length);
+    } else if (tagId !== 'all') {
+      contacts = contacts.filter((c) => (c.tags ?? []).some((tag) => tag.id === tagId));
+    }
+    if (linked === 'hide_linked') {
+      contacts = contacts.filter((c) => !isLinkedContact(c));
+    } else if (linked === 'linked_only') {
+      contacts = contacts.filter((c) => isLinkedContact(c));
+    }
+    return contacts;
   });
 
   protected readonly franceLocationById = computed(() => {
@@ -183,6 +204,10 @@ export class MapPageComponent {
 
   protected onFilterTagChange(value: string): void {
     this.filterTag.set(value ?? 'all');
+  }
+
+  protected onFilterLinkedChange(value: string): void {
+    this.filterLinked.set(value ?? 'all');
   }
 
   protected onSelectMetroDepartment(departmentId: string): void {

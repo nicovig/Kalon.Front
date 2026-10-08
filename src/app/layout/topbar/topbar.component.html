@@ -1,7 +1,12 @@
 <div class="topbar">
   <div>
     <div class="page-title">{{ title }}</div>
-    <div class="page-sub">{{ subtitle }}</div>
+    <div class="page-sub">
+      @if (subtitle) {
+        {{ subtitle }}
+      }
+      <ng-content select="[topbarSubtitle]"></ng-content>
+    </div>
   </div>
   <div class="topbar-right">
     <ng-content></ng-content>

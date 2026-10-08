@@ -11,6 +11,8 @@ export class DashboardCardComponent {
     @Input() type: 'violet' | 'pink' | 'mint' | 'yellow' = 'violet';
     @Input() value: string = '0';
     @Input() label: string = '';
+    @Input() secondaryValue: string = '';
+    @Input() secondaryLabel: string = '';
     @Input() helper: string = '';
     @Input() chip: 'up' | 'down' | 'warn' = 'up';
     @Input() icon: string = '';

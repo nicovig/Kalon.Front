@@ -9,7 +9,7 @@ import { ContactStatusLabelPipe } from './contact-status-label.pipe';
 export interface TableColumn {
   key: string;
   header: string;
-  type?: 'text' | 'number' | 'date' | 'badge' | 'contactKind';
+  type?: 'text' | 'number' | 'date' | 'badge' | 'contactKind' | 'tags';
   searchable?: boolean;
   align?: 'left' | 'right' | 'center';
   sortable?: boolean;
@@ -103,7 +103,9 @@ export class TableComponent implements OnChanges {
             ? value === true || value === 'company' || value === 'enterprise'
               ? 'entreprise'
               : 'particulier'
-            : String(value);
+            : col.type === 'tags'
+              ? this.tagsSearchText(value)
+              : String(value);
         return text.toLowerCase().includes(term);
       }),
     );
@@ -281,8 +283,36 @@ export class TableComponent implements OnChanges {
       const bt = new Date(String(b)).getTime();
       if (Number.isFinite(at) && Number.isFinite(bt)) return at - bt;
     }
+    if (type === 'tags') {
+      return this.tagsSearchText(a).localeCompare(this.tagsSearchText(b), 'fr', {
+        numeric: true,
+        sensitivity: 'base'
+      });
+    }
     const as = String(a).toLocaleLowerCase('fr');
     const bs = String(b).toLocaleLowerCase('fr');
     return as.localeCompare(bs, 'fr', { numeric: true, sensitivity: 'base' });
+  }
+
+  getTags(value: unknown): Array<{ id: string; name: string; color?: string }> {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value
+      .map((tag) => {
+        if (!tag || typeof tag !== 'object') return null;
+        const id = String((tag as { id?: unknown }).id ?? '').trim();
+        const name = String((tag as { name?: unknown }).name ?? '').trim();
+        if (!id || !name) return null;
+        const color = String((tag as { color?: unknown }).color ?? '').trim();
+        return color ? { id, name, color } : { id, name };
+      })
+      .filter((tag): tag is { id: string; name: string; color?: string } => tag != null);
+  }
+
+  private tagsSearchText(value: unknown): string {
+    return this.getTags(value)
+      .map((tag) => tag.name)
+      .join(' ');
   }
 }

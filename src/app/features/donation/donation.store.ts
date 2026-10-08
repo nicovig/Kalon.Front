@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map, of, tap } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import {
   DonationPaymentMethod,
   DonationType,
@@ -13,6 +13,8 @@ import { API_ENDPOINTS } from '../../core/api/api.endpoints';
 import { UserStore } from '../../core/auth/user.store';
 import {
   DonationApiModel,
+  DonationBulkCreateRequestApiModel,
+  DonationBulkCreateResponseApiModel,
   DonationByContactListResponseApiModel,
   DonationListResponse,
   GeneratedDocumentApiModel
@@ -178,6 +180,53 @@ export class DonationStoreService {
     this.donationsSignal.set([donation, ...this.donationsSignal()]);
     this.contactStore.recordDonation(contact.id, amount, date);
     return this.pushCreateToApi(donation);
+  }
+
+  createDonationsBulk(
+    items: Array<{
+      contactId: string;
+      amount: number;
+      date: Date;
+      paymentMethod: DonationPaymentMethod | null;
+      donationType: DonationType;
+    }>
+  ): Observable<{ createdCount: number }> {
+    if (!items.length) {
+      return of({ createdCount: 0 });
+    }
+    if (!this.userStore.isAuthenticated()) {
+      for (const item of items) {
+        const contact = this.contactStore.contacts().find((c) => c.id === item.contactId);
+        if (!contact) continue;
+        this.addDonationForContact(
+          contact,
+          item.amount,
+          item.date,
+          item.paymentMethod,
+          item.donationType
+        );
+      }
+      return of({ createdCount: items.length });
+    }
+    const body: DonationBulkCreateRequestApiModel = {
+      items: items.map((item) => ({
+        contactId: item.contactId,
+        amount: item.amount,
+        date: new Date(item.date).toISOString(),
+        donationType: item.donationType,
+        paymentMethod: item.paymentMethod,
+        notes: null,
+        isAnonymous: false
+      }))
+    };
+    return this.http.post<DonationBulkCreateResponseApiModel>(API_ENDPOINTS.donation.bulkCreate(), body).pipe(
+      switchMap((res) =>
+        forkJoin({
+          donations: this.loadDonationsFromApi(),
+          contacts: this.contactStore.loadContactsFromApi()
+        }).pipe(map(() => ({ createdCount: res.createdCount ?? items.length })))
+      )
+    );
   }
 
   private newId(): string {

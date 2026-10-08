@@ -1,11 +1,19 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, catchError, concatMap, from, map, of, reduce, switchMap, tap } from 'rxjs';
 import { IContact, IContactAddress, IContactEnterprise } from '../../core/models/contact.model';
 import { ContactSettingsStore } from './settings/contact-settings.store';
 import { UserStore } from '../../core/auth/user.store';
 import { API_ENDPOINTS } from '../../core/api/api.endpoints';
-import { ContactApiAddress, ContactApiEnterprise, ContactApiModel, ContactCreateRequestApiModel, TagResponseApiModel } from '../../core/api/backend-api.model';
+import {
+  ContactApiAddress,
+  ContactApiEnterprise,
+  ContactApiModel,
+  ContactBulkCreateRequestApiModel,
+  ContactBulkCreateResponseApiModel,
+  ContactCreateRequestApiModel,
+  TagResponseApiModel
+} from '../../core/api/backend-api.model';
 import { contactMatchesIdentityAndAddress } from '../../core/utils/contact-match.util';
 import { TagStoreService } from '../account/tag.store';
 
@@ -24,6 +32,7 @@ export interface NewContactInputIndividual {
   lastMembershipDate?: Date | null;
   membershipEndDate?: Date | null;
   isFamilyMembership?: boolean;
+  mainContactId?: string | null;
   tagIds?: string[];
 }
 
@@ -37,6 +46,7 @@ export interface NewContactInputCompany {
   lastMembershipDate?: Date | null;
   membershipEndDate?: Date | null;
   isFamilyMembership?: boolean;
+  mainContactId?: string | null;
   tagIds?: string[];
 }
 
@@ -187,6 +197,62 @@ export class ContactStoreService {
     return this.pushCreateToApi(contact);
   }
 
+  createContactsBulk(inputs: NewContactInput[]): Observable<{ createdCount: number }> {
+    if (!inputs.length) {
+      return of({ createdCount: 0 });
+    }
+    if (!this.userStore.isAuthenticated()) {
+      for (const input of inputs) {
+        this.createContact(input);
+      }
+      return of({ createdCount: inputs.length });
+    }
+    const body: ContactBulkCreateRequestApiModel = {
+      items: inputs.map((input) => this.toContactCreateBody(this.buildLocalContactFromInput(input)))
+    };
+    return this.http.post<ContactBulkCreateResponseApiModel>(API_ENDPOINTS.contact.bulkCreate(), body).pipe(
+      switchMap((res) =>
+        this.loadContactsFromApi().pipe(
+          map(() => ({ createdCount: res.createdCount ?? inputs.length }))
+        )
+      )
+    );
+  }
+
+  updateContactsSequential(
+    updates: Array<{ id: string; input: NewContactInput }>
+  ): Observable<number> {
+    if (!updates.length) {
+      return of(0);
+    }
+    return from(updates).pipe(
+      concatMap(({ id, input }) =>
+        this.updateContactAsync(id, input).pipe(
+          map((contact) => (contact ? 1 : 0)),
+          catchError(() => of(0))
+        )
+      ),
+      reduce((sum, value) => sum + value, 0)
+    );
+  }
+
+  private buildLocalContactFromInput(input: NewContactInput): IContact {
+    const now = new Date();
+    const baseData = this.toContactFromInput(input, {
+      id: this.newId(),
+      creationDate: now,
+      status: 'new',
+      totalDonation: 0,
+      lastDonation: undefined,
+      donationCount: 0,
+      organizationId: this.userStore.organizationId
+    });
+    return this.toContactFromInput(input, {
+      ...baseData,
+      status: this.contactSettings.statusOf(baseData, now)
+    });
+  }
+
   updateContactAsync(id: string, input: NewContactInput): Observable<IContact | null> {
     const existing = this.contactsSignal().find((d) => d.id === id);
     if (!existing) {
@@ -272,6 +338,7 @@ export class ContactStoreService {
         lastMembershipDate: input.lastMembershipDate ?? null,
         membershipEndDate: input.membershipEndDate ?? null,
         isFamilyMembership: Boolean(input.isFamilyMembership),
+        mainContactId: input.mainContactId?.trim() || null,
         tags: this.resolveTagsFromIds(input.tagIds)
       };
     }
@@ -305,6 +372,7 @@ export class ContactStoreService {
       lastMembershipDate: input.lastMembershipDate ?? null,
       membershipEndDate: input.membershipEndDate ?? null,
       isFamilyMembership: Boolean(input.isFamilyMembership),
+      mainContactId: input.mainContactId?.trim() || null,
       tags: this.resolveTagsFromIds(input.tagIds)
     };
   }
@@ -397,6 +465,7 @@ export class ContactStoreService {
         ? new Date(contact.membershipEndDate).toISOString()
         : null,
       isFamilyMembership: Boolean(contact.isFamilyMembership),
+      mainContactId: contact.mainContactId?.trim() || null,
       address,
       enterprise,
       tagIds: (contact.tags ?? []).map((tag) => tag.id)
@@ -496,6 +565,7 @@ export class ContactStoreService {
       lastMembershipDate: this.parseOptionalDate(row.lastMembershipDate),
       membershipEndDate: this.parseOptionalDate(row.membershipEndDate),
       isFamilyMembership: Boolean(row.isFamilyMembership),
+      mainContactId: row.mainContactId ? String(row.mainContactId).trim() : null,
       tags: this.mapTagsFromApi(row.tags)
     };
   }
