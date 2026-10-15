@@ -30,10 +30,10 @@ const CONTACT_RULES: ImportBusinessRuleSection[] = [
   {
     title: 'Ce qu’il faut pour chaque profil',
     items: [
-      'Chaque ligne doit permettre de contacter la personne : un email valide, ou une adresse postale complète.',
-      'Adresse acceptée : tout sur une ligne (au moins 8 caractères), ou bien rue + code postal et/ou ville.',
-      'Pour un particulier : au moins un nom ou un prénom.',
-      'Pour une entreprise : nom, SIRET, et nom ou prénom de la personne de contact.'
+      'Pour un particulier : prénom et nom sont obligatoires.',
+      'Pour une entreprise : la raison sociale est obligatoire.',
+      'Email, téléphone, adresse et SIRET restent optionnels.',
+      'Adresse acceptée si renseignée : tout sur une ligne, ou rue + code postal et/ou ville.'
     ]
   },
   {

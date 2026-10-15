@@ -184,12 +184,6 @@ export function mapRowToNewContactInput(
     if (!enterpriseName) {
       return null;
     }
-    if (!siret) {
-      return null;
-    }
-    if (!contactFirstname && !contactLastname) {
-      return null;
-    }
 
     return {
       isEnterprise: true,
@@ -216,14 +210,14 @@ export function mapRowToNewContactInput(
     };
   }
 
-  if (!firstname && !lastname) {
+  if (!firstname || !lastname) {
     return null;
   }
 
   return {
     isEnterprise: false,
-    firstname: firstname || '-',
-    lastname: lastname || '-',
+    firstname,
+    lastname,
     email,
     phone: (bag.phone ?? '').trim() || undefined,
     jobTitle,
