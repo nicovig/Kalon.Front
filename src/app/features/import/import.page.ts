@@ -492,7 +492,7 @@ export class ImportPageComponent implements OnInit {
       return 'Associez au moins une colonne du fichier à un champ Kalon pour continuer';
     }
     if (!this.contactsMappingComplete()) {
-      return 'Reliez au minimum un email ou une adresse, et un nom/prénom (ou nom complet)';
+      return 'Reliez au minimum prénom + nom (ou nom complet), ou la raison sociale';
     }
     if (!this.donationsMappingComplete()) {
       return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
@@ -1195,7 +1195,7 @@ export class ImportPageComponent implements OnInit {
       map(({ created, updated }) => {
         if (created === 0 && updated === 0) {
           this.toast.show(
-            'Aucun profil importé : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
+            'Aucun profil importé : chaque particulier doit avoir un prénom et un nom ; chaque entreprise une raison sociale.',
             'alert',
             6500
           );
@@ -1366,7 +1366,7 @@ export class ImportPageComponent implements OnInit {
       map(({ created, updated, donationsCreated }) => {
         if (created === 0 && updated === 0) {
           this.toast.show(
-            'Aucune ligne importée : chaque ligne doit avoir un email ou une adresse postale, et un nom ou un prénom.',
+            'Aucune ligne importée : chaque particulier doit avoir un prénom et un nom ; chaque entreprise une raison sociale.',
             'alert',
             6500
           );

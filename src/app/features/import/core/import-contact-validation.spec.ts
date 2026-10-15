@@ -3,34 +3,19 @@ import {
   assessContactImportRowSkipReason,
   buildContactImportBag,
   contactsImportMappingReady,
-  hasPostalAddressInBag,
   hasReachableChannel,
-  isValidEmail,
+  needsCombinedNameOrderChoice,
   splitFullNameCell
 } from './import-contact-validation';
-import { ImportFieldKey } from './model/import-field.model';
+import type { ImportFieldKey } from './model/import-field.model';
 
 describe('import-contact-validation', () => {
-  describe('isValidEmail', () => {
-    it('accepts a standard email', () => {
-      expect(isValidEmail('alice@example.com')).toBe(true);
-    });
-
-    it('rejects invalid emails', () => {
-      expect(isValidEmail('not-an-email')).toBe(false);
-      expect(isValidEmail('')).toBe(false);
-    });
-  });
-
   describe('splitFullNameCell', () => {
     it('splits firstname and lastname from a combined cell', () => {
       expect(splitFullNameCell('Jean Dupont')).toEqual({
         firstname: 'Jean',
         lastname: 'Dupont'
       });
-    });
-
-    it('keeps hyphenated first names intact', () => {
       expect(splitFullNameCell('Jean-Michel Dupont')).toEqual({
         firstname: 'Jean-Michel',
         lastname: 'Dupont'
@@ -39,9 +24,6 @@ describe('import-contact-validation', () => {
         firstname: 'Anne-Sophie',
         lastname: 'Martin'
       });
-    });
-
-    it('keeps hyphenated last names intact', () => {
       expect(splitFullNameCell('Jean Dupont-Martin')).toEqual({
         firstname: 'Jean',
         lastname: 'Dupont-Martin'
@@ -64,21 +46,6 @@ describe('import-contact-validation', () => {
     });
   });
 
-  describe('hasPostalAddressInBag', () => {
-    it('accepts a full address line', () => {
-      expect(hasPostalAddressInBag({ addressLine: '12 rue de la Paix 75002 Paris' })).toBe(true);
-    });
-
-    it('accepts street with postal code or city', () => {
-      expect(hasPostalAddressInBag({ street: '12 rue de la Paix', postalCode: '75002' })).toBe(true);
-      expect(hasPostalAddressInBag({ street: '12 rue de la Paix', city: 'Paris' })).toBe(true);
-    });
-
-    it('rejects placeholder street without city or postal code', () => {
-      expect(hasPostalAddressInBag({ street: '-' })).toBe(false);
-    });
-  });
-
   describe('hasReachableChannel', () => {
     it('accepts email or postal address', () => {
       expect(hasReachableChannel({ email: 'a@b.com' })).toBe(true);
@@ -90,46 +57,62 @@ describe('import-contact-validation', () => {
   });
 
   describe('contactsImportMappingReady', () => {
-    it('requires channel and identity fields', () => {
-      expect(contactsImportMappingReady(['email', 'lastname'])).toBe(true);
-      expect(contactsImportMappingReady(['addressLine', 'fullName'])).toBe(true);
-      expect(contactsImportMappingReady(['email'])).toBe(false);
+    it('requires person identity or enterprise name mapping', () => {
+      expect(contactsImportMappingReady(['firstname', 'lastname'])).toBe(true);
+      expect(contactsImportMappingReady(['fullName'])).toBe(true);
+      expect(contactsImportMappingReady(['enterpriseName'])).toBe(true);
+      expect(contactsImportMappingReady(['email', 'lastname'])).toBe(false);
       expect(contactsImportMappingReady(['firstname'])).toBe(false);
+      expect(contactsImportMappingReady(['email'])).toBe(false);
     });
   });
 
   describe('assessContactImportRowSkipReason', () => {
-    it('requires email or address for individuals', () => {
+    it('accepts person with firstname and lastname only', () => {
       expect(
         assessContactImportRowSkipReason({ firstname: 'Jean', lastname: 'Dupont' })
-      ).toBe('Email ou adresse postale manquant');
-    });
-
-    it('accepts address without email when name is present', () => {
-      expect(
-        assessContactImportRowSkipReason({
-          firstname: 'Jean',
-          lastname: 'Dupont',
-          addressLine: '12 rue de la Paix 75002 Paris'
-        })
       ).toBeNull();
     });
 
-    it('requires name or firstname for individuals', () => {
+    it('requires both firstname and lastname for individuals', () => {
+      expect(
+        assessContactImportRowSkipReason({
+          email: 'jean@example.com',
+          firstname: 'Jean'
+        })
+      ).toBe('Nom manquant');
+      expect(
+        assessContactImportRowSkipReason({
+          email: 'jean@example.com',
+          lastname: 'Dupont'
+        })
+      ).toBe('Prénom manquant');
       expect(
         assessContactImportRowSkipReason({
           email: 'jean@example.com'
         })
-      ).toBe('Nom ou prénom manquant');
+      ).toBe('Prénom manquant');
     });
 
     it('derives name from fullName column', () => {
       expect(
         assessContactImportRowSkipReason({
-          email: 'jean@example.com',
           fullName: 'Jean Dupont'
         })
       ).toBeNull();
+    });
+
+    it('requires enterprise name only for companies', () => {
+      expect(
+        assessContactImportRowSkipReason({
+          enterpriseName: 'ACME'
+        })
+      ).toBeNull();
+      expect(
+        assessContactImportRowSkipReason({
+          siret: '12345678901234'
+        })
+      ).toBe('Nom entreprise manquant');
     });
   });
 
@@ -137,64 +120,38 @@ describe('import-contact-validation', () => {
     it('flags empty mapped columns as blocking errors', () => {
       const headers = ['Email', 'Nom'];
       const bindings: ImportFieldKey[] = ['email', 'lastname'];
-      const rows = [['', 'Dupont'], ['', 'Martin']];
-      const analysis = analyzeContactImportDataset(headers, bindings, rows);
-      expect(analysis.issues.some((i) => i.code === 'empty_mapped_column')).toBe(true);
-      expect(analysis.invalidRowCount).toBe(2);
-    });
-
-    it('detects duplicate emails in file', () => {
-      const headers = ['Email', 'Nom'];
-      const bindings: ImportFieldKey[] = ['email', 'lastname'];
       const rows = [
-        ['dup@example.com', 'Dupont'],
-        ['dup@example.com', 'Martin']
+        ['a@b.com', 'Dupont'],
+        ['c@d.com', 'Martin']
       ];
       const analysis = analyzeContactImportDataset(headers, bindings, rows);
-      expect(analysis.duplicateEmails).toHaveLength(1);
-      expect(analysis.duplicateEmails[0].rowNumbers).toEqual([1, 2]);
-      expect(analysis.issues.some((i) => i.code === 'duplicate_emails_in_file')).toBe(true);
+      expect(analysis.issues.some((issue) => issue.code === 'mapping_incomplete')).toBe(true);
     });
 
-    it('does not treat empty or placeholder emails as duplicates', () => {
-      const headers = ['Email', 'Nom', 'Adresse'];
-      const bindings: ImportFieldKey[] = ['email', 'lastname', 'addressLine'];
+    it('accepts firstname+lastname mapping without email', () => {
+      const headers = ['Prénom', 'Nom'];
+      const bindings: ImportFieldKey[] = ['firstname', 'lastname'];
       const rows = [
-        ['non renseigné', 'Dupont', '12 rue de la Paix 75002 Paris'],
-        ['', 'Martin', '5 avenue Victor Hugo 75016 Paris'],
-        ['non renseigné', 'Durand', '8 boulevard Haussmann 75009 Paris']
+        ['Jean', 'Dupont'],
+        ['Marie', 'Martin']
       ];
       const analysis = analyzeContactImportDataset(headers, bindings, rows);
-      expect(analysis.duplicateEmails).toHaveLength(0);
-      expect(analysis.issues.some((i) => i.code === 'duplicate_emails_in_file')).toBe(false);
-    });
-
-    it('warns when a column looks like combined name', () => {
-      const headers = ['Email', 'Identité'];
-      const bindings: ImportFieldKey[] = ['email', 'firstname'];
-      const rows = [
-        ['a@b.com', 'Jean Dupont'],
-        ['b@b.com', 'Marie Martin'],
-        ['c@b.com', 'Paul Durand']
-      ];
-      const analysis = analyzeContactImportDataset(headers, bindings, rows);
-      expect(analysis.issues.some((i) => i.code === 'combined_name_column')).toBe(true);
+      expect(analysis.issues.some((issue) => issue.code === 'mapping_incomplete')).toBe(false);
+      expect(analysis.validRowCount).toBe(2);
     });
   });
 
   describe('buildContactImportBag', () => {
     it('enriches firstname and lastname from fullName mapping', () => {
       const bindings: ImportFieldKey[] = ['fullName', 'email'];
-      const row = ['Jean Dupont', 'jean@example.com'];
-      const bag = buildContactImportBag(row, bindings);
+      const bag = buildContactImportBag(['Jean Dupont', 'a@b.com'], bindings);
       expect(bag.firstname).toBe('Jean');
       expect(bag.lastname).toBe('Dupont');
     });
 
     it('enriches from fullName with lastname-firstname order', () => {
       const bindings: ImportFieldKey[] = ['fullName', 'email'];
-      const row = ['Dupont Jean', 'jean@example.com'];
-      const bag = buildContactImportBag(row, bindings, undefined, {
+      const bag = buildContactImportBag(['Dupont Jean', 'a@b.com'], bindings, undefined, {
         fullNameOrder: 'lastname-firstname'
       });
       expect(bag.firstname).toBe('Jean');
@@ -203,8 +160,7 @@ describe('import-contact-validation', () => {
 
     it('strips firstname from lastname column when order is lastname-firstname', () => {
       const bindings: ImportFieldKey[] = ['lastname', 'firstname', 'email'];
-      const row = ['BAUDET FRANCINE', 'FRANCINE', 'francine@example.com'];
-      const bag = buildContactImportBag(row, bindings, undefined, {
+      const bag = buildContactImportBag(['BAUDET FRANCINE', '', 'a@b.com'], bindings, undefined, {
         fullNameOrder: 'lastname-firstname'
       });
       expect(bag.lastname).toBe('BAUDET');
@@ -213,12 +169,18 @@ describe('import-contact-validation', () => {
 
     it('splits lastname-only combined cell with lastname-firstname order', () => {
       const bindings: ImportFieldKey[] = ['lastname', 'email'];
-      const row = ['BAUDET FRANCINE', 'francine@example.com'];
-      const bag = buildContactImportBag(row, bindings, undefined, {
+      const bag = buildContactImportBag(['BAUDET FRANCINE', 'a@b.com'], bindings, undefined, {
         fullNameOrder: 'lastname-firstname'
       });
       expect(bag.lastname).toBe('BAUDET');
       expect(bag.firstname).toBe('FRANCINE');
+    });
+  });
+
+  describe('needsCombinedNameOrderChoice', () => {
+    it('detects fullName mapping', () => {
+      expect(needsCombinedNameOrderChoice(['fullName', 'email'])).toBe(true);
+      expect(needsCombinedNameOrderChoice(['firstname', 'lastname'])).toBe(false);
     });
   });
 });

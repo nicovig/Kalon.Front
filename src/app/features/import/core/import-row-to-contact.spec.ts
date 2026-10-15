@@ -19,7 +19,19 @@ describe('mapRowToNewContactInput', () => {
     expect(input.lastname).toBe('Dupont');
   });
 
-  it('creates a donor with address only when postal data is sufficient', () => {
+  it('creates a donor with name only (email and address optional)', () => {
+    const bindings: ImportFieldKey[] = ['firstname', 'lastname'];
+    const input = mapRowToNewContactInput(['Jean', 'Dupont'], bindings);
+    expect(input).not.toBeNull();
+    if (!input || input.isEnterprise) {
+      return;
+    }
+    expect(input.email).toBe('');
+    expect(input.firstname).toBe('Jean');
+    expect(input.lastname).toBe('Dupont');
+  });
+
+  it('creates a donor with address when postal data is present', () => {
     const bindings: ImportFieldKey[] = ['firstname', 'lastname', 'addressLine'];
     const input = mapRowToNewContactInput(
       ['Jean', 'Dupont', '12 rue de la Paix 75002 Paris'],
@@ -29,18 +41,16 @@ describe('mapRowToNewContactInput', () => {
     if (!input || input.isEnterprise) {
       return;
     }
-    expect(input.email).toBe('');
     expect(input.address?.street).toBe('12 rue de la Paix 75002 Paris');
   });
 
-  it('returns null when neither email nor address is present', () => {
-    const bindings: ImportFieldKey[] = ['firstname', 'lastname'];
-    const input = mapRowToNewContactInput(['Jean', 'Dupont'], bindings);
+  it('returns null when firstname is missing', () => {
+    const input = mapRowToNewContactInput(['jean@example.com', '', 'Dupont'], emailNameBindings);
     expect(input).toBeNull();
   });
 
-  it('returns null when name is missing', () => {
-    const input = mapRowToNewContactInput(['jean@example.com', '', ''], emailNameBindings);
+  it('returns null when lastname is missing', () => {
+    const input = mapRowToNewContactInput(['jean@example.com', 'Jean', ''], emailNameBindings);
     expect(input).toBeNull();
   });
 
@@ -74,7 +84,18 @@ describe('mapRowToNewContactInput', () => {
     expect(input.lastname).toBe('Dupont');
   });
 
-  it('creates a company contact when enterprise fields are mapped', () => {
+  it('creates a company contact with enterprise name only', () => {
+    const bindings: ImportFieldKey[] = ['enterpriseName'];
+    const input = mapRowToNewContactInput(['ACME'], bindings);
+    expect(input?.isEnterprise).toBe(true);
+    if (!input || !input.isEnterprise) {
+      return;
+    }
+    expect(input.enterprise?.name).toBe('ACME');
+    expect(input.enterprise?.siret).toBe('');
+  });
+
+  it('creates a company contact when optional enterprise fields are mapped', () => {
     const bindings: ImportFieldKey[] = [
       'email',
       'enterpriseName',
@@ -92,6 +113,12 @@ describe('mapRowToNewContactInput', () => {
     }
     expect(input.enterprise?.name).toBe('ACME');
     expect(input.enterprise?.siret).toBe('12345678901234');
+  });
+
+  it('returns null for company row without enterprise name', () => {
+    const bindings: ImportFieldKey[] = ['siret', 'email'];
+    const input = mapRowToNewContactInput(['12345678901234', 'a@b.com'], bindings);
+    expect(input).toBeNull();
   });
 
   it('applies overrides from ignored-line corrections', () => {

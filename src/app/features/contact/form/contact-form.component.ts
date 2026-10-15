@@ -65,7 +65,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     category: ['particular', Validators.required],
     firstname: [''],
     lastname: [''],
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.email]],
     phone: [''],
     jobTitle: [''],
     birthDate: [''],
@@ -85,7 +85,7 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     enterprise: this.fb.group({
       name: [''],
       siret: [''],
-      fiscalStatus: ['general_interest_66', Validators.required],
+      fiscalStatus: ['general_interest_66'],
       contactFirstname: [''],
       contactLastname: [''],
       contactEmail: ['', Validators.email],
@@ -329,7 +329,6 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     const category = (this.form.get('category')?.value ?? 'particular') as 'particular' | 'company';
 
     const email = this.form.get('email');
-    if (email?.hasError('required')) return "L'email est obligatoire.";
     if (email?.hasError('email')) return "L'email semble invalide.";
 
     if (category === 'particular') {
@@ -339,38 +338,9 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       const lastname = this.form.get('lastname');
       if (lastname?.hasError('required')) return 'Le nom est obligatoire.';
 
-      const street = this.form.get('address.street');
-      if (street?.hasError('required')) return 'La rue est obligatoire.';
-
-      const postalCode = this.form.get('address.postalCode');
-      if (postalCode?.hasError('required')) return 'Le code postal est obligatoire.';
-
-      const city = this.form.get('address.city');
-      if (city?.hasError('required')) return 'La ville est obligatoire.';
-
-      const country = this.form.get('address.country');
-      if (country?.hasError('required')) return 'Le pays est obligatoire.';
     } else {
       const name = this.form.get('enterprise.name');
       if (name?.hasError('required')) return 'La raison sociale est obligatoire.';
-
-      const siret = this.form.get('enterprise.siret');
-      if (siret?.hasError('required')) return 'Le SIRET est obligatoire.';
-
-      const fiscal = this.form.get('enterprise.fiscalStatus');
-      if (fiscal?.hasError('required')) return 'Le statut fiscal est obligatoire.';
-
-      const esStreet = this.form.get('enterprise.address.street');
-      if (esStreet?.hasError('required')) return 'La rue (siège) est obligatoire.';
-
-      const esPostalCode = this.form.get('enterprise.address.postalCode');
-      if (esPostalCode?.hasError('required')) return 'Le code postal (siège) est obligatoire.';
-
-      const esCity = this.form.get('enterprise.address.city');
-      if (esCity?.hasError('required')) return 'La ville (siège) est obligatoire.';
-
-      const esCountry = this.form.get('enterprise.address.country');
-      if (esCountry?.hasError('required')) return 'Le pays (siège) est obligatoire.';
 
       const contactEmail = this.form.get('enterprise.contactEmail');
       if (contactEmail?.hasError('email')) return "L'email du représentant semble invalide.";
@@ -387,10 +357,10 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     if (category === 'particular') {
       this.form.get('firstname')?.setValidators([Validators.required]);
       this.form.get('lastname')?.setValidators([Validators.required]);
-      addressGroup.get('street')?.setValidators([Validators.required]);
-      addressGroup.get('postalCode')?.setValidators([Validators.required]);
-      addressGroup.get('city')?.setValidators([Validators.required]);
-      addressGroup.get('country')?.setValidators([Validators.required]);
+      addressGroup.get('street')?.clearValidators();
+      addressGroup.get('postalCode')?.clearValidators();
+      addressGroup.get('city')?.clearValidators();
+      addressGroup.get('country')?.clearValidators();
 
       enterpriseGroup.get('name')?.clearValidators();
       enterpriseGroup.get('siret')?.clearValidators();
@@ -411,12 +381,12 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       addressGroup.get('country')?.clearValidators();
 
       enterpriseGroup.get('name')?.setValidators([Validators.required]);
-      enterpriseGroup.get('siret')?.setValidators([Validators.required]);
-      enterpriseGroup.get('fiscalStatus')?.setValidators([Validators.required]);
-      enterpriseAddress.get('street')?.setValidators([Validators.required]);
-      enterpriseAddress.get('postalCode')?.setValidators([Validators.required]);
-      enterpriseAddress.get('city')?.setValidators([Validators.required]);
-      enterpriseAddress.get('country')?.setValidators([Validators.required]);
+      enterpriseGroup.get('siret')?.clearValidators();
+      enterpriseGroup.get('fiscalStatus')?.clearValidators();
+      enterpriseAddress.get('street')?.clearValidators();
+      enterpriseAddress.get('postalCode')?.clearValidators();
+      enterpriseAddress.get('city')?.clearValidators();
+      enterpriseAddress.get('country')?.clearValidators();
 
       addressGroup.disable({ emitEvent: false });
       enterpriseGroup.enable({ emitEvent: false });

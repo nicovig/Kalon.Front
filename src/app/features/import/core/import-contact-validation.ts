@@ -175,17 +175,10 @@ export function hasReachableChannel(bag: Partial<Record<ImportFieldKey, string>>
 }
 
 export function contactsImportMappingReady(bindings: ImportFieldKey[]): boolean {
-  const hasChannel =
-    bindings.includes('email') ||
-    bindings.includes('addressLine') ||
-    bindings.includes('street') ||
-    bindings.includes('postalCode');
-  const hasIdentity =
-    bindings.includes('fullName') ||
-    bindings.includes('firstname') ||
-    bindings.includes('lastname') ||
-    bindings.includes('enterpriseName');
-  return hasChannel && hasIdentity;
+  const hasEnterpriseIdentity = bindings.includes('enterpriseName');
+  const hasFullName = bindings.includes('fullName');
+  const hasPersonIdentity = bindings.includes('firstname') && bindings.includes('lastname');
+  return hasEnterpriseIdentity || hasFullName || hasPersonIdentity;
 }
 
 export function columnNonEmptyRate(rows: string[][], columnIndex: number): number {
@@ -262,29 +255,20 @@ export function assessContactImportRowSkipReason(
   const siret = String(enriched.siret ?? '').trim();
   const intendedKind = enterpriseName || siret ? 'company' : 'individual';
 
-  if (!hasReachableChannel(enriched)) {
-    return 'Email ou adresse postale manquant';
-  }
-
   if (intendedKind === 'company') {
     if (!enterpriseName) {
       return 'Nom entreprise manquant';
-    }
-    if (!siret) {
-      return 'SIRET manquant';
-    }
-    const contactFirstname = String(enriched.contactFirstname ?? '').trim();
-    const contactLastname = String(enriched.contactLastname ?? '').trim();
-    if (!contactFirstname && !contactLastname) {
-      return 'Nom ou prénom contact manquant';
     }
     return null;
   }
 
   const firstname = String(enriched.firstname ?? '').trim();
   const lastname = String(enriched.lastname ?? '').trim();
-  if (!firstname && !lastname) {
-    return 'Nom ou prénom manquant';
+  if (!firstname) {
+    return 'Prénom manquant';
+  }
+  if (!lastname) {
+    return 'Nom manquant';
   }
   return null;
 }
@@ -359,7 +343,7 @@ export function analyzeContactImportDataset(
       severity: 'error',
       code: 'mapping_incomplete',
       message:
-        'Reliez au minimum un moyen de contact (email ou adresse) et une identité (nom/prénom ou nom complet).'
+        'Reliez au minimum prénom + nom (ou nom complet), ou la raison sociale pour une entreprise.'
     });
   }
 
