@@ -145,6 +145,7 @@ export type PlanPostImportLinkUpdatesArgs = {
   linkingColumnIndex: number | null;
   manualAssignments: Record<number, ImportManualLinkAssignment>;
   resolveContactId: (input: NewContactInput) => string | null | undefined;
+  onlyChildIndexes?: Set<number>;
 };
 
 export function planPostImportLinkUpdates(
@@ -190,6 +191,9 @@ export function planPostImportLinkUpdates(
     if (!parentContactId) continue;
 
     for (const childIndex of group.childIndexes) {
+      if (args.onlyChildIndexes && !args.onlyChildIndexes.has(childIndex)) {
+        continue;
+      }
       const childInput = byIndex.get(childIndex);
       if (!childInput) continue;
       const childContactId = String(args.resolveContactId(childInput) ?? '').trim();
