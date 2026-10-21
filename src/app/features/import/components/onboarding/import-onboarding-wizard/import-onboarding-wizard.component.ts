@@ -45,6 +45,10 @@ export class ImportOnboardingWizardComponent {
     hint: opt.hint
   }));
 
+  protected getTitle(): string {
+    return this.mode() === 'contacts' ? 'Déposez votre fichier contenant les profils à ajouter ici' : this.mode() === 'donations' ? 'Déposez votre fichier contenant les financements à ajouter ici' : 'Déposez votre fichier contenant les profils et les financements à ajouter ici';
+  }
+
   protected goToFileStep(): void {
     this.stepChange.emit('file');
   }

@@ -60,11 +60,23 @@
 
       <div class="df-row-3">
         <div class="df-field">
-          <label class="df-label" for="df-phone">Téléphone</label>
+          <label class="df-label" for="df-mobilePhone">Téléphone mobile</label>
           <form-text-component
-            id="df-phone"
-            formControlName="phone"
+            id="df-mobilePhone"
+            formControlName="mobilePhone"
             placeholder="+33 6 12 34 56 78"
+            type="tel"
+            [icon]="null"
+            width="100%"
+          ></form-text-component>
+        </div>
+
+        <div class="df-field">
+          <label class="df-label" for="df-landlinePhone">Téléphone fixe</label>
+          <form-text-component
+            id="df-landlinePhone"
+            formControlName="landlinePhone"
+            placeholder="+33 1 23 45 67 89"
             type="tel"
             [icon]="null"
             width="100%"
@@ -82,14 +94,14 @@
             width="100%"
           ></form-text-component>
         </div>
+      </div>
 
+      <div class="df-row-3 align-items-end">
         <div class="df-field">
           <label class="df-label df-birthdate-label" for="df-birthDate">Date de naissance (optionnel)</label>
           <form-date-component id="df-birthDate" formControlName="birthDate" width="100%" [max]="todayDateString"></form-date-component>
         </div>
-      </div>
 
-      <div class="df-row-3 align-items-end">
         <div class="df-field">
           <label class="df-label" for="df-jobTitle">Métier (optionnel)</label>
           <form-text-component
@@ -222,10 +234,22 @@
         </div>
 
         <div class="df-field">
-          <label class="df-label" for="df-phone-co">Téléphone</label>
+          <label class="df-label" for="df-mobilePhone-co">Téléphone mobile</label>
           <form-text-component
-            id="df-phone-co"
-            formControlName="phone"
+            id="df-mobilePhone-co"
+            formControlName="mobilePhone"
+            placeholder="+33 6 12 34 56 78"
+            type="tel"
+            [icon]="null"
+            width="100%"
+          ></form-text-component>
+        </div>
+
+        <div class="df-field">
+          <label class="df-label" for="df-landlinePhone-co">Téléphone fixe</label>
+          <form-text-component
+            id="df-landlinePhone-co"
+            formControlName="landlinePhone"
             placeholder="+33 1 23 45 67 89"
             type="tel"
             [icon]="null"

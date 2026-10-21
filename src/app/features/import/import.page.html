@@ -3,7 +3,18 @@
 
 @if (importing()) {
   <div class="imp-importing-overlay" role="alert" aria-live="assertive">
-    <inline-loader size="lg" label="Import en cours… Ne quittez pas cet écran." />
+    <div class="imp-importing-panel">
+      <inline-loader size="lg" label="Import en cours… Ne quittez pas cet écran." />
+      <div class="imp-importing-progress" aria-hidden="true">
+        <div class="imp-importing-progress-bar">
+          <div
+            class="imp-importing-progress-fill"
+            [style.width.%]="importProgressPercent()"
+          ></div>
+        </div>
+        <div class="imp-importing-progress-value">{{ importProgressPercent() }}&nbsp;%</div>
+      </div>
+    </div>
   </div>
 }
 
@@ -14,6 +25,17 @@
       [sheetName]="sheetName()"
       (dismiss)="onIgnoredPopupDismiss()"
       (continue)="onIgnoredPopupContinue($event)"
+    />
+  }
+
+  @if (tagsPopupOpen()) {
+    <import-tags-popup
+      [drafts]="tagDrafts()"
+      [columnLabel]="tagsColumnLabel()"
+      [busy]="tagsPopupBusy()"
+      [step]="tagsPopupStep()"
+      (dismiss)="onTagsPopupDismiss()"
+      (primaryAction)="onTagsPopupPrimary($event)"
     />
   }
 
@@ -155,8 +177,8 @@
             importMode() === 'donations'
               ? 'Champs obligatoires : Date de la contribution + Montant + lien avec Kalon (email du profil ou nom/prénom). À gauche : champ Kalon - à droite : colonne du fichier (détection automatique).'
               : importMode() === 'combined'
-                ? 'Profils : prénom + nom (ou nom complet), ou raison sociale. Email/adresse optionnels. Contributions sur la même ligne : date + montant. Mapping automatique : ajustez si besoin.'
-                : 'Champs obligatoires : prénom + nom (ou nom complet), ou raison sociale pour une entreprise. Email, téléphone, adresse et SIRET sont optionnels.'
+                ? 'Profils : identité (prénom/nom ou nom complet, ou raison sociale). Email/adresse optionnels. Contributions sur la même ligne : date + montant. Mapping automatique : ajustez si besoin.'
+                : 'Reliez au minimum une identité (prénom et/ou nom, nom complet, ou raison sociale). Email, téléphone, adresse et SIRET sont optionnels ; chaque ligne doit ensuite avoir prénom+nom (particulier) ou raison sociale (entreprise).'
           "
           paddingClass="advanced"
         >
@@ -288,7 +310,8 @@
                         <th>Nom</th>
                         <th>Prénom / Contact</th>
                         <th>Email</th>
-                        <th>Téléphone</th>
+                        <th>Mobile</th>
+                        <th>Fixe</th>
                         <th>Adresse</th>
                       </tr>
                     </thead>
@@ -305,7 +328,8 @@
                             }
                           </td>
                           <td>{{ p.email || '-' }}</td>
-                          <td>{{ p.phone || '-' }}</td>
+                          <td>{{ p.mobilePhone || '-' }}</td>
+                          <td>{{ p.landlinePhone || '-' }}</td>
                           <td>{{ p.address || '-' }}</td>
                         </tr>
                       }
@@ -342,7 +366,8 @@
                         <th>Nom</th>
                         <th>Prénom / Contact</th>
                         <th>Email</th>
-                        <th>Téléphone</th>
+                        <th>Mobile</th>
+                        <th>Fixe</th>
                         <th>Adresse</th>
                         <th>Date de la contribution</th>
                         <th>Montant</th>
@@ -361,7 +386,8 @@
                             }
                           </td>
                           <td>{{ p.email || '-' }}</td>
-                          <td>{{ p.phone || '-' }}</td>
+                          <td>{{ p.mobilePhone || '-' }}</td>
+                          <td>{{ p.landlinePhone || '-' }}</td>
                           <td>{{ p.address || '-' }}</td>
                           <td>{{ p.donationDate || '-' }}</td>
                           <td>{{ p.donationAmount || '-' }}</td>

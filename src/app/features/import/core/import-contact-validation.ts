@@ -177,8 +177,16 @@ export function hasReachableChannel(bag: Partial<Record<ImportFieldKey, string>>
 export function contactsImportMappingReady(bindings: ImportFieldKey[]): boolean {
   const hasEnterpriseIdentity = bindings.includes('enterpriseName');
   const hasFullName = bindings.includes('fullName');
-  const hasPersonIdentity = bindings.includes('firstname') && bindings.includes('lastname');
-  return hasEnterpriseIdentity || hasFullName || hasPersonIdentity;
+  const hasSeparatePersonNames =
+    bindings.includes('firstname') && bindings.includes('lastname');
+  const hasCombinedPersonNameColumn =
+    bindings.includes('lastname') || bindings.includes('firstname');
+  return (
+    hasEnterpriseIdentity ||
+    hasFullName ||
+    hasSeparatePersonNames ||
+    hasCombinedPersonNameColumn
+  );
 }
 
 export function columnNonEmptyRate(rows: string[][], columnIndex: number): number {
@@ -343,7 +351,7 @@ export function analyzeContactImportDataset(
       severity: 'error',
       code: 'mapping_incomplete',
       message:
-        'Reliez au minimum prénom + nom (ou nom complet), ou la raison sociale pour une entreprise.'
+        'Reliez au minimum une identité : prénom et/ou nom (ou nom complet), ou la raison sociale pour une entreprise.'
     });
   }
 

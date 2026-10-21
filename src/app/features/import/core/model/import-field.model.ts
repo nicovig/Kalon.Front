@@ -10,7 +10,8 @@ export type ImportFieldKey =
   | 'firstname'
   | 'fullName'
   | 'email'
-  | 'phone'
+  | 'mobilePhone'
+  | 'landlinePhone'
   | 'jobTitle'
   | 'birthDate'
   | 'gender'
@@ -38,7 +39,8 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'firstname', label: 'Particulier - Prénom' },
   { key: 'fullName', label: 'Particulier - Nom et prénom' },
   { key: 'email', label: 'Particulier - Email' },
-  { key: 'phone', label: 'Particulier - Téléphone' },
+  { key: 'mobilePhone', label: 'Particulier - Téléphone mobile' },
+  { key: 'landlinePhone', label: 'Particulier - Téléphone fixe' },
   { key: 'jobTitle', label: 'Particulier - Métier' },
   { key: 'birthDate', label: 'Particulier - Date de naissance' },
   { key: 'gender', label: 'Particulier - Genre' },
@@ -47,7 +49,7 @@ export const IMPORT_FIELD_OPTIONS: { key: ImportFieldKey; label: string }[] = [
   { key: 'isFamilyMembership', label: 'Particulier - Adhésion familiale (oui/non)' },
   { key: 'lastMembershipDate', label: 'Particulier - Date de début d’adhésion' },
   { key: 'membershipEndDate', label: 'Particulier - Date de fin d’adhésion' },
-  { key: 'tags', label: 'Particulier - Tags (séparés par , ou ;)' },
+  { key: 'tags', label: 'Tag (adhésion / nature / type…)' },
   { key: 'addressLine', label: 'Particulier - Adresse (tout en une colonne)' },
   { key: 'street', label: 'Particulier - Rue / voie' },
   { key: 'postalCode', label: 'Particulier - Code postal' },

@@ -33,7 +33,7 @@
               <inline-loader size="lg" label="Lecture de votre fichier…" />
             </div>
           } @else {
-            <import-banner variant="xxl" [navigate]="false" (fileSelected)="onFile($event)" />
+            <import-banner [title]="getTitle()" variant="xxl" [navigate]="false" (fileSelected)="onFile($event)" />
           }
         </div>
 

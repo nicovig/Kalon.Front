@@ -188,7 +188,8 @@ export function mapRowToNewContactInput(
     return {
       isEnterprise: true,
       email,
-      phone: (bag.phone ?? '').trim() || undefined,
+      mobilePhone: (bag.mobilePhone ?? '').trim() || undefined,
+      landlinePhone: (bag.landlinePhone ?? '').trim() || undefined,
       enterprise: {
         name: enterpriseName,
         siret,
@@ -198,8 +199,7 @@ export function mapRowToNewContactInput(
           street,
           postalCode,
           city,
-          country,
-          phone: (bag.phone ?? '').trim() || undefined
+          country
         },
         contactFirstname: contactFirstname || undefined,
         contactLastname: contactLastname || undefined
@@ -219,7 +219,8 @@ export function mapRowToNewContactInput(
     firstname,
     lastname,
     email,
-    phone: (bag.phone ?? '').trim() || undefined,
+    mobilePhone: (bag.mobilePhone ?? '').trim() || undefined,
+    landlinePhone: (bag.landlinePhone ?? '').trim() || undefined,
     jobTitle,
     birthDate,
     gender,

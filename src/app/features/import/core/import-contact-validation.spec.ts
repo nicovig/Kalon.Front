@@ -57,13 +57,14 @@ describe('import-contact-validation', () => {
   });
 
   describe('contactsImportMappingReady', () => {
-    it('requires person identity or enterprise name mapping', () => {
+    it('accepts person identity (separate, combined, or single name column) or enterprise name', () => {
       expect(contactsImportMappingReady(['firstname', 'lastname'])).toBe(true);
       expect(contactsImportMappingReady(['fullName'])).toBe(true);
       expect(contactsImportMappingReady(['enterpriseName'])).toBe(true);
-      expect(contactsImportMappingReady(['email', 'lastname'])).toBe(false);
-      expect(contactsImportMappingReady(['firstname'])).toBe(false);
+      expect(contactsImportMappingReady(['email', 'lastname'])).toBe(true);
+      expect(contactsImportMappingReady(['firstname'])).toBe(true);
       expect(contactsImportMappingReady(['email'])).toBe(false);
+      expect(contactsImportMappingReady(['mobilePhone', 'street'])).toBe(false);
     });
   });
 
@@ -117,12 +118,23 @@ describe('import-contact-validation', () => {
   });
 
   describe('analyzeContactImportDataset', () => {
-    it('flags empty mapped columns as blocking errors', () => {
+    it('does not flag mapping_incomplete when a name column is mapped', () => {
       const headers = ['Email', 'Nom'];
       const bindings: ImportFieldKey[] = ['email', 'lastname'];
       const rows = [
         ['a@b.com', 'Dupont'],
         ['c@d.com', 'Martin']
+      ];
+      const analysis = analyzeContactImportDataset(headers, bindings, rows);
+      expect(analysis.issues.some((issue) => issue.code === 'mapping_incomplete')).toBe(false);
+    });
+
+    it('flags mapping_incomplete when no identity column is mapped', () => {
+      const headers = ['Email', 'Téléphone'];
+      const bindings: ImportFieldKey[] = ['email', 'mobilePhone'];
+      const rows = [
+        ['a@b.com', '0600000000'],
+        ['c@d.com', '0600000001']
       ];
       const analysis = analyzeContactImportDataset(headers, bindings, rows);
       expect(analysis.issues.some((issue) => issue.code === 'mapping_incomplete')).toBe(true);

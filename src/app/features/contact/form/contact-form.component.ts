@@ -66,7 +66,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     firstname: [''],
     lastname: [''],
     email: ['', [Validators.email]],
-    phone: [''],
+    mobilePhone: [''],
+    landlinePhone: [''],
     jobTitle: [''],
     birthDate: [''],
     gender: [''],
@@ -152,7 +153,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     this.form.patchValue({
       category: isCompany ? 'company' : 'particular',
       email: d.email,
-      phone: d.phone ?? '',
+      mobilePhone: d.mobilePhone ?? '',
+      landlinePhone: d.landlinePhone ?? '',
       jobTitle: d.jobTitle ?? '',
       birthDate: d.birthDate ? this.dateToInputValue(d.birthDate) : '',
       gender: d.gender ?? '',
@@ -211,7 +213,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
       firstname: string;
       lastname: string;
       email: string;
-      phone?: string;
+      mobilePhone?: string;
+      landlinePhone?: string;
       jobTitle: string;
       birthDate: string;
       gender: 'male' | 'female' | 'other' | '';
@@ -269,7 +272,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
         firstname: raw.firstname.trim(),
         lastname: raw.lastname.trim(),
         email: raw.email.trim(),
-        phone: raw.phone?.trim() || undefined,
+        mobilePhone: raw.mobilePhone?.trim() || undefined,
+        landlinePhone: raw.landlinePhone?.trim() || undefined,
         address: {
           street: raw.address.street.trim(),
           postalCode: raw.address.postalCode.trim(),
@@ -296,7 +300,8 @@ export class ContactFormComponent implements OnInit, OnDestroy {
     const value: NewContactInput = {
       isEnterprise: true,
       email: raw.email.trim(),
-      phone: raw.phone?.trim() || undefined,
+      mobilePhone: raw.mobilePhone?.trim() || undefined,
+      landlinePhone: raw.landlinePhone?.trim() || undefined,
       preferredFrequencySendingReceipt: raw.preferredFrequencySendingReceipt,
       out: raw.out,
       ...membershipFields,

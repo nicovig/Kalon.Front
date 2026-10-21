@@ -158,7 +158,9 @@ export class StatisticsPageComponent {
           contactId: donation.contactId,
           contactDisplayName: contactName,
           contactEmail,
-          contactPhoneNumber: contact?.phone ?? '-',
+          contactPhoneNumber: contact
+            ? [contact.mobilePhone, contact.landlinePhone].filter(Boolean).join(' · ') || '-'
+            : '-',
           isEnterprise,
           contactTagIds: (contact?.tags ?? []).map((tag) => tag.id),
           isLinked: Boolean(contact?.mainContactId?.trim()),

@@ -18,7 +18,7 @@ import { FormSelectComponent, FormSelectOption } from '../../layout/forms/select
 import { FormNumberComponent } from '../../layout/forms/number/form-number.component';
 import { TagStoreService } from '../account/tag.store';
 import { OrganizationLinkingStore } from '../account/organization-linking.store';
-import { isLinkedContact } from '../../core/models/contact.model';
+import { contactPhonesLabel, isLinkedContact } from '../../core/models/contact.model';
 
 @Component({
   selector: 'contact-page',
@@ -96,7 +96,7 @@ export class ContactListPageComponent {
       if (linked === 'hide_linked' && isLinkedContact(row)) return false;
       if (linked === 'linked_only' && !isLinkedContact(row)) return false;
       if (email && !String(row.email ?? '').toLowerCase().includes(email)) return false;
-      const phoneValue = String(row.phone ?? row.enterprise?.contactPhone ?? '').toLowerCase();
+      const phoneValue = contactPhonesLabel(row).toLowerCase();
       if (phone && !phoneValue.includes(phone)) return false;
       if (status !== 'all' && row.status !== status) return false;
       const total = Number(row.totalDonation ?? 0);
@@ -170,7 +170,8 @@ export class ContactListPageComponent {
     { key: 'lastname', header: 'Nom', searchable: true, sortable: true },
     { key: 'isEnterprise', header: 'Type', type: 'contactKind', searchable: true, sortable: true },
     { key: 'email', header: 'Email', searchable: true, sortable: true },
-    { key: 'phone', header: 'Téléphone', searchable: true, sortable: true },
+    { key: 'mobilePhone', header: 'Mobile', searchable: true, sortable: true },
+    { key: 'landlinePhone', header: 'Fixe', searchable: true, sortable: true },
     { key: 'tags', header: 'Tags', type: 'tags', searchable: true, sortable: true },
     { key: 'status', header: 'Statut', type: 'badge', sortable: true },
     { key: 'totalDonation', header: 'Total contributions', type: 'number', align: 'right', sortable: true }

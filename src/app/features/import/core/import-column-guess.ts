@@ -52,14 +52,34 @@ const RULES: Rule[] = [
       /\bprenom\b/.test(n) && (/\bcontact\b/.test(n) || /\binterlocuteur\b/.test(n) || /\bresponsable\b/.test(n))
   },
   {
-    field: 'phone',
+    field: 'mobilePhone',
     weight: 10,
     test: (n) =>
-      /\btel\b/.test(n) ||
-      /\btelephone\b/.test(n) ||
       /\bmobile\b/.test(n) ||
       /\bportable\b/.test(n) ||
-      /\bfixe\b/.test(n)
+      /\bgsm\b/.test(n) ||
+      /\bcell\b/.test(n) ||
+      (/\btel\b/.test(n) && /\bmobile\b/.test(n)) ||
+      (/\btelephone\b/.test(n) && /\bmobile\b/.test(n))
+  },
+  {
+    field: 'landlinePhone',
+    weight: 10,
+    test: (n) =>
+      /\bfixe\b/.test(n) ||
+      /\blandline\b/.test(n) ||
+      /\bdomicile\b/.test(n) ||
+      (/\btel\b/.test(n) && /\bfixe\b/.test(n)) ||
+      (/\btelephone\b/.test(n) && /\bfixe\b/.test(n))
+  },
+  {
+    field: 'mobilePhone',
+    weight: 8,
+    test: (n) =>
+      (/\btel\b/.test(n) || /\btelephone\b/.test(n) || /\bphone\b/.test(n)) &&
+      !/\bfixe\b/.test(n) &&
+      !/\blandline\b/.test(n) &&
+      !/\bdomicile\b/.test(n)
   },
   {
     field: 'jobTitle',
@@ -132,11 +152,25 @@ const RULES: Rule[] = [
   },
   {
     field: 'tags',
-    weight: 8,
-    test: (n) =>
-      /\btags?\b/.test(n) ||
-      /\betiquettes?\b/.test(n) ||
-      /\blabels?\b/.test(n)
+    weight: 9,
+    test: (n) => {
+      if (/\btags?\b/.test(n) || /\betiquettes?\b/.test(n) || /\blabels?\b/.test(n)) {
+        return true;
+      }
+      if (/\bnature\b/.test(n) || /\betat\b/.test(n) || /\bentite\b/.test(n)) {
+        return true;
+      }
+      if (/\btype\b/.test(n) && !/\bsoutien\b/.test(n) && !/\bsupport\b/.test(n)) {
+        return true;
+      }
+      if (
+        /\bgenre\b/.test(n) &&
+        (/\badhesion\b/.test(n) || /\bmembre\b/.test(n) || /\badherent\b/.test(n) || /\bprofil\b/.test(n))
+      ) {
+        return true;
+      }
+      return false;
+    }
   },
   {
     field: 'fullName',

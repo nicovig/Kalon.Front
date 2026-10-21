@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize, map, of, switchMap } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, of, switchMap, toArray } from 'rxjs';
 import type { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -80,6 +80,18 @@ import {
   planPostImportLinkUpdates,
   shouldRunPostImportLinking
 } from './core/import-contact-linking';
+import {
+  applyTagRenameMap,
+  buildImportTagMappingDrafts,
+  buildTagRenameMap,
+  collectUniqueTagValuesFromRows,
+  findTagsColumnIndex,
+  ImportTagMappingDraft
+} from './core/import-tags';
+import {
+  ImportTagsPopupComponent,
+  ImportTagsPopupStep
+} from './components/import-tags-popup/import-tags-popup.component';
 
 type PendingImportDonation = {
   contactId?: string;
@@ -104,6 +116,7 @@ type PendingImportDonation = {
     ImportOnboardingHelpComponent,
     ImportStepTrailComponent,
     IgnoredLinesPopupComponent,
+    ImportTagsPopupComponent,
     PopupShellComponent,
     FormSelectComponent,
     ImportBusinessRulesTooltipComponent,
@@ -171,6 +184,15 @@ export class ImportPageComponent implements OnInit {
 
   protected readonly donationsImportPromptOpen = signal(false);
   protected readonly importing = signal(false);
+  protected readonly importProgressPercent = signal(0);
+  private importProgressTimer: ReturnType<typeof setInterval> | null = null;
+  protected readonly tagsPopupOpen = signal(false);
+  protected readonly tagsPopupBusy = signal(false);
+  protected readonly tagsPopupStep = signal<ImportTagsPopupStep>('create');
+  protected readonly tagDrafts = signal<ImportTagMappingDraft[]>([]);
+  protected readonly tagsColumnLabel = signal('Tag');
+  private readonly tagRenameMap = signal<Record<string, string>>({});
+  private readonly tagPalette = ['#5b6cff', '#e85d75', '#2a9d8f', '#e9c46a', '#9b5de5', '#00b4d8'];
 
   protected readonly fullNameOrder = signal<FullNameOrder>('firstname-lastname');
   protected readonly linkingColumnIndex = signal<number | null>(null);
@@ -305,6 +327,14 @@ export class ImportPageComponent implements OnInit {
       const columnIndex = b.findIndex((x) => x === fieldKey);
       if (columnIndex >= 0) {
         rows.push({ fieldKey, columnIndex });
+      }
+    }
+    if (this.importMode() === 'contacts' || this.importMode() === 'combined') {
+      if (!rows.some((r) => r.fieldKey === 'tags')) {
+        rows.push({
+          fieldKey: 'tags',
+          columnIndex: b.findIndex((x) => x === 'tags')
+        });
       }
     }
     if (this.importMode() === 'donations') {
@@ -492,7 +522,7 @@ export class ImportPageComponent implements OnInit {
       return 'Associez au moins une colonne du fichier à un champ Kalon pour continuer';
     }
     if (!this.contactsMappingComplete()) {
-      return 'Reliez au minimum prénom + nom (ou nom complet), ou la raison sociale';
+      return 'Reliez au minimum une identité : prénom et/ou nom (ou nom complet), ou la raison sociale';
     }
     if (!this.donationsMappingComplete()) {
       return 'Mappez au moins une colonne pour la date, le montant et le lien avec Kalon (email ou nom/prénom du profil)';
@@ -512,6 +542,7 @@ export class ImportPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.clearImportProgressTimer());
     this.tagStore.ensureLoaded();
     this.linkingStore.ensureLoaded();
     const qp = this.route.snapshot.queryParamMap.get('mode');
@@ -963,6 +994,14 @@ export class ImportPageComponent implements OnInit {
     this.fullNameOrder.set('firstname-lastname');
     this.linkingColumnIndex.set(null);
     this.manualLinkAssignments.set({});
+    this.tagsPopupOpen.set(false);
+    this.tagsPopupBusy.set(false);
+    this.tagsPopupStep.set('create');
+    this.tagDrafts.set([]);
+    this.tagRenameMap.set({});
+    this.clearImportProgressTimer();
+    this.importing.set(false);
+    this.importProgressPercent.set(0);
     this.onboardingStep.set(nextStep);
   }
 
@@ -1043,10 +1082,119 @@ export class ImportPageComponent implements OnInit {
     if (this.importButtonDisabled()) {
       return;
     }
+    if (this.openTagsPrepPopupIfNeeded()) {
+      return;
+    }
+    this.executeImport();
+  }
+
+  protected onTagsPopupDismiss(): void {
+    if (this.tagsPopupBusy()) {
+      return;
+    }
+    this.tagsPopupOpen.set(false);
+    this.tagsPopupStep.set('create');
+    this.tagDrafts.set([]);
+  }
+
+  protected onTagsPopupPrimary(drafts: ImportTagMappingDraft[]): void {
+    if (this.tagsPopupStep() === 'create') {
+      this.createTagsFromDrafts(drafts);
+      return;
+    }
+    this.tagRenameMap.set(buildTagRenameMap(drafts));
+    this.tagsPopupOpen.set(false);
+    this.executeImport();
+  }
+
+  private openTagsPrepPopupIfNeeded(): boolean {
+    if (this.importMode() === 'donations') {
+      return false;
+    }
+    const columnIndex = findTagsColumnIndex(this.bindings());
+    if (columnIndex < 0) {
+      this.tagRenameMap.set({});
+      return false;
+    }
+    const values = collectUniqueTagValuesFromRows(this.allRows(), columnIndex);
+    if (!values.length) {
+      this.tagRenameMap.set({});
+      return false;
+    }
+    this.tagDrafts.set(
+      buildImportTagMappingDrafts(values, (name) => this.tagStore.findByName(name)?.name)
+    );
+    this.tagsColumnLabel.set(this.headers()[columnIndex]?.trim() || 'Tag');
+    this.tagsPopupStep.set('create');
+    this.tagsPopupBusy.set(false);
+    this.tagsPopupOpen.set(true);
+    return true;
+  }
+
+  private createTagsFromDrafts(drafts: ImportTagMappingDraft[]): void {
+    const normalized = drafts.map((draft) => ({
+      ...draft,
+      kalonName: draft.kalonName.trim() || draft.sourceValue.trim()
+    }));
+    const toCreate: string[] = [];
+    const seen = new Set<string>();
+    for (const draft of normalized) {
+      const name = draft.kalonName;
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (!this.tagStore.findByName(name)) {
+        toCreate.push(name);
+      }
+    }
+
+    if (!toCreate.length) {
+      this.tagDrafts.set(
+        normalized.map((draft) => ({
+          ...draft,
+          alreadyExists: Boolean(this.tagStore.findByName(draft.kalonName))
+        }))
+      );
+      this.tagsPopupStep.set('import');
+      return;
+    }
+
+    this.tagsPopupBusy.set(true);
+    from(toCreate)
+      .pipe(
+        concatMap((name, index) =>
+          this.tagStore.createTag(name, this.tagPalette[index % this.tagPalette.length])
+        ),
+        toArray(),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.tagsPopupBusy.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.tagDrafts.set(
+            normalized.map((draft) => ({
+              ...draft,
+              alreadyExists: Boolean(this.tagStore.findByName(draft.kalonName))
+            }))
+          );
+          this.tagsPopupStep.set('import');
+          this.toast.show(
+            `${toCreate.length} tag${toCreate.length > 1 ? 's' : ''} créé${toCreate.length > 1 ? 's' : ''}.`,
+            'success',
+            3500
+          );
+        },
+        error: () =>
+          this.toast.show('Impossible de créer les tags. Réessayez.', 'alert', 5000)
+      });
+  }
+
+  private executeImport(): void {
     const mode = this.importMode();
     const rows = this.allRows();
     const b = this.bindings();
-    this.importing.set(true);
+    this.startImportProgress();
     const request$ =
       mode === 'contacts'
         ? this.importContacts(rows, b as ImportFieldKey[])
@@ -1056,11 +1204,50 @@ export class ImportPageComponent implements OnInit {
     request$
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.importing.set(false))
+        finalize(() => this.stopImportProgress())
       )
       .subscribe({
         error: () => this.toast.show("L'import a échoué. Réessayez dans un instant.", 'alert', 5000)
       });
+  }
+
+  private startImportProgress(): void {
+    this.clearImportProgressTimer();
+    this.importing.set(true);
+    this.importProgressPercent.set(4);
+    this.importProgressTimer = setInterval(() => {
+      this.importProgressPercent.update((current) => {
+        if (current >= 92) {
+          return current;
+        }
+        if (current < 30) {
+          return current + 5;
+        }
+        if (current < 60) {
+          return current + 3;
+        }
+        if (current < 80) {
+          return current + 2;
+        }
+        return current + 1;
+      });
+    }, 280);
+  }
+
+  private stopImportProgress(): void {
+    this.clearImportProgressTimer();
+    this.importProgressPercent.set(100);
+    window.setTimeout(() => {
+      this.importing.set(false);
+      this.importProgressPercent.set(0);
+    }, 220);
+  }
+
+  private clearImportProgressTimer(): void {
+    if (this.importProgressTimer != null) {
+      clearInterval(this.importProgressTimer);
+      this.importProgressTimer = null;
+    }
   }
 
   private buildContactOverridesFromIgnoredLine(
@@ -1108,8 +1295,9 @@ export class ImportPageComponent implements OnInit {
   }
 
   private resolveImportTagIds = (tagNames: string[]): string[] => {
+    const renamed = applyTagRenameMap(tagNames, this.tagRenameMap());
     const ids: string[] = [];
-    for (const name of tagNames) {
+    for (const name of renamed) {
       const tag = this.tagStore.findByName(name);
       if (tag && !ids.includes(tag.id)) {
         ids.push(tag.id);
