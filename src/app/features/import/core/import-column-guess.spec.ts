@@ -7,8 +7,15 @@ describe('guessMappingForHeaders', () => {
     expect(m[0]).toBe('skip');
     expect(m[1]).toBe('lastname');
     expect(m[2]).toBe('email');
-    expect(m[3]).toBe('phone');
-    expect(m[4]).toBe('skip');
+    expect(m[3]).toBe('landlinePhone');
+    expect(m[4]).toBe('mobilePhone');
+  });
+
+  it('detects mobile and landline phone headers', () => {
+    expect(guessFieldForHeader('Téléphone mobile')).toBe('mobilePhone');
+    expect(guessFieldForHeader('Portable')).toBe('mobilePhone');
+    expect(guessFieldForHeader('Téléphone fixe')).toBe('landlinePhone');
+    expect(guessFieldForHeader('Téléphone')).toBe('mobilePhone');
   });
 
   it('does not clear all mappings after one pass', () => {
@@ -34,5 +41,10 @@ describe('guessMappingForHeaders', () => {
     expect(guessFieldForHeader('Date début adhésion')).toBe('lastMembershipDate');
     expect(guessFieldForHeader('Date fin adhésion')).toBe('membershipEndDate');
     expect(guessFieldForHeader('Tags')).toBe('tags');
+    expect(guessFieldForHeader('Type adhésion')).toBe('tags');
+    expect(guessFieldForHeader('Nature adhésion')).toBe('tags');
+    expect(guessFieldForHeader('État membre')).toBe('tags');
+    expect(guessFieldForHeader('Entité')).toBe('tags');
+    expect(guessFieldForHeader('Genre')).toBe('gender');
   });
 });

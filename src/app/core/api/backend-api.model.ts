@@ -65,6 +65,8 @@ export interface ContactApiModel {
   lastname?: string | null;
   email?: string | null;
   phone?: string | null;
+  mobilePhone?: string | null;
+  landlinePhone?: string | null;
   jobTitle?: string | null;
   birthDate?: string | null;
   gender?: string | null;
@@ -94,7 +96,8 @@ export interface ContactCreateRequestApiModel {
   firstname?: string | null;
   lastname?: string | null;
   email?: string | null;
-  phone?: string | null;
+  mobilePhone?: string | null;
+  landlinePhone?: string | null;
   jobTitle?: string | null;
   birthDate?: string | null;
   gender?: string | null;

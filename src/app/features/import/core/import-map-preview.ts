@@ -8,7 +8,8 @@ export type ImportPreviewRow = {
   firstname: string;
   contactLastname?: string;
   email: string;
-  phone: string;
+  mobilePhone: string;
+  landlinePhone: string;
   address: string;
 };
 
@@ -66,7 +67,8 @@ export function mapDataRowToPreview(
       firstname: bag.contactFirstname ?? '',
       contactLastname: bag.contactLastname ?? '',
       email: bag.email ?? '',
-      phone: bag.phone ?? '',
+      mobilePhone: bag.mobilePhone ?? '',
+      landlinePhone: bag.landlinePhone ?? '',
       address
     };
   }
@@ -76,7 +78,8 @@ export function mapDataRowToPreview(
     lastname: bag.lastname ?? '',
     firstname: bag.firstname ?? '',
     email: bag.email ?? '',
-    phone: bag.phone ?? '',
+    mobilePhone: bag.mobilePhone ?? '',
+    landlinePhone: bag.landlinePhone ?? '',
     address
   };
 }

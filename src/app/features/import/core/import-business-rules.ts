@@ -67,7 +67,8 @@ const CONTACT_RULES: ImportBusinessRuleSection[] = [
     items: [
       'Adhésion familiale : indiquez oui ou non.',
       'Dates de début et de fin d’adhésion : formats courants du type 01/01/2024 ; ces champs sont facultatifs.',
-      'Tags : listez les noms séparés par une virgule ou un point-virgule. Seuls les tags déjà créés dans Compte seront associés.'
+      'Tag : reliez une colonne (type, nature, état d’adhésion…). Avant l’import, Kalon propose de créer ou renommer les valeurs détectées.',
+      'Plusieurs tags dans une même case restent possibles s’ils sont séparés par une virgule ou un point-virgule.'
     ]
   }
 ];

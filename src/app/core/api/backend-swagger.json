@@ -4394,7 +4394,11 @@
             "type": "string",
             "nullable": true
           },
-          "phone": {
+          "mobilePhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "landlinePhone": {
             "type": "string",
             "nullable": true
           },
@@ -4597,7 +4601,11 @@
             "type": "string",
             "nullable": true
           },
-          "phone": {
+          "mobilePhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "landlinePhone": {
             "type": "string",
             "nullable": true
           },
@@ -4784,7 +4792,11 @@
             "type": "string",
             "nullable": true
           },
-          "phone": {
+          "mobilePhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "landlinePhone": {
             "type": "string",
             "nullable": true
           },

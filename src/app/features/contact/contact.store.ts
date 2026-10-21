@@ -22,7 +22,8 @@ export interface NewContactInputIndividual {
   firstname: string;
   lastname: string;
   email: string;
-  phone?: string;
+  mobilePhone?: string;
+  landlinePhone?: string;
   address: IContactAddress;
   jobTitle?: string;
   birthDate?: Date;
@@ -39,7 +40,8 @@ export interface NewContactInputIndividual {
 export interface NewContactInputCompany {
   isEnterprise: true;
   email: string;
-  phone?: string;
+  mobilePhone?: string;
+  landlinePhone?: string;
   enterprise: IContactEnterprise;
   preferredFrequencySendingReceipt?: IContact['preferredFrequencySendingReceipt'];
   out?: boolean;
@@ -331,7 +333,8 @@ export class ContactStoreService {
         firstname: input.firstname.trim(),
         lastname: input.lastname.trim(),
         email: input.email.trim(),
-        phone: input.phone?.trim() || undefined,
+        mobilePhone: input.mobilePhone?.trim() || undefined,
+        landlinePhone: input.landlinePhone?.trim() || undefined,
         address: this.normalizeAddress(input.address),
         enterprise: undefined,
         status: input.out ? 'out' : meta.status,
@@ -364,7 +367,8 @@ export class ContactStoreService {
       firstname: contactFirst,
       lastname: enterprise.name,
       email: input.email.trim(),
-      phone: input.phone?.trim() || undefined,
+      mobilePhone: input.mobilePhone?.trim() || undefined,
+      landlinePhone: input.landlinePhone?.trim() || undefined,
       address: undefined,
       enterprise,
       preferredFrequencySendingReceipt: input.preferredFrequencySendingReceipt,
@@ -451,7 +455,8 @@ export class ContactStoreService {
       firstname: contact.firstname ?? null,
       lastname: contact.lastname ?? null,
       email: contact.email ?? null,
-      phone: contact.phone ?? null,
+      mobilePhone: contact.mobilePhone?.trim() || null,
+      landlinePhone: contact.landlinePhone?.trim() || null,
       jobTitle: contact.jobTitle ?? null,
       birthDate: contact.birthDate ? new Date(contact.birthDate).toISOString() : null,
       gender: contact.gender ?? null,
@@ -510,7 +515,12 @@ export class ContactStoreService {
       firstname: String(row.firstname ?? ''),
       lastname: String(row.lastname ?? ''),
       email: String(row.email ?? ''),
-      phone: row.phone ? String(row.phone) : undefined,
+      mobilePhone: row.mobilePhone
+        ? String(row.mobilePhone)
+        : row.phone
+          ? String(row.phone)
+          : undefined,
+      landlinePhone: row.landlinePhone ? String(row.landlinePhone) : undefined,
       jobTitle: row.jobTitle ? String(row.jobTitle) : undefined,
       birthDate:
         birthDateRaw && !Number.isNaN(new Date(String(birthDateRaw)).getTime())

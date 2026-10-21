@@ -12,7 +12,8 @@ export interface IContact {
   firstname: string;
   lastname: string;
   email: string;
-  phone?: string;
+  mobilePhone?: string;
+  landlinePhone?: string;
   jobTitle?: string;
   birthDate?: Date;
   gender?: 'male' | 'female' | 'other';
@@ -78,4 +79,13 @@ export function contactDisplayName(c: IContact): string {
 export function contactNatureLabel(c: Pick<IContact, 'isEnterprise'> | boolean): string {
   const isEnterprise = typeof c === 'boolean' ? c : c.isEnterprise;
   return isEnterprise ? 'Entreprise' : 'Particulier';
+}
+
+export function contactPhonesLabel(
+  c: Pick<IContact, 'mobilePhone' | 'landlinePhone' | 'enterprise'>
+): string {
+  const values = [c.mobilePhone, c.landlinePhone, c.enterprise?.contactPhone]
+    .map((value) => String(value ?? '').trim())
+    .filter(Boolean);
+  return values.join(' · ');
 }

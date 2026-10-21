@@ -1,0 +1,56 @@
+<app-popup-shell [maxWidth]="'720px'" [zIndex]="2070" (dismiss)="onDismiss()">
+  <div popup-header>
+    <div class="app-popup-title">Tags à préparer avant l’import</div>
+    <p class="app-popup-sub">
+      @if (step() === 'create') {
+        Valeurs trouvées dans la colonne « <strong>{{ columnLabel() }}</strong> ». Conservez-les
+        ou renommez-les avant création dans Kalon.
+      } @else {
+        Les tags sont prêts. Vous pouvez lancer l’import des profils.
+      }
+    </p>
+  </div>
+
+  <div class="itp-body">
+    <div class="itp-summary" role="status">
+      {{ localDrafts().length }}
+      {{ localDrafts().length === 1 ? 'valeur détectée' : 'valeurs détectées' }}
+    </div>
+
+    <div class="itp-list" role="list" aria-label="Correspondance des tags">
+      @for (row of localDrafts(); track row.sourceValue; let i = $index) {
+        <div class="itp-item" role="listitem">
+          <div class="itp-source">
+            <span class="itp-source-label">Dans le fichier</span>
+            <span class="itp-source-value" [title]="row.sourceValue">{{ row.sourceValue }}</span>
+          </div>
+          <div class="itp-arrow" aria-hidden="true">→</div>
+          <div class="itp-kalon">
+            <span class="itp-source-label">Dans Kalon</span>
+            <form-text-component
+              [placeholder]="'Nom du tag'"
+              [icon]="null"
+              [width]="'100%'"
+              [value]="row.kalonName"
+              [disabled]="busy() || step() === 'import'"
+              (valueChange)="onKalonNameChange(i, $event)"
+            />
+            @if (row.alreadyExists && step() === 'create') {
+              <span class="itp-hint">Déjà présent dans Kalon</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="itp-actions">
+      <button-label-component
+        type="primary"
+        [disabled]="busy() || localDrafts().length === 0"
+        (click)="onPrimary()"
+      >
+        {{ primaryLabel() }}
+      </button-label-component>
+    </div>
+  </div>
+</app-popup-shell>
