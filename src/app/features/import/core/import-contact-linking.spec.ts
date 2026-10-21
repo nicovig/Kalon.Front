@@ -256,4 +256,78 @@ describe('post-import linking updates (critical: PUT only when linking is enable
     });
     expect(plans).toEqual([]);
   });
+
+  it('onlyChildIndexes limits PUTs to the current chunk children', () => {
+    const plans = planPostImportLinkUpdates({
+      mode: 'same_id',
+      importedEntries,
+      rows,
+      linkingColumnIndex: 0,
+      manualAssignments: {},
+      resolveContactId,
+      onlyChildIndexes: new Set([1])
+    });
+    expect(plans).toEqual([
+      {
+        childRowIndex: 1,
+        parentRowIndex: 0,
+        childContactId: 'id-child',
+        parentContactId: 'id-parent',
+        childInput: child
+      }
+    ]);
+  });
+
+  it('onlyChildIndexes skips children outside the current chunk', () => {
+    const plans = planPostImportLinkUpdates({
+      mode: 'same_id',
+      importedEntries,
+      rows,
+      linkingColumnIndex: 0,
+      manualAssignments: {},
+      resolveContactId,
+      onlyChildIndexes: new Set([0, 2])
+    });
+    expect(plans).toEqual([]);
+  });
+
+  it('cross-chunk: parent in cumulative entries, child filtered by onlyChildIndexes', () => {
+    const lateChild = individual('Late', 'Fam', 'late@test.fr');
+    const cumulativeEntries = [
+      { index: 0, input: parent },
+      { index: 1, input: child },
+      { index: 250, input: lateChild }
+    ];
+    const wideRows = [
+      ...rows,
+      ...Array.from({ length: 247 }, () => ['', '']),
+      ['FAM-1', 'Late']
+    ];
+    const resolveWide = (input: NewContactInput) => {
+      if (input.email === parent.email) return 'id-parent';
+      if (input.email === child.email) return 'id-child';
+      if (input.email === lateChild.email) return 'id-late';
+      return null;
+    };
+
+    const chunk2Plans = planPostImportLinkUpdates({
+      mode: 'same_id',
+      importedEntries: cumulativeEntries,
+      rows: wideRows,
+      linkingColumnIndex: 0,
+      manualAssignments: {},
+      resolveContactId: resolveWide,
+      onlyChildIndexes: new Set([250])
+    });
+
+    expect(chunk2Plans).toEqual([
+      {
+        childRowIndex: 250,
+        parentRowIndex: 0,
+        childContactId: 'id-late',
+        parentContactId: 'id-parent',
+        childInput: lateChild
+      }
+    ]);
+  });
 });

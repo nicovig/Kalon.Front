@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, concatMap, finalize, from, map, of, switchMap, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, of, reduce, switchMap, toArray } from 'rxjs';
 import type { DonationPaymentMethod, DonationType } from '../../core/models/donation.model';
 import { ToastComponent } from '../../layout/toast/toast.component';
 import { TopbarComponent } from '../../layout/topbar/topbar.component';
@@ -88,6 +88,13 @@ import {
   findTagsColumnIndex,
   ImportTagMappingDraft
 } from './core/import-tags';
+import {
+  chunkArray,
+  computeImportProgressPercent,
+  IMPORT_CONTACT_CHUNK_SIZE,
+  PreparedContactImportRow,
+  splitPreparedContactChunk
+} from './core/import-chunking';
 import {
   ImportTagsPopupComponent,
   ImportTagsPopupStep
@@ -185,7 +192,6 @@ export class ImportPageComponent implements OnInit {
   protected readonly donationsImportPromptOpen = signal(false);
   protected readonly importing = signal(false);
   protected readonly importProgressPercent = signal(0);
-  private importProgressTimer: ReturnType<typeof setInterval> | null = null;
   protected readonly tagsPopupOpen = signal(false);
   protected readonly tagsPopupBusy = signal(false);
   protected readonly tagsPopupStep = signal<ImportTagsPopupStep>('create');
@@ -542,7 +548,6 @@ export class ImportPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.destroyRef.onDestroy(() => this.clearImportProgressTimer());
     this.tagStore.ensureLoaded();
     this.linkingStore.ensureLoaded();
     const qp = this.route.snapshot.queryParamMap.get('mode');
@@ -741,8 +746,7 @@ export class ImportPageComponent implements OnInit {
     bindings: ImportFieldKey[]
   ) {
     const stillIgnored: IgnoredImportLine[] = [];
-    const creates: NewContactInput[] = [];
-    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const prepared: PreparedContactImportRow[] = [];
 
     for (const line of editedLines) {
       const rowIndex = line.rowNumber - 1;
@@ -764,14 +768,14 @@ export class ImportPageComponent implements OnInit {
       }
 
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
-      if (existing) {
-        updates.push({ id: existing.id, input: parsed.input });
-      } else {
-        creates.push(parsed.input);
-      }
+      prepared.push({
+        index: rowIndex,
+        input: parsed.input,
+        existingId: existing?.id
+      });
     }
 
-    return this.persistContactsBulk(creates, updates).pipe(
+    return this.persistPreparedContactChunks(prepared).pipe(
       map(({ created, updated }) => ({
         stillIgnored,
         importedCount: created + updated
@@ -880,8 +884,7 @@ export class ImportPageComponent implements OnInit {
     bindings: CombinedImportFieldKey[]
   ) {
     const stillIgnored: IgnoredImportLine[] = [];
-    const creates: NewContactInput[] = [];
-    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const prepared: PreparedContactImportRow[] = [];
     const pendingDonations: PendingImportDonation[] = [];
 
     const contactBindings = bindings.map((b) =>
@@ -910,11 +913,11 @@ export class ImportPageComponent implements OnInit {
       }
 
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
-      if (existing) {
-        updates.push({ id: existing.id, input: parsed.input });
-      } else {
-        creates.push(parsed.input);
-      }
+      prepared.push({
+        index: rowIndex,
+        input: parsed.input,
+        existingId: existing?.id
+      });
 
       let donationDateStr = '';
       let donationAmountStr = '';
@@ -969,7 +972,7 @@ export class ImportPageComponent implements OnInit {
       }
     }
 
-    return this.persistContactsBulk(creates, updates).pipe(
+    return this.persistPreparedContactChunks(prepared).pipe(
       switchMap(({ created, updated }) =>
         this.persistDonationsBulk(pendingDonations).pipe(
           map(() => ({
@@ -999,7 +1002,6 @@ export class ImportPageComponent implements OnInit {
     this.tagsPopupStep.set('create');
     this.tagDrafts.set([]);
     this.tagRenameMap.set({});
-    this.clearImportProgressTimer();
     this.importing.set(false);
     this.importProgressPercent.set(0);
     this.onboardingStep.set(nextStep);
@@ -1194,7 +1196,7 @@ export class ImportPageComponent implements OnInit {
     const mode = this.importMode();
     const rows = this.allRows();
     const b = this.bindings();
-    this.startImportProgress();
+    this.beginImportProgress();
     const request$ =
       mode === 'contacts'
         ? this.importContacts(rows, b as ImportFieldKey[])
@@ -1204,50 +1206,28 @@ export class ImportPageComponent implements OnInit {
     request$
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.stopImportProgress())
+        finalize(() => this.finishImportProgress())
       )
       .subscribe({
         error: () => this.toast.show("L'import a échoué. Réessayez dans un instant.", 'alert', 5000)
       });
   }
 
-  private startImportProgress(): void {
-    this.clearImportProgressTimer();
+  private beginImportProgress(): void {
     this.importing.set(true);
-    this.importProgressPercent.set(4);
-    this.importProgressTimer = setInterval(() => {
-      this.importProgressPercent.update((current) => {
-        if (current >= 92) {
-          return current;
-        }
-        if (current < 30) {
-          return current + 5;
-        }
-        if (current < 60) {
-          return current + 3;
-        }
-        if (current < 80) {
-          return current + 2;
-        }
-        return current + 1;
-      });
-    }, 280);
+    this.importProgressPercent.set(0);
   }
 
-  private stopImportProgress(): void {
-    this.clearImportProgressTimer();
+  private setImportProgress(processed: number, total: number): void {
+    this.importProgressPercent.set(computeImportProgressPercent(processed, total));
+  }
+
+  private finishImportProgress(): void {
     this.importProgressPercent.set(100);
     window.setTimeout(() => {
       this.importing.set(false);
       this.importProgressPercent.set(0);
     }, 220);
-  }
-
-  private clearImportProgressTimer(): void {
-    if (this.importProgressTimer != null) {
-      clearInterval(this.importProgressTimer);
-      this.importProgressTimer = null;
-    }
   }
 
   private buildContactOverridesFromIgnoredLine(
@@ -1354,9 +1334,7 @@ export class ImportPageComponent implements OnInit {
   private importContacts(rows: string[][], bindings: ImportFieldKey[]) {
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
-    const creates: NewContactInput[] = [];
-    const updates: Array<{ id: string; input: NewContactInput }> = [];
-    const importedEntries: Array<{ index: number; input: NewContactInput }> = [];
+    const prepared: PreparedContactImportRow[] = [];
 
     for (const [index, row] of rows.entries()) {
       const parsed = this.parseContactImportRow(index, row, bindings);
@@ -1367,19 +1345,15 @@ export class ImportPageComponent implements OnInit {
         }
         continue;
       }
-      importedEntries.push({ index, input: parsed.input });
       const existing = this.contactStore.findExistingContactForImport(parsed.input);
-      if (existing) {
-        updates.push({ id: existing.id, input: parsed.input });
-      } else {
-        creates.push(parsed.input);
-      }
+      prepared.push({
+        index,
+        input: parsed.input,
+        existingId: existing?.id
+      });
     }
 
-    return this.persistContactsBulk(creates, updates).pipe(
-      switchMap((result) =>
-        this.applyImportLinking(importedEntries).pipe(map(() => result))
-      ),
+    return this.persistPreparedContactChunks(prepared).pipe(
       map(({ created, updated }) => {
         if (created === 0 && updated === 0) {
           this.toast.show(
@@ -1465,8 +1439,10 @@ export class ImportPageComponent implements OnInit {
       });
     }
 
+    this.setImportProgress(0, donations.length || 1);
     return this.persistDonationsBulk(donations).pipe(
       map((created) => {
+        this.setImportProgress(donations.length, donations.length || 1);
         if (created === 0) {
           this.toast.show(
             `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
@@ -1496,10 +1472,8 @@ export class ImportPageComponent implements OnInit {
   private importCombined(rows: string[][], bindings: CombinedImportFieldKey[]) {
     let skipped = 0;
     const ignored: IgnoredImportLine[] = [];
-    const creates: NewContactInput[] = [];
-    const updates: Array<{ id: string; input: NewContactInput }> = [];
+    const prepared: PreparedContactImportRow[] = [];
     const pendingDonations: PendingImportDonation[] = [];
-    const importedEntries: Array<{ index: number; input: NewContactInput }> = [];
 
     const contactBindings = bindings.map((b) =>
       b === 'donationDate' || b === 'donationAmount' || b === 'donationType' || b === 'paymentMethod'
@@ -1523,13 +1497,12 @@ export class ImportPageComponent implements OnInit {
         }
         continue;
       }
-      importedEntries.push({ index, input: contactInput });
       const existing = this.contactStore.findExistingContactForImport(contactInput);
-      if (existing) {
-        updates.push({ id: existing.id, input: contactInput });
-      } else {
-        creates.push(contactInput);
-      }
+      prepared.push({
+        index,
+        input: contactInput,
+        existingId: existing?.id
+      });
       if (donation) {
         pendingDonations.push({
           contactId: existing?.id,
@@ -1542,10 +1515,7 @@ export class ImportPageComponent implements OnInit {
       }
     }
 
-    return this.persistContactsBulk(creates, updates).pipe(
-      switchMap((result) =>
-        this.applyImportLinking(importedEntries).pipe(map(() => result))
-      ),
+    return this.persistPreparedContactChunks(prepared).pipe(
       switchMap(({ created, updated }) =>
         this.persistDonationsBulk(pendingDonations).pipe(
           map((donationsCreated) => ({ created, updated, donationsCreated }))
@@ -1589,8 +1559,48 @@ export class ImportPageComponent implements OnInit {
     );
   }
 
+  private persistPreparedContactChunks(prepared: PreparedContactImportRow[]) {
+    if (!prepared.length) {
+      this.setImportProgress(0, 0);
+      return of({ created: 0, updated: 0 });
+    }
+
+    const chunks = chunkArray(prepared, IMPORT_CONTACT_CHUNK_SIZE);
+    const total = prepared.length;
+    let processed = 0;
+    let cumulativeEntries: Array<{ index: number; input: NewContactInput }> = [];
+    this.setImportProgress(0, total);
+
+    return from(chunks).pipe(
+      concatMap((chunk) => {
+        const split = splitPreparedContactChunk(chunk);
+        cumulativeEntries = cumulativeEntries.concat(split.entries);
+        const linkingEntries = [...cumulativeEntries];
+        const childIndexes = split.childIndexSet;
+        return this.persistContactsBulk(split.creates, split.updates).pipe(
+          switchMap((result) =>
+            this.applyImportLinking(linkingEntries, childIndexes).pipe(map(() => result))
+          ),
+          map((result) => {
+            processed += chunk.length;
+            this.setImportProgress(processed, total);
+            return result;
+          })
+        );
+      }),
+      reduce(
+        (acc, result) => ({
+          created: acc.created + result.created,
+          updated: acc.updated + result.updated
+        }),
+        { created: 0, updated: 0 }
+      )
+    );
+  }
+
   private applyImportLinking(
-    importedEntries: Array<{ index: number; input: NewContactInput }>
+    importedEntries: Array<{ index: number; input: NewContactInput }>,
+    onlyChildIndexes?: Set<number>
   ) {
     const mode = this.contactLinkingMode();
     if (!shouldRunPostImportLinking(mode) || !this.showContactLinkingSetup()) {
@@ -1603,7 +1613,8 @@ export class ImportPageComponent implements OnInit {
       rows: this.allRows(),
       linkingColumnIndex: this.linkingColumnIndex(),
       manualAssignments: this.manualLinkAssignments(),
-      resolveContactId: (input) => this.contactStore.findExistingContactForImport(input)?.id
+      resolveContactId: (input) => this.contactStore.findExistingContactForImport(input)?.id,
+      onlyChildIndexes
     });
 
     if (!plans.length) {
