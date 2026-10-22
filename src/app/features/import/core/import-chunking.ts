@@ -1,6 +1,7 @@
 import type { NewContactInput } from '../../contact/contact.store';
 
 export const IMPORT_CONTACT_CHUNK_SIZE = 200;
+export const IMPORT_PROGRESS_BATCH_SIZE = 10;
 
 export function chunkArray<T>(items: T[], size: number = IMPORT_CONTACT_CHUNK_SIZE): T[][] {
   const chunkSize = Math.max(1, Math.floor(size));
@@ -50,4 +51,31 @@ export function splitPreparedContactChunk(chunk: PreparedContactImportRow[]): {
   }
 
   return { creates, updates, entries, childIndexSet };
+}
+
+export function buildImportPersistSteps(
+  prepared: PreparedContactImportRow[],
+  chunkSize: number = IMPORT_CONTACT_CHUNK_SIZE,
+  progressBatchSize: number = IMPORT_PROGRESS_BATCH_SIZE
+): number[] {
+  const steps: number[] = [];
+  let processed = 0;
+  const total = prepared.length;
+  if (!total) {
+    return [100];
+  }
+
+  for (const chunk of chunkArray(prepared, chunkSize)) {
+    const split = splitPreparedContactChunk(chunk);
+    for (let i = 0; i < split.updates.length; i++) {
+      processed += 1;
+      steps.push(computeImportProgressPercent(processed, total));
+    }
+    for (const batch of chunkArray(split.creates, progressBatchSize)) {
+      processed += batch.length;
+      steps.push(computeImportProgressPercent(processed, total));
+    }
+  }
+
+  return steps;
 }

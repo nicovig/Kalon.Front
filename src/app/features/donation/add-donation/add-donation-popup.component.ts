@@ -107,11 +107,11 @@ export class AddDonationPopupComponent {
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => {
-          this.toast.show(`Don de ${amount} € enregistré pour ${this.displayName()}.`, 'success');
+          this.toast.show(`Contribution de ${amount} € enregistrée pour ${this.displayName()}.`, 'success');
           this.closed.emit();
         },
         error: () => {
-          this.toast.show("Impossible d'enregistrer le don pour le moment.", 'alert');
+          this.toast.show("Impossible d'enregistrer la contribution pour le moment.", 'alert');
         }
       });
   }

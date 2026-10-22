@@ -1,7 +1,9 @@
 import {
+  buildImportPersistSteps,
   chunkArray,
   computeImportProgressPercent,
   IMPORT_CONTACT_CHUNK_SIZE,
+  IMPORT_PROGRESS_BATCH_SIZE,
   splitPreparedContactChunk,
   type PreparedContactImportRow
 } from './import-chunking';
@@ -169,6 +171,32 @@ describe('import-chunking', () => {
       expect(secondSplit.childIndexSet.has(200)).toBe(true);
       expect(secondSplit.childIndexSet.has(249)).toBe(true);
       expect(secondSplit.childIndexSet.has(0)).toBe(false);
+    });
+
+    it('advances progress in small steps for imports under the 200 threshold', () => {
+      const prepared: PreparedContactImportRow[] = Array.from({ length: 100 }, (_, index) => ({
+        index,
+        input: person(`F${index}`, `L${index}`, `u${index}@test.fr`)
+      }));
+      const steps = buildImportPersistSteps(prepared);
+      expect(IMPORT_PROGRESS_BATCH_SIZE).toBe(10);
+      expect(steps).toHaveLength(10);
+      expect(steps[0]).toBe(10);
+      expect(steps[4]).toBe(50);
+      expect(steps[steps.length - 1]).toBe(100);
+      expect(steps.every((value, index) => index === 0 || value > steps[index - 1])).toBe(true);
+    });
+
+    it('advances one step per update then by create batches', () => {
+      const prepared: PreparedContactImportRow[] = [
+        { index: 0, input: person('A', 'One', 'a@test.fr'), existingId: 'id-a' },
+        { index: 1, input: person('B', 'Two', 'b@test.fr'), existingId: 'id-b' },
+        { index: 2, input: person('C', 'Three', 'c@test.fr') },
+        { index: 3, input: person('D', 'Four', 'd@test.fr') },
+        { index: 4, input: person('E', 'Five', 'e@test.fr') }
+      ];
+      const steps = buildImportPersistSteps(prepared, 200, 2);
+      expect(steps).toEqual([20, 40, 80, 100]);
     });
   });
 });

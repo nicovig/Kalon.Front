@@ -9,8 +9,8 @@ export type CombinedImportFieldKey =
 
 export const COMBINED_IMPORT_OPTIONS: { key: CombinedImportFieldKey; label: string }[] = [
   ...IMPORT_FIELD_OPTIONS,
-  { key: 'donationDate', label: 'Date du don' },
-  { key: 'donationAmount', label: 'Montant du don (€)' },
-  { key: 'donationType', label: 'Type de don' },
+  { key: 'donationDate', label: 'Date de la contribution' },
+  { key: 'donationAmount', label: 'Montant de la contribution (€)' },
+  { key: 'donationType', label: 'Type de contribution' },
   { key: 'paymentMethod', label: 'Moyen de paiement' }
 ];

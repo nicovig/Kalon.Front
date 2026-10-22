@@ -222,7 +222,8 @@ export class ContactStoreService {
   }
 
   updateContactsSequential(
-    updates: Array<{ id: string; input: NewContactInput }>
+    updates: Array<{ id: string; input: NewContactInput }>,
+    onItemComplete?: () => void
   ): Observable<number> {
     if (!updates.length) {
       return of(0);
@@ -230,8 +231,14 @@ export class ContactStoreService {
     return from(updates).pipe(
       concatMap(({ id, input }) =>
         this.updateContactAsync(id, input).pipe(
-          map((contact) => (contact ? 1 : 0)),
-          catchError(() => of(0))
+          map((contact) => {
+            onItemComplete?.();
+            return contact ? 1 : 0;
+          }),
+          catchError(() => {
+            onItemComplete?.();
+            return of(0);
+          })
         )
       ),
       reduce((sum, value) => sum + value, 0)
