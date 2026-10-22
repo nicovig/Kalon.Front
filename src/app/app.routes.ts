@@ -68,6 +68,11 @@ export const routes: Routes = [
           import('./features/search/search.routes').then((m) => m.SEARCH_ROUTES)
       },
       {
+        path: 'pricing',
+        loadComponent: () =>
+          import('./features/pricing/pricing.page').then((m) => m.PricingPageComponent)
+      },
+      {
         path: 'parametres',
         loadChildren: () =>
           import('./features/account/account.routes').then((m) => m.ACCOUNT_ROUTES)

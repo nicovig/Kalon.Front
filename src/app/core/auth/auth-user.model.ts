@@ -10,4 +10,5 @@ export interface AuthUser {
   email: string;
   associationName: string;
   plan: AssociationPlan;
+  features?: Record<string, string>;
 }

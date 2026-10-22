@@ -123,8 +123,24 @@ export class AuthService {
       lastname: u.lastname ?? '',
       email: u.email ?? '',
       associationName: u.organization?.name ?? '',
-      plan: this.normalizePlan(meran?.plan ?? '')
+      plan: this.normalizePlan(meran?.plan ?? ''),
+      features: this.normalizeFeatures(meran?.features)
     };
+  }
+
+  private normalizeFeatures(
+    raw: Record<string, string> | null | undefined
+  ): Record<string, string> | undefined {
+    if (!raw || typeof raw !== 'object') {
+      return undefined;
+    }
+    const next: Record<string, string> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      const k = String(key ?? '').trim();
+      if (!k) continue;
+      next[k] = String(value ?? '');
+    }
+    return Object.keys(next).length ? next : undefined;
   }
 
   private normalizePlan(raw: string): AssociationPlan {
@@ -149,7 +165,8 @@ export class AuthService {
       lastname: 'Dupont',
       email: normalizedEmail,
       associationName: 'Asso Parents d eleves',
-      plan: 'basic'
+      plan: 'premium',
+      features: { recherche_mecenes: 'true' }
     };
     const token = `mock-${Date.now()}`;
     this.userStore.setSession(token, user);

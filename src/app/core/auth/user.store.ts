@@ -31,6 +31,24 @@ export class UserStore {
     return this.currentUser?.organizationId ?? 'anonymous';
   }
 
+  hasFeature(feature: string): boolean {
+    const key = String(feature ?? '').trim();
+    if (!key) {
+      return false;
+    }
+    const features = this.currentUser?.features;
+    if (features && Object.prototype.hasOwnProperty.call(features, key)) {
+      const raw = String(features[key] ?? '')
+        .trim()
+        .toLowerCase();
+      return raw === 'true' || raw === '1' || raw === 'enabled' || raw === 'yes';
+    }
+    if (key === 'recherche_mecenes') {
+      return this.currentPlan === 'premium';
+    }
+    return false;
+  }
+
   isAuthenticated(): boolean {
     return this.currentUser !== null && !!this.tokenValue;
   }

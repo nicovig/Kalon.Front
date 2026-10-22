@@ -171,5 +171,26 @@ export const API_ENDPOINTS = {
     getById: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`),
     update: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`),
     remove: ({ id }: { id: string }) => toUrl(`/api/Tag/${encodeURIComponent(id)}`)
+  },
+  search: {
+    credits: () => toUrl('/api/Search/credits'),
+    companies: ({
+      dep,
+      naf,
+      nbrep
+    }: {
+      dep?: string;
+      naf?: string;
+      nbrep?: number;
+    } = {}) =>
+      toUrl(
+        withQuery('/api/Search/companies', {
+          dep,
+          naf,
+          nbrep
+        })
+      ),
+    companyDetails: ({ siren }: { siren: string }) =>
+      toUrl(`/api/Search/companies/${encodeURIComponent(siren)}/details`)
   }
 };
