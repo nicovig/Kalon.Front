@@ -127,7 +127,7 @@ export class ContactDonationsPopupComponent {
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => {
-          this.toast.show(`Don de ${amount} € enregistré pour ${this.contactTitle()}.`, 'success');
+          this.toast.show(`Contribution de ${amount} € enregistrée pour ${this.contactTitle()}.`, 'success');
           this.dashboardNotificationStore.refresh();
           this.submitted = false;
           this.addFormOpen = false;
@@ -138,7 +138,7 @@ export class ContactDonationsPopupComponent {
           });
         },
         error: () => {
-          this.toast.show("Impossible d'enregistrer le don pour le moment.", 'alert');
+          this.toast.show("Impossible d'enregistrer la contribution pour le moment.", 'alert');
         }
       });
   }

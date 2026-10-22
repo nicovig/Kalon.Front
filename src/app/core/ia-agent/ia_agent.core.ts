@@ -58,7 +58,7 @@ export class IaAgentCore {
       subject: 'Votre aide est precieuse aujourd hui, {{prenom}}',
       body: `<p>Bonjour {{prenom}},</p>
 <p>Nous traversons une periode importante et nous avons besoin de soutien rapidement.</p>
-<p>Votre dernier geste nous a beaucoup aides, et un nouveau don ferait une vraie difference maintenant.</p>
+<p>Votre dernier geste nous a beaucoup aides, et une nouvelle contribution financière ferait une vraie difference maintenant.</p>
 <p>Si vous le pouvez, meme un petit montant nous aide.</p>
 <p>Merci pour votre presence a nos cotes.</p>
 {{signature_footer}}`
@@ -68,7 +68,7 @@ export class IaAgentCore {
       body: `<p>Bonjour {{prenom}},</p>
 <p>La fin d'annee est un moment fort pour notre association et pour les personnes que nous accompagnons.</p>
 <p>Votre soutien peut nous aider a lancer nos actions des prochaines semaines.</p>
-<p>Si vous le souhaitez, vous pouvez faire un nouveau don en quelques secondes.</p>
+<p>Si vous le souhaitez, vous pouvez faire une nouvelle contribution en quelques secondes.</p>
 <p>Merci pour votre confiance.</p>
 {{signature_footer}}`
     },
@@ -86,7 +86,7 @@ export class IaAgentCore {
       body: `<p>Bonjour {{prenom}},</p>
 <p>Cela fait un an que vous soutenez {{nom_association}}, et nous voulions vous remercier sincèrement.</p>
 <p>Votre fidélité nous aide à maintenir des actions concrètes sur le terrain.</p>
-<p>Si vous le souhaitez, vous pouvez prolonger ce bel engagement avec un nouveau don.</p>
+<p>Si vous le souhaitez, vous pouvez prolonger ce bel engagement avec une nouvelle contribution.</p>
 <p>Merci d'être à nos côtés.</p>
 {{signature_footer}}`
     },

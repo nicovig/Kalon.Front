@@ -92,6 +92,7 @@ import {
   chunkArray,
   computeImportProgressPercent,
   IMPORT_CONTACT_CHUNK_SIZE,
+  IMPORT_PROGRESS_BATCH_SIZE,
   PreparedContactImportRow,
   splitPreparedContactChunk
 } from './core/import-chunking';
@@ -156,7 +157,7 @@ export class ImportPageComponent implements OnInit {
       case 'donations':
         return 'Importez montants et dates ; chaque ligne est reliée à un profil (lien fait avec l\'email)';
       case 'combined':
-        return 'Un fichier où chaque ligne peut contenir le contact et le don sur la même ligne';
+        return 'Un fichier où chaque ligne peut contenir le contact et la contribution sur la même ligne';
       default:
         return '';
     }
@@ -1445,7 +1446,7 @@ export class ImportPageComponent implements OnInit {
         this.setImportProgress(donations.length, donations.length || 1);
         if (created === 0) {
           this.toast.show(
-            `Aucun don importé. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
+            `Aucune contribution importée. Vérifiez les montants, les dates et que l’email correspond à un profil existant${
               missingContact > 0 ? ` (${missingContact} email(s) introuvable(s))` : ''
             }.`,
             'alert',
@@ -1455,7 +1456,7 @@ export class ImportPageComponent implements OnInit {
           return;
         }
         this.toast.show(
-          `${created} don(s) enregistré(s)${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
+          `${created} contribution(s) enregistrée(s)${skipped > 0 ? ` - ${skipped} ligne(s) ignorée(s)` : ''}.`,
           'success',
           5000
         );
@@ -1571,21 +1572,21 @@ export class ImportPageComponent implements OnInit {
     let cumulativeEntries: Array<{ index: number; input: NewContactInput }> = [];
     this.setImportProgress(0, total);
 
+    const bumpProgress = (count: number) => {
+      processed = Math.min(total, processed + count);
+      this.setImportProgress(processed, total);
+    };
+
     return from(chunks).pipe(
       concatMap((chunk) => {
         const split = splitPreparedContactChunk(chunk);
         cumulativeEntries = cumulativeEntries.concat(split.entries);
         const linkingEntries = [...cumulativeEntries];
         const childIndexes = split.childIndexSet;
-        return this.persistContactsBulk(split.creates, split.updates).pipe(
+        return this.persistContactsWithProgress(split.creates, split.updates, bumpProgress).pipe(
           switchMap((result) =>
             this.applyImportLinking(linkingEntries, childIndexes).pipe(map(() => result))
-          ),
-          map((result) => {
-            processed += chunk.length;
-            this.setImportProgress(processed, total);
-            return result;
-          })
+          )
         );
       }),
       reduce(
@@ -1629,15 +1630,32 @@ export class ImportPageComponent implements OnInit {
     return this.contactStore.updateContactsSequential(linkUpdates);
   }
 
-  private persistContactsBulk(
+  private persistContactsWithProgress(
     creates: NewContactInput[],
-    updates: Array<{ id: string; input: NewContactInput }>
+    updates: Array<{ id: string; input: NewContactInput }>,
+    onPersisted: (count: number) => void
   ) {
-    return this.contactStore.updateContactsSequential(updates).pipe(
+    const updates$ = this.contactStore.updateContactsSequential(updates, () => onPersisted(1));
+    const createBatches = chunkArray(creates, IMPORT_PROGRESS_BATCH_SIZE);
+    const creates$ = createBatches.length
+      ? from(createBatches).pipe(
+          concatMap((batch) =>
+            this.contactStore.createContactsBulk(batch).pipe(
+              map((created) => {
+                onPersisted(batch.length);
+                return created.createdCount;
+              })
+            )
+          ),
+          reduce((sum, value) => sum + value, 0)
+        )
+      : of(0);
+
+    return updates$.pipe(
       switchMap((updated) =>
-        this.contactStore.createContactsBulk(creates).pipe(
+        creates$.pipe(
           map((created) => ({
-            created: created.createdCount,
+            created,
             updated
           }))
         )

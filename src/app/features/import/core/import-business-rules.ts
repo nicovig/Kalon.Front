@@ -77,7 +77,7 @@ const DONATION_RULES: ImportBusinessRuleSection[] = [
   {
     title: 'Ce qu’il faut pour chaque contribution',
     items: [
-      'Chaque ligne doit avoir une date valide et, pour un don d’argent, un montant supérieur à 0.',
+      'Chaque ligne doit avoir une date valide et, pour une contribution financière, un montant supérieur à 0.',
       'Il faut pouvoir retrouver le profil dans Kalon (souvent via l’email, parfois le nom/prénom).',
       'Le profil doit déjà exister dans Kalon avant d’importer les contributions seules.'
     ]
@@ -85,7 +85,7 @@ const DONATION_RULES: ImportBusinessRuleSection[] = [
   {
     title: 'Types et montants',
     items: [
-      'Don en nature ou mécénat : le montant peut être 0 ou absent.',
+      'Contribution en nature ou mécénat : le montant peut être 0 ou absent.',
       'Les dates et montants sont lus dans les formats courants (JJ/MM/AAAA, virgule ou point pour les décimales).'
     ]
   }

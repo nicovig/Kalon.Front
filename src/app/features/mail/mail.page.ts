@@ -706,7 +706,7 @@ export class MailPageComponent {
   protected readonly iaContextPlaceholders: Record<ReminderTemplateTone, string> = {
     chill_reminder: "Exemple : relance douce après 12 mois d'inactivité, mettre en avant l'impact concret des contributions",
     fidelity_reminder: "Exemple : fidélisation, rappeler l'engagement passé et proposer un renouvellement…",
-    thank_you_reminder: 'Exemple : remercier pour le dernier don et rappeler ce que cela a permis…',
+    thank_you_reminder: 'Exemple : remercier pour la dernière contribution et rappeler ce que cela a permis…',
     urgency_reminder: "Exemple : situation actuelle et pourquoi un geste maintenant aide vraiment…",
     seasonal_reminder: 'Exemple : contexte de la période et prochaines actions à soutenir…',
     adhesion_renewal_reminder: "Exemple : nouvelle saison, bénéfices pour les membres, renouvellement d'adhésion…",
@@ -1545,10 +1545,10 @@ export class MailPageComponent {
     const pieces = [];
     if (summary.lastDate) {
       const lastAmount = summary.lastAmount == null ? '' : ` · ${this.formatAmount(summary.lastAmount)} €`;
-      pieces.push(`Dernier don : ${this.formatShortDate(summary.lastDate)}${lastAmount}`);
+      pieces.push(`Dernière contribution : ${this.formatShortDate(summary.lastDate)}${lastAmount}`);
     }
     if (summary.averageAmount != null && summary.count > 0) {
-      pieces.push(`Don moyen : ${this.formatAmount(summary.averageAmount)} €`);
+      pieces.push(`Contribution moyenne : ${this.formatAmount(summary.averageAmount)} €`);
     }
     return pieces.join(' · ');
   }
@@ -1789,7 +1789,7 @@ export class MailPageComponent {
   private donationTypeLabel(type: IDonation['donationType']): string {
     if (type === 'in_kind') return 'Don en nature';
     if (type === 'sponsoring') return 'Mécénat';
-    return 'Don financier';
+    return 'Contribution financière';
   }
 }
 

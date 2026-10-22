@@ -269,7 +269,7 @@ export class MapPageComponent {
 
   private geoOfContact(c: IContact): ContactGeo {
     const country = c.address?.country?.trim().toLowerCase();
-    if (!country || country !== 'france') {
+    if (!country || (country !== 'france' && country !== 'fr' && country !== 'france metropolitaine')) {
       return { kind: 'hors_france' };
     }
 
