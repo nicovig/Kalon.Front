@@ -3582,6 +3582,77 @@
         }
       }
     },
+    "/api/Search/companies": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "dep",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "naf",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nbrep",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Search/companies/{siren}/details": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "siren",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Search/credits": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Sending/mail-editor-tags": {
       "get": {
         "tags": [
@@ -6243,6 +6314,15 @@
           },
           "contactLinkingNote": {
             "type": "string",
+            "nullable": true
+          },
+          "cachedPlan": {
+            "type": "string",
+            "nullable": true
+          },
+          "cachedPlanUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "contacts": {

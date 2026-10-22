@@ -1,0 +1,29 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.pricing-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pricing-copy {
+  margin: 0 0 14px;
+  color: var(--ink-70);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.pricing-back {
+  font-weight: 800;
+  color: var(--violet);
+  text-decoration: none;
+}
+
+.pricing-back:hover {
+  text-decoration: underline;
+}

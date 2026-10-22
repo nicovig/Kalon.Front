@@ -1,1 +1,192 @@
-<topbar [title]="'Recherche de mécènes et sponsors'" [subtitle]="'Recherchez de nouveaux mécènes et sponsors avec facilité'"></topbar>
+<topbar
+  [title]="'Recherche de mécènes et sponsors'"
+  [subtitle]="'Recherchez de nouveaux mécènes et sponsors avec facilité'"
+></topbar>
+
+<toast-component></toast-component>
+
+<div class="search-shell">
+  @if (showPremiumGate()) {
+    <card title="Fonctionnalité Premium" subtitle="Débloquez la recherche de mécènes">
+      <div class="search-premium">
+        <p>
+          Cette fonctionnalité nécessite le plan Premium. Passez au Premium pour explorer
+          des entreprises et trouver de nouveaux mécènes.
+        </p>
+        <a routerLink="/pricing" class="search-premium-cta">Passer au Premium</a>
+      </div>
+    </card>
+  } @else {
+    <section class="search-credits" aria-label="Solde de crédits">
+      <div class="search-credits-main">
+        @if (creditsLoading()) {
+          <inline-loader label="Chargement des crédits…"></inline-loader>
+        } @else {
+          <div class="search-credits-info">
+            <span
+              class="search-credits-badge"
+              [class.search-credits-badge--ok]="creditsBadgeTone() === 'ok'"
+              [class.search-credits-badge--warn]="creditsBadgeTone() === 'warn'"
+              [class.search-credits-badge--danger]="creditsBadgeTone() === 'danger'"
+            >
+              {{ creditsLabel() }}
+            </span>
+            <p class="search-credits-source">
+              Données issues de <strong>Société.com</strong>
+            </p>
+          </div>
+        }
+      </div>
+      <span class="search-soon-wrap" tabindex="0" aria-label="Disponible prochainement">
+        <button-label-component type="ghost" [disabled]="true">
+          Acheter des crédits
+        </button-label-component>
+        <span class="search-soon-tip" role="tooltip">Disponible prochainement</span>
+      </span>
+    </section>
+
+    <card title="Critères de recherche" subtitle="Tous les filtres sont optionnels">
+      <form class="search-form" (ngSubmit)="onSearch()">
+        <div class="search-form-grid">
+          <label class="search-field">
+            <span class="search-field-label">Département</span>
+            <form-select-component
+              [options]="departmentOptions"
+              [ngModel]="dep()"
+              (ngModelChange)="dep.set($event)"
+              name="dep"
+            ></form-select-component>
+          </label>
+
+          <label class="search-field">
+            <span class="search-field-label">Secteur d’activité (NAF)</span>
+            <form-select-component
+              [options]="nafOptions"
+              [ngModel]="naf()"
+              (ngModelChange)="naf.set($event)"
+              name="naf"
+            ></form-select-component>
+          </label>
+
+          <label class="search-field">
+            <span class="search-field-label">Nombre de résultats</span>
+            <form-select-component
+              [options]="resultCountOptions"
+              [ngModel]="nbrep()"
+              (ngModelChange)="nbrep.set($event)"
+              name="nbrep"
+            ></form-select-component>
+          </label>
+        </div>
+
+        <div class="search-form-actions">
+          <p class="search-cost">Coût : {{ searchCreditCost }} crédit</p>
+          <button-label-component
+            type="primary"
+            htmlType="submit"
+            [disabled]="!canSearch() || searching()"
+          >
+            {{ searching() ? 'Recherche…' : 'Rechercher' }}
+          </button-label-component>
+        </div>
+      </form>
+    </card>
+
+    <section class="search-results" aria-label="Résultats de recherche">
+      @if (searching()) {
+        <div class="search-skeleton-grid">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="search-skeleton-card" aria-hidden="true">
+              <div class="search-skeleton-line search-skeleton-line--title"></div>
+              <div class="search-skeleton-line"></div>
+              <div class="search-skeleton-line search-skeleton-line--short"></div>
+              <div class="search-skeleton-line search-skeleton-line--btn"></div>
+            </div>
+          }
+        </div>
+      } @else if (hasSearched() && results().length === 0) {
+        <div class="search-empty">
+          <div class="search-empty-illu" aria-hidden="true">🔍</div>
+          <h2>Aucune entreprise trouvée</h2>
+          <p>Aucune entreprise trouvée pour ces critères — essayez d’élargir votre recherche.</p>
+        </div>
+      } @else if (results().length > 0) {
+        <div class="search-results-grid">
+          @for (card of results(); track card.siren) {
+            <article class="company-card">
+              <header class="company-card-head">
+                <div class="company-card-title-row">
+                  <span class="company-card-icon" aria-hidden="true">🏢</span>
+                  <h3 class="company-card-name">{{ card.nomCommercial || 'Entreprise' }}</h3>
+                </div>
+                @if (card.dep) {
+                  <span class="company-card-dep">{{ card.dep }}</span>
+                }
+              </header>
+
+              <p class="company-card-meta">
+                <span>Secteur : {{ card.nafLib || card.nafCode || '—' }}</span>
+                <span>Ville : {{ card.cpVille || '—' }}</span>
+              </p>
+
+              @if (card.unlocked && card.detail; as detail) {
+                <div class="company-card-unlocked">
+                  <p>
+                    CA : {{ formatMoney(detail.bilan.chiffreAffaires) }}
+                    <span class="company-card-sep">|</span>
+                    Résultat net : {{ formatMoney(detail.bilan.resultatNet) }}
+                    <span class="company-card-sep">|</span>
+                    Année : {{ detail.bilan.annee || '—' }}
+                  </p>
+                  <p>
+                    Dirigeant : {{ dirigeantLabel(detail) }}
+                    <span class="company-card-sep">|</span>
+                    Tél : {{ formatPhone(detail.contact.telephone) }}
+                  </p>
+                  @if (detail.contact.email) {
+                    <p>Email : {{ detail.contact.email }}</p>
+                  }
+                </div>
+              } @else {
+                <div class="company-card-locked">
+                  <span>CA : 🔒 confidentiel</span>
+                  <span>Dirigeant : 🔒</span>
+                </div>
+
+                <div class="company-card-actions">
+                  <button-label-component
+                    type="primary"
+                    [disabled]="card.unlocking"
+                    (click)="unlockDetails(card)"
+                  >
+                    {{
+                      card.unlocking
+                        ? 'Déverrouillage…'
+                        : 'Voir la fiche complète - ' + detailCreditCost + ' crédits'
+                    }}
+                  </button-label-component>
+
+                  @if (card.detailError) {
+                    <div class="company-card-error">
+                      <p>{{ card.detailError }}</p>
+                      <span
+                        class="search-soon-wrap"
+                        tabindex="0"
+                        aria-label="Disponible prochainement"
+                      >
+                        <button-label-component type="ghost" [disabled]="true">
+                          Acheter des crédits
+                        </button-label-component>
+                        <span class="search-soon-tip" role="tooltip">Disponible prochainement</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

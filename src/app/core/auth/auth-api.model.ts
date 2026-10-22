@@ -40,5 +40,6 @@ export interface LoginResponseBody {
   meran?: {
     isActive?: boolean;
     plan?: string | null;
+    features?: Record<string, string> | null;
   } | null;
 }
